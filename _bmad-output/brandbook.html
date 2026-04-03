@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASYSTEM.AI — Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   CSS RESET & BASE
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* Core Blues */
+  --blue-50: #eef5ff;
+  --blue-100: #d9e8ff;
+  --blue-200: #bcd8ff;
+  --blue-300: #8ec1ff;
+  --blue-400: #59a0ff;
+  --blue-500: #3381ff;
+  --blue-600: #1b5ff5;
+  --blue-700: #144ae1;
+  --blue-800: #173cb6;
+  --blue-900: #19378f;
+
+  /* Accent - Electric Cyan */
+  --cyan-400: #22d3ee;
+  --cyan-500: #06b6d4;
+
+  /* Backgrounds */
+  --bg-primary: #030712;
+  --bg-secondary: #0a1628;
+  --bg-card: #0d1b2a;
+  --bg-card-hover: #112240;
+  --bg-elevated: #1a2942;
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Borders */
+  --border: rgba(59, 130, 246, 0.15);
+  --border-hover: rgba(59, 130, 246, 0.35);
+
+  /* Glows */
+  --glow-blue: 0 0 60px rgba(51, 129, 255, 0.3);
+  --glow-cyan: 0 0 40px rgba(34, 211, 238, 0.2);
+  --glow-soft: 0 0 120px rgba(51, 129, 255, 0.1);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #3381ff, #1b5ff5);
+  --gradient-accent: linear-gradient(135deg, #3381ff, #22d3ee);
+  --gradient-bg: linear-gradient(180deg, #030712 0%, #0a1628 50%, #030712 100%);
+  --gradient-card: linear-gradient(145deg, rgba(13,27,42,0.8), rgba(10,22,40,0.4));
+  --gradient-text: linear-gradient(90deg, #3381ff, #22d3ee);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   CANVAS PARTICLES BACKGROUND
+   ═══════════════════════════════════════════ */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 40px;
+  backdrop-filter: blur(20px);
+  background: rgba(3, 7, 18, 0.8);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.nav-logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.nav-logo span { color: var(--blue-500); }
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-links a:hover { color: var(--text-primary); }
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 2px;
+  background: var(--gradient-accent);
+  transition: width 0.3s ease;
+  border-radius: 1px;
+}
+
+.nav-links a:hover::after { width: 100%; }
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════ */
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+section {
+  padding: 120px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════
+   HERO SECTION
+   ═══════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-top: 80px;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: rgba(51, 129, 255, 0.08);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--blue-400);
+  margin-bottom: 40px;
+  animation: fadeInUp 0.8s ease;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue-500);
+  box-shadow: 0 0 12px var(--blue-500);
+  animation: pulse-dot 2s infinite;
+}
+
+.hero h1 {
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 8px;
+  animation: fadeInUp 0.8s ease 0.1s both;
+}
+
+.hero h1 .gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 300;
+  color: var(--text-secondary);
+  margin-top: 16px;
+  margin-bottom: 48px;
+  animation: fadeInUp 0.8s ease 0.2s both;
+}
+
+.hero-version {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+/* Decorative orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.orb-1 {
+  width: 600px; height: 600px;
+  background: rgba(51, 129, 255, 0.08);
+  top: 10%; left: -10%;
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb-2 {
+  width: 400px; height: 400px;
+  background: rgba(34, 211, 238, 0.06);
+  bottom: 10%; right: -5%;
+  animation: float 25s infinite ease-in-out reverse;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION HEADERS
+   ═══════════════════════════════════════════ */
+.section-header {
+  margin-bottom: 64px;
+}
+
+.section-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--blue-500);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════
+   DIVIDER
+   ═══════════════════════════════════════════ */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════
+   BRAND STORY (Section 01)
+   ═══════════════════════════════════════════ */
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.story-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.story-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.story-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--glow-blue);
+}
+
+.story-card:hover::before { opacity: 1; }
+
+.story-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: rgba(51, 129, 255, 0.1);
+  border: 1px solid rgba(51, 129, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.story-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.story-card p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════
+   LOGO SECTION (Section 02)
+   ═══════════════════════════════════════════ */
+.logo-showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.logo-variant {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-variant:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--glow-soft);
+}
+
+.logo-variant.dark { background: var(--bg-primary); }
+.logo-variant.light { background: #f8fafc; }
+.logo-variant.blue { background: var(--gradient-primary); }
+.logo-variant.gradient-bg { background: linear-gradient(135deg, #0a1628, #112240); }
+
+.logo-variant-label {
+  position: absolute;
+  top: 16px; left: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.logo-variant.light .logo-variant-label { color: #64748b; }
+.logo-variant.blue .logo-variant-label { color: rgba(255,255,255,0.6); }
+
+.logo-svg {
+  height: 48px;
+  width: auto;
+}
+
+.logo-rules {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.logo-rule {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+}
+
+.logo-rule-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.logo-rule h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.logo-rule p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Logo rendering */
+.logo-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'Inter', sans-serif;
+}
+
+.logo-mark {
+  width: 48px;
+  height: 48px;
+  position: relative;
+}
+
+.logo-mark svg { width: 100%; height: 100%; }
+
+.logo-wordmark {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.logo-wordmark-light { color: var(--text-primary); }
+.logo-wordmark-dark { color: #0f172a; }
+.logo-wordmark-white { color: #ffffff; }
+
+.logo-wordmark .dot { color: var(--blue-500); }
+.logo-wordmark-dark .dot { color: var(--blue-600); }
+
+/* ═══════════════════════════════════════════
+   COLOR PALETTE (Section 03)
+   ═══════════════════════════════════════════ */
+.palette-group {
+  margin-bottom: 48px;
+}
+
+.palette-group-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.palette-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.color-chip {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.color-chip:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glow-soft);
+  border-color: var(--border-hover);
+}
+
+.color-swatch {
+  height: 80px;
+  position: relative;
+}
+
+.color-swatch::after {
+  content: 'Copied!';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.color-chip.copied .color-swatch::after { opacity: 1; }
+
+.color-info {
+  padding: 12px 14px;
+  background: var(--bg-card);
+}
+
+.color-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.color-hex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Primary color - big card */
+.color-primary-card {
+  grid-column: span 2;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.color-primary-swatch {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+}
+
+.color-primary-swatch h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.color-primary-swatch p {
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.color-primary-info {
+  background: var(--bg-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.color-value-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.color-value-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.color-value-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════
+   TYPOGRAPHY (Section 04)
+   ═══════════════════════════════════════════ */
+.type-specimen {
+  margin-bottom: 64px;
+}
+
+.type-font-name {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.type-font-name h3 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.type-font-name span {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.type-scale {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.type-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: baseline;
+  gap: 32px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+}
+
+.type-row:hover {
+  background: rgba(51, 129, 255, 0.03);
+  padding-left: 16px;
+  border-radius: 8px;
+}
+
+.type-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.type-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--blue-500);
+  font-weight: 500;
+}
+
+.type-specs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.type-sample-h1 { font-size: 64px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.type-sample-h2 { font-size: 48px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+.type-sample-h3 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.type-sample-h4 { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+.type-sample-body { font-size: 16px; font-weight: 400; line-height: 1.7; color: var(--text-secondary); }
+.type-sample-small { font-size: 14px; font-weight: 400; line-height: 1.6; color: var(--text-muted); }
+.type-sample-mono { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: var(--cyan-400); }
+
+/* ═══════════════════════════════════════════
+   SPACING & GRID (Section 05)
+   ═══════════════════════════════════════════ */
+.spacing-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.spacing-item {
+  display: grid;
+  grid-template-columns: 80px 1fr 100px;
+  align-items: center;
+  gap: 20px;
+}
+
+.spacing-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.spacing-bar {
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(51,129,255,0.3), rgba(51,129,255,0.1));
+  border: 1px solid rgba(51,129,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.spacing-item:hover .spacing-bar {
+  background: linear-gradient(90deg, rgba(51,129,255,0.5), rgba(51,129,255,0.2));
+  box-shadow: var(--glow-soft);
+}
+
+.spacing-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════
+   COMPONENTS (Section 06)
+   ═══════════════════════════════════════════ */
+.components-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.component-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  transition: all 0.4s ease;
+}
+
+.component-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--glow-soft);
+}
+
+.component-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* Buttons */
+.btn-showcase {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.btn {
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 24px rgba(51, 129, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(51, 129, 255, 0.5);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
+}
+
+.btn-secondary:hover {
+  background: rgba(51, 129, 255, 0.08);
+  border-color: var(--blue-500);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--blue-400);
+  padding: 12px 16px;
+}
+
+.btn-ghost:hover { background: rgba(51, 129, 255, 0.08); }
+
+.btn-sm {
+  padding: 8px 20px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.btn-lg {
+  padding: 16px 36px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+/* Cards */
+.card-demo {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.card-demo:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-blue);
+}
+
+.card-demo h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.card-demo p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Input */
+.input-demo {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.input-demo:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(51, 129, 255, 0.15);
+}
+
+.input-demo::placeholder { color: var(--text-muted); }
+
+/* Tags / Badges */
+.tags-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag {
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag-blue {
+  background: rgba(51, 129, 255, 0.12);
+  color: var(--blue-400);
+  border: 1px solid rgba(51, 129, 255, 0.2);
+}
+
+.tag-cyan {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--cyan-400);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+}
+
+.tag-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.tag-warning {
+  background: rgba(234, 179, 8, 0.1);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+/* ═══════════════════════════════════════════
+   GLASSMORPHISM CARDS (Section 07)
+   ═══════════════════════════════════════════ */
+.glass-demo-container {
+  position: relative;
+  min-height: 400px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a1628 0%, #112240 50%, #0a1628 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 60px;
+}
+
+.glass-demo-container .orb-demo-1 {
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: rgba(51, 129, 255, 0.2);
+  filter: blur(60px);
+  top: -50px; left: -50px;
+  animation: float 15s infinite ease-in-out;
+}
+
+.glass-demo-container .orb-demo-2 {
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.15);
+  filter: blur(50px);
+  bottom: -30px; right: -30px;
+  animation: float 20s infinite ease-in-out reverse;
+}
+
+.glass-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px;
+  width: 260px;
+  transition: all 0.4s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-8px);
+  box-shadow: var(--glow-blue);
+}
+
+.glass-card-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+}
+
+.glass-card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.glass-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════
+   ICON SET (Section 08)
+   ═══════════════════════════════════════════ */
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.icon-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.icon-item:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--glow-soft);
+}
+
+.icon-item svg {
+  width: 28px; height: 28px;
+  stroke: var(--blue-400);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-item span {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════
+   BRAND VOICE (Section 09)
+   ═══════════════════════════════════════════ */
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.voice-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.voice-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.voice-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glow-soft);
+}
+
+.voice-card:hover::after { opacity: 1; }
+
+.voice-emoji {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.voice-card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.voice-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.do-dont {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.do-card, .dont-card {
+  border-radius: 12px;
+  padding: 28px;
+  border: 1px solid;
+}
+
+.do-card {
+  background: rgba(34, 197, 94, 0.04);
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+.dont-card {
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.do-card h4 { color: #4ade80; margin-bottom: 16px; }
+.dont-card h4 { color: #f87171; margin-bottom: 16px; }
+
+.do-card li, .dont-card li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  list-style: none;
+  padding-left: 24px;
+  position: relative;
+}
+
+.do-card li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.dont-card li::before {
+  content: '✗';
+  position: absolute;
+  left: 0;
+  color: #f87171;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════
+   MOTION (Section 10)
+   ═══════════════════════════════════════════ */
+.motion-demos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.motion-demo {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.motion-box {
+  width: 60px; height: 60px;
+  border-radius: 12px;
+  background: var(--gradient-primary);
+  margin: 0 auto 20px;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motion-demo:hover .motion-box-scale { transform: scale(1.2); }
+.motion-demo:hover .motion-box-lift { transform: translateY(-16px); box-shadow: 0 16px 40px rgba(51,129,255,0.4); }
+.motion-demo:hover .motion-box-glow { box-shadow: 0 0 40px rgba(51,129,255,0.6), 0 0 80px rgba(51,129,255,0.3); }
+
+.motion-demo h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.motion-demo p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════
+   ENTRY POINTS PREVIEW (Section 11)
+   ═══════════════════════════════════════════ */
+.entry-preview {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.entry-preview h3 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.entry-preview > p {
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+  font-size: 16px;
+}
+
+.entry-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.entry-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 40px 24px;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.entry-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--blue-500);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: var(--glow-blue);
+}
+
+.entry-card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.entry-card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.entry-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+.footer {
+  text-align: center;
+  padding: 80px 40px;
+  border-top: 1px solid var(--border);
+}
+
+.footer p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.footer .logo-wordmark {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -30px) rotate(5deg); }
+  66% { transform: translate(-20px, 20px) rotate(-3deg); }
+}
+
+/* Scroll animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  section { padding: 80px 20px; }
+  .nav { padding: 12px 20px; }
+  .nav-links { display: none; }
+  .story-grid, .logo-showcase, .components-grid, .do-dont, .entry-cards { grid-template-columns: 1fr; }
+  .voice-grid, .motion-demos { grid-template-columns: 1fr; }
+  .logo-rules { grid-template-columns: 1fr; }
+  .palette-row { grid-template-columns: repeat(2, 1fr); }
+  .color-primary-card { grid-column: span 1; grid-template-columns: 1fr; }
+  .type-row { grid-template-columns: 1fr; gap: 8px; }
+  .glass-demo-container { flex-direction: column; padding: 40px 20px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <div class="nav-logo"><span>a</span>system<span>.</span>ai</div>
+  <ul class="nav-links">
+    <li><a href="#story">Философия</a></li>
+    <li><a href="#logo">Логотип</a></li>
+    <li><a href="#colors">Цвета</a></li>
+    <li><a href="#typography">Типографика</a></li>
+    <li><a href="#components">Компоненты</a></li>
+    <li><a href="#glass">Glass</a></li>
+    <li><a href="#voice">Голос бренда</a></li>
+    <li><a href="#motion">Анимации</a></li>
+    <li><a href="#preview">Превью</a></li>
+  </ul>
+</nav>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════ -->
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-badge">Brand Guidelines</div>
+  <h1><span class="gradient-text">asystem</span>.ai</h1>
+  <p class="hero-subtitle">Полное руководство по фирменному стилю</p>
+  <div class="hero-version">v1.0 — Февраль 2026</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     01. BRAND STORY
+     ═══════════════════════════════════════════ -->
+<section id="story" class="reveal">
+  <div class="section-header">
+    <span class="section-number">01 — Философия бренда</span>
+    <h2 class="section-title">Системы, которые<br>двигают бизнес</h2>
+    <p class="section-desc">
+      asystem.ai — это команда, которая превращает сложное в простое. 
+      Мы создаём цифровые системы, которые работают на результат: сайты, боты, 
+      приложения и автоматизация процессов. Быстро, профессионально, с гарантией качества.
+    </p>
+  </div>
+
+  <div class="story-grid">
+    <div class="story-card">
+      <div class="story-icon">⚡</div>
+      <h3>Скорость</h3>
+      <p>Мы доставляем проекты в разы быстрее рынка. Лендинг за 2 дня, бот за неделю, корпоративная система за месяц. Без потери качества — за счёт отлаженных процессов и экспертизы команды.</p>
+    </div>
+    <div class="story-card">
+      <div class="story-icon">🎯</div>
+      <h3>Результат</h3>
+      <p>Каждый проект — это измеримый бизнес-результат. Не «сайт ради сайта», а инструмент, который приносит клиентов, экономит время и масштабирует бизнес.</p>
+    </div>
+    <div class="story-card">
+      <div class="story-icon">🤝</div>
+      <h3>Партнёрство</h3>
+      <p>Мы строим долгосрочные отношения. Партнёрская программа, прозрачные процессы, личный кабинет для отслеживания проектов — бизнес вместе.</p>
+    </div>
+    <div class="story-card">
+      <div class="story-icon">🔧</div>
+      <h3>Системный подход</h3>
+      <p>«a» в названии — это article, определитель. asystem — это THE system. Единая экосистема для автоматизации, разработки и цифровой трансформации.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     02. LOGO
+     ═══════════════════════════════════════════ -->
+<section id="logo" class="reveal">
+  <div class="section-header">
+    <span class="section-number">02 — Логотип</span>
+    <h2 class="section-title">Знак и логотип</h2>
+    <p class="section-desc">
+      Логотип asystem.ai построен на контрасте: строгая геометрия иконки (связанные узлы системы) 
+      и чистая типографика. Точка между «asystem» и «ai» — ключевой элемент бренда.
+    </p>
+  </div>
+
+  <div class="logo-showcase">
+    <!-- Dark variant -->
+    <div class="logo-variant dark">
+      <span class="logo-variant-label">На тёмном фоне (основной)</span>
+      <div class="logo-main">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="12" r="5" stroke="#3381ff" stroke-width="2"/>
+            <circle cx="12" cy="36" r="5" stroke="#3381ff" stroke-width="2"/>
+            <circle cx="36" cy="36" r="5" stroke="#3381ff" stroke-width="2"/>
+            <line x1="24" y1="17" x2="14" y2="32" stroke="#3381ff" stroke-width="1.5" opacity="0.6"/>
+            <line x1="24" y1="17" x2="34" y2="32" stroke="#3381ff" stroke-width="1.5" opacity="0.6"/>
+            <line x1="17" y1="36" x2="31" y2="36" stroke="#3381ff" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="24" cy="12" r="2.5" fill="#3381ff"/>
+            <circle cx="12" cy="36" r="2.5" fill="#3381ff"/>
+            <circle cx="36" cy="36" r="2.5" fill="#3381ff"/>
+          </svg>
+        </div>
+        <div class="logo-wordmark logo-wordmark-light">asystem<span class="dot">.</span>ai</div>
+      </div>
+    </div>
+
+    <!-- Light variant -->
+    <div class="logo-variant light">
+      <span class="logo-variant-label">На светлом фоне</span>
+      <div class="logo-main">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="12" r="5" stroke="#1b5ff5" stroke-width="2"/>
+            <circle cx="12" cy="36" r="5" stroke="#1b5ff5" stroke-width="2"/>
+            <circle cx="36" cy="36" r="5" stroke="#1b5ff5" stroke-width="2"/>
+            <line x1="24" y1="17" x2="14" y2="32" stroke="#1b5ff5" stroke-width="1.5" opacity="0.6"/>
+            <line x1="24" y1="17" x2="34" y2="32" stroke="#1b5ff5" stroke-width="1.5" opacity="0.6"/>
+            <line x1="17" y1="36" x2="31" y2="36" stroke="#1b5ff5" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="24" cy="12" r="2.5" fill="#1b5ff5"/>
+            <circle cx="12" cy="36" r="2.5" fill="#1b5ff5"/>
+            <circle cx="36" cy="36" r="2.5" fill="#1b5ff5"/>
+          </svg>
+        </div>
+        <div class="logo-wordmark logo-wordmark-dark">asystem<span class="dot">.</span>ai</div>
+      </div>
+    </div>
+
+    <!-- On blue -->
+    <div class="logo-variant blue">
+      <span class="logo-variant-label">На синем фоне</span>
+      <div class="logo-main">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="12" r="5" stroke="rgba(255,255,255,0.9)" stroke-width="2"/>
+            <circle cx="12" cy="36" r="5" stroke="rgba(255,255,255,0.9)" stroke-width="2"/>
+            <circle cx="36" cy="36" r="5" stroke="rgba(255,255,255,0.9)" stroke-width="2"/>
+            <line x1="24" y1="17" x2="14" y2="32" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+            <line x1="24" y1="17" x2="34" y2="32" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+            <line x1="17" y1="36" x2="31" y2="36" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+            <circle cx="24" cy="12" r="2.5" fill="white"/>
+            <circle cx="12" cy="36" r="2.5" fill="white"/>
+            <circle cx="36" cy="36" r="2.5" fill="white"/>
+          </svg>
+        </div>
+        <div class="logo-wordmark logo-wordmark-white">asystem<span class="dot" style="color:rgba(255,255,255,0.7)">.</span>ai</div>
+      </div>
+    </div>
+
+    <!-- Gradient bg -->
+    <div class="logo-variant gradient-bg">
+      <span class="logo-variant-label">На градиентном фоне</span>
+      <div class="logo-main">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#3381ff"/>
+                <stop offset="100%" style="stop-color:#22d3ee"/>
+              </linearGradient>
+            </defs>
+            <circle cx="24" cy="12" r="5" stroke="url(#grad1)" stroke-width="2"/>
+            <circle cx="12" cy="36" r="5" stroke="url(#grad1)" stroke-width="2"/>
+            <circle cx="36" cy="36" r="5" stroke="url(#grad1)" stroke-width="2"/>
+            <line x1="24" y1="17" x2="14" y2="32" stroke="url(#grad1)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="24" y1="17" x2="34" y2="32" stroke="url(#grad1)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="17" y1="36" x2="31" y2="36" stroke="url(#grad1)" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="24" cy="12" r="2.5" fill="#3381ff"/>
+            <circle cx="12" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle cx="36" cy="36" r="2.5" fill="#3381ff"/>
+          </svg>
+        </div>
+        <div class="logo-wordmark logo-wordmark-light">asystem<span class="dot">.</span>ai</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logo-rules">
+    <div class="logo-rule">
+      <div class="logo-rule-icon">📏</div>
+      <h4>Охранное поле</h4>
+      <p>Минимальный отступ вокруг логотипа — высота буквы «a» со всех сторон</p>
+    </div>
+    <div class="logo-rule">
+      <div class="logo-rule-icon">🔍</div>
+      <h4>Мин. размер</h4>
+      <p>Не менее 100px по ширине для digital, 25mm для печати</p>
+    </div>
+    <div class="logo-rule">
+      <div class="logo-rule-icon">🚫</div>
+      <h4>Запрещено</h4>
+      <p>Не растягивать, не вращать, не менять цвета вне палитры, не добавлять эффекты</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     03. COLORS
+     ═══════════════════════════════════════════ -->
+<section id="colors" class="reveal">
+  <div class="section-header">
+    <span class="section-number">03 — Цветовая палитра</span>
+    <h2 class="section-title">Синий — цвет доверия<br>и технологий</h2>
+    <p class="section-desc">
+      Основная палитра построена на глубоких синих тонах, символизирующих надёжность 
+      и инновации. Акцентный циан добавляет энергию и технологичность.
+    </p>
+  </div>
+
+  <!-- Primary Color -->
+  <div class="palette-group">
+    <div class="palette-group-title">Основной цвет</div>
+    <div class="palette-row">
+      <div class="color-primary-card">
+        <div class="color-primary-swatch" style="background: var(--gradient-primary);">
+          <h3>asystem Blue</h3>
+          <p>Основной цвет бренда</p>
+        </div>
+        <div class="color-primary-info">
+          <div class="color-value-row">
+            <span class="color-value-label">HEX</span>
+            <span class="color-value-code">#3381FF</span>
+          </div>
+          <div class="color-value-row">
+            <span class="color-value-label">RGB</span>
+            <span class="color-value-code">51, 129, 255</span>
+          </div>
+          <div class="color-value-row">
+            <span class="color-value-label">HSL</span>
+            <span class="color-value-code">217°, 100%, 60%</span>
+          </div>
+          <div class="color-value-row">
+            <span class="color-value-label">Tailwind</span>
+            <span class="color-value-code">--blue-500 (custom)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blue Scale -->
+  <div class="palette-group">
+    <div class="palette-group-title">Шкала синего</div>
+    <div class="palette-row">
+      <div class="color-chip" onclick="copyColor(this, '#eef5ff')">
+        <div class="color-swatch" style="background:#eef5ff"></div>
+        <div class="color-info"><div class="color-name">Blue 50</div><div class="color-hex">#eef5ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#d9e8ff')">
+        <div class="color-swatch" style="background:#d9e8ff"></div>
+        <div class="color-info"><div class="color-name">Blue 100</div><div class="color-hex">#d9e8ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#bcd8ff')">
+        <div class="color-swatch" style="background:#bcd8ff"></div>
+        <div class="color-info"><div class="color-name">Blue 200</div><div class="color-hex">#bcd8ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#8ec1ff')">
+        <div class="color-swatch" style="background:#8ec1ff"></div>
+        <div class="color-info"><div class="color-name">Blue 300</div><div class="color-hex">#8ec1ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#59a0ff')">
+        <div class="color-swatch" style="background:#59a0ff"></div>
+        <div class="color-info"><div class="color-name">Blue 400</div><div class="color-hex">#59a0ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#3381ff')">
+        <div class="color-swatch" style="background:#3381ff"></div>
+        <div class="color-info"><div class="color-name">Blue 500 ★</div><div class="color-hex">#3381ff</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#1b5ff5')">
+        <div class="color-swatch" style="background:#1b5ff5"></div>
+        <div class="color-info"><div class="color-name">Blue 600</div><div class="color-hex">#1b5ff5</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#144ae1')">
+        <div class="color-swatch" style="background:#144ae1"></div>
+        <div class="color-info"><div class="color-name">Blue 700</div><div class="color-hex">#144ae1</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#173cb6')">
+        <div class="color-swatch" style="background:#173cb6"></div>
+        <div class="color-info"><div class="color-name">Blue 800</div><div class="color-hex">#173cb6</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accent -->
+  <div class="palette-group">
+    <div class="palette-group-title">Акцентный — Electric Cyan</div>
+    <div class="palette-row">
+      <div class="color-chip" onclick="copyColor(this, '#22d3ee')">
+        <div class="color-swatch" style="background:#22d3ee"></div>
+        <div class="color-info"><div class="color-name">Cyan 400</div><div class="color-hex">#22d3ee</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#06b6d4')">
+        <div class="color-swatch" style="background:#06b6d4"></div>
+        <div class="color-info"><div class="color-name">Cyan 500</div><div class="color-hex">#06b6d4</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backgrounds -->
+  <div class="palette-group">
+    <div class="palette-group-title">Фоны</div>
+    <div class="palette-row">
+      <div class="color-chip" onclick="copyColor(this, '#030712')">
+        <div class="color-swatch" style="background:#030712"></div>
+        <div class="color-info"><div class="color-name">Primary BG</div><div class="color-hex">#030712</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#0a1628')">
+        <div class="color-swatch" style="background:#0a1628"></div>
+        <div class="color-info"><div class="color-name">Secondary BG</div><div class="color-hex">#0a1628</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#0d1b2a')">
+        <div class="color-swatch" style="background:#0d1b2a"></div>
+        <div class="color-info"><div class="color-name">Card BG</div><div class="color-hex">#0d1b2a</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#112240')">
+        <div class="color-swatch" style="background:#112240"></div>
+        <div class="color-info"><div class="color-name">Card Hover</div><div class="color-hex">#112240</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#1a2942')">
+        <div class="color-swatch" style="background:#1a2942"></div>
+        <div class="color-info"><div class="color-name">Elevated</div><div class="color-hex">#1a2942</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Semantic -->
+  <div class="palette-group">
+    <div class="palette-group-title">Семантические</div>
+    <div class="palette-row">
+      <div class="color-chip" onclick="copyColor(this, '#4ade80')">
+        <div class="color-swatch" style="background:#4ade80"></div>
+        <div class="color-info"><div class="color-name">Success</div><div class="color-hex">#4ade80</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#facc15')">
+        <div class="color-swatch" style="background:#facc15"></div>
+        <div class="color-info"><div class="color-name">Warning</div><div class="color-hex">#facc15</div></div>
+      </div>
+      <div class="color-chip" onclick="copyColor(this, '#f87171')">
+        <div class="color-swatch" style="background:#f87171"></div>
+        <div class="color-info"><div class="color-name">Error</div><div class="color-hex">#f87171</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     04. TYPOGRAPHY
+     ═══════════════════════════════════════════ -->
+<section id="typography" class="reveal">
+  <div class="section-header">
+    <span class="section-number">04 — Типографика</span>
+    <h2 class="section-title">Два шрифта —<br>максимум ясности</h2>
+    <p class="section-desc">
+      Inter для UI и заголовков — геометрический, чистый, отличная читаемость на экранах. 
+      JetBrains Mono для кода и технических элементов — подчёркивает IT-природу бренда.
+    </p>
+  </div>
+
+  <!-- Inter -->
+  <div class="type-specimen">
+    <div class="type-font-name">
+      <h3>Inter</h3>
+      <span>Основной шрифт — UI, заголовки, текст</span>
+    </div>
+    <div class="type-scale">
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">H1 — Display</span>
+          <span class="type-specs">64px / 900 / -0.04em</span>
+        </div>
+        <div class="type-sample-h1">Системы</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">H2 — Title</span>
+          <span class="type-specs">48px / 800 / -0.03em</span>
+        </div>
+        <div class="type-sample-h2">Автоматизация</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">H3 — Section</span>
+          <span class="type-specs">32px / 700 / -0.02em</span>
+        </div>
+        <div class="type-sample-h3">Цифровая трансформация</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">H4 — Subsection</span>
+          <span class="type-specs">24px / 600 / -0.01em</span>
+        </div>
+        <div class="type-sample-h4">Создаём решения для бизнеса</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">Body</span>
+          <span class="type-specs">16px / 400 / 1.7</span>
+        </div>
+        <div class="type-sample-body">Мы создаём цифровые системы, которые работают на результат. От лендингов и ботов до корпоративных платформ — каждый проект решает конкретную бизнес-задачу.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">Small</span>
+          <span class="type-specs">14px / 400 / 1.6</span>
+        </div>
+        <div class="type-sample-small">Вспомогательный текст, подписи, мета-информация и навигационные элементы</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JetBrains Mono -->
+  <div class="type-specimen">
+    <div class="type-font-name">
+      <h3 style="font-family: 'JetBrains Mono', monospace;">JetBrains Mono</h3>
+      <span>Технический шрифт — код, данные, метки</span>
+    </div>
+    <div class="type-scale">
+      <div class="type-row">
+        <div class="type-meta">
+          <span class="type-label">Code / Tech</span>
+          <span class="type-specs">14px / 500</span>
+        </div>
+        <div class="type-sample-mono">const system = await asystem.deploy({ fast: true });</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     05. SPACING
+     ═══════════════════════════════════════════ -->
+<section class="reveal">
+  <div class="section-header">
+    <span class="section-number">05 — Сетка и отступы</span>
+    <h2 class="section-title">Система на базе 4px</h2>
+    <p class="section-desc">
+      Все отступы кратны 4px. Основные шаги: 4, 8, 12, 16, 24, 32, 48, 64, 80, 120px.
+      Это обеспечивает визуальный ритм и консистентность.
+    </p>
+  </div>
+
+  <div class="spacing-visual">
+    <div class="spacing-item">
+      <span class="spacing-label">xs</span>
+      <div class="spacing-bar" style="width: 4%;"></div>
+      <span class="spacing-value">4px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">sm</span>
+      <div class="spacing-bar" style="width: 8%;"></div>
+      <span class="spacing-value">8px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">md</span>
+      <div class="spacing-bar" style="width: 16%;"></div>
+      <span class="spacing-value">16px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">lg</span>
+      <div class="spacing-bar" style="width: 24%;"></div>
+      <span class="spacing-value">24px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">xl</span>
+      <div class="spacing-bar" style="width: 32%;"></div>
+      <span class="spacing-value">32px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">2xl</span>
+      <div class="spacing-bar" style="width: 48%;"></div>
+      <span class="spacing-value">48px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">3xl</span>
+      <div class="spacing-bar" style="width: 64%;"></div>
+      <span class="spacing-value">64px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">4xl</span>
+      <div class="spacing-bar" style="width: 80%;"></div>
+      <span class="spacing-value">80px</span>
+    </div>
+    <div class="spacing-item">
+      <span class="spacing-label">5xl</span>
+      <div class="spacing-bar" style="width: 100%;"></div>
+      <span class="spacing-value">120px</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     06. COMPONENTS
+     ═══════════════════════════════════════════ -->
+<section id="components" class="reveal">
+  <div class="section-header">
+    <span class="section-number">06 — UI Компоненты</span>
+    <h2 class="section-title">Библиотека<br>компонентов</h2>
+    <p class="section-desc">
+      Базовые компоненты дизайн-системы. Все строятся на Tailwind CSS + shadcn/ui 
+      с кастомной синей темой.
+    </p>
+  </div>
+
+  <div class="components-grid">
+    <!-- Buttons -->
+    <div class="component-card">
+      <div class="component-label">Кнопки</div>
+      <div class="btn-showcase">
+        <button class="btn btn-primary">Оставить заявку</button>
+        <button class="btn btn-secondary">Подробнее</button>
+        <button class="btn btn-ghost">Ссылка →</button>
+      </div>
+      <div style="margin-top: 20px;" class="btn-showcase">
+        <button class="btn btn-primary btn-sm">Small</button>
+        <button class="btn btn-primary">Default</button>
+        <button class="btn btn-primary btn-lg">Large</button>
+      </div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="component-card">
+      <div class="component-label">Поля ввода</div>
+      <input class="input-demo" type="text" placeholder="Ваше имя" />
+      <input class="input-demo" type="email" placeholder="email@company.com" />
+      <select class="input-demo" style="appearance: none;">
+        <option>Выберите услугу...</option>
+        <option>Сайт / Лендинг</option>
+        <option>Бот</option>
+        <option>Мобильное приложение</option>
+      </select>
+    </div>
+
+    <!-- Cards -->
+    <div class="component-card">
+      <div class="component-label">Карточки</div>
+      <div class="card-demo">
+        <h4>🌐 Создание сайтов</h4>
+        <p>От лендинга до корпоративного портала. Быстро, красиво, с SEO.</p>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="component-card">
+      <div class="component-label">Теги и статусы</div>
+      <div class="tags-demo">
+        <span class="tag tag-blue">Сайт</span>
+        <span class="tag tag-cyan">Бот</span>
+        <span class="tag tag-blue">Автоматизация</span>
+        <span class="tag tag-success">Выполнен</span>
+        <span class="tag tag-warning">В работе</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     07. GLASSMORPHISM
+     ═══════════════════════════════════════════ -->
+<section id="glass" class="reveal">
+  <div class="section-header">
+    <span class="section-number">07 — Glass-эффекты</span>
+    <h2 class="section-title">Glassmorphism —<br>фирменный приём</h2>
+    <p class="section-desc">
+      Полупрозрачные карточки с backdrop-blur — ключевой визуальный элемент. 
+      Используется для entry-point карточек, модальных окон и акцентных блоков.
+    </p>
+  </div>
+
+  <div class="glass-demo-container">
+    <div class="orb-demo-1"></div>
+    <div class="orb-demo-2"></div>
+
+    <div class="glass-card">
+      <div class="glass-card-icon">🤝</div>
+      <h4>Я партнёр</h4>
+      <p>Условия сотрудничества и бенефиты программы</p>
+    </div>
+
+    <div class="glass-card">
+      <div class="glass-card-icon">🚀</div>
+      <h4>Хочу проект</h4>
+      <p>Сайт, бот, приложение или автоматизация</p>
+    </div>
+
+    <div class="glass-card">
+      <div class="glass-card-icon">⚡</div>
+      <h4>Продукты</h4>
+      <p>Готовые решения и интеграции</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     08. ICONOGRAPHY
+     ═══════════════════════════════════════════ -->
+<section class="reveal">
+  <div class="section-header">
+    <span class="section-number">08 — Иконография</span>
+    <h2 class="section-title">Lucide Icons</h2>
+    <p class="section-desc">
+      Библиотека иконок — Lucide (open-source, 1.5px stroke). 
+      Единый стиль: outline, rounded caps, 24×24 базовый размер.
+    </p>
+  </div>
+
+  <div class="icon-grid">
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <span>Система</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01"/><path d="M7 12h10"/><path d="M7 17h6"/></svg>
+      <span>Сайт</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M12 18v4"/></svg>
+      <span>Бот</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+      <span>Приложение</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Заявка</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Партнёры</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span>Быстро</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>Готово</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     09. BRAND VOICE
+     ═══════════════════════════════════════════ -->
+<section id="voice" class="reveal">
+  <div class="section-header">
+    <span class="section-number">09 — Голос бренда</span>
+    <h2 class="section-title">Как мы говорим</h2>
+    <p class="section-desc">
+      Тон коммуникации asystem.ai — уверенный профессионал, 
+      который говорит просто о сложном. Без пафоса, без жаргона — по делу.
+    </p>
+  </div>
+
+  <div class="voice-grid">
+    <div class="voice-card">
+      <div class="voice-emoji">💎</div>
+      <h4>Ясность</h4>
+      <p>Говорим просто. Если клиент не понял — это наша проблема, не его. Никакого «синергия блокчейн экосистемы».</p>
+    </div>
+    <div class="voice-card">
+      <div class="voice-emoji">🎯</div>
+      <h4>Конкретика</h4>
+      <p>Цифры, сроки, результаты. «Лендинг за 2 дня» вместо «быстрая разработка». «Бот обрабатывает 500 заявок/день» вместо «эффективное решение».</p>
+    </div>
+    <div class="voice-card">
+      <div class="voice-emoji">🤝</div>
+      <h4>Партнёрский тон</h4>
+      <p>Мы на одной стороне с клиентом. Не «мы вам сделаем», а «давайте вместе решим». Уважение, но без подобострастия.</p>
+    </div>
+  </div>
+
+  <div class="do-dont">
+    <div class="do-card">
+      <h4>✅ Так говорим</h4>
+      <ul>
+        <li>«Запустим ваш сайт за 3 рабочих дня»</li>
+        <li>«Бот сэкономит 4 часа в день на обработке заявок»</li>
+        <li>«Расскажите задачу — предложим решение»</li>
+        <li>«Прозрачные сроки и стоимость»</li>
+        <li>«Уже сделали 50+ проектов для бизнеса в КР»</li>
+      </ul>
+    </div>
+    <div class="dont-card">
+      <h4>❌ Так не говорим</h4>
+      <ul>
+        <li>«Инновационные digital-решения нового поколения»</li>
+        <li>«Синергия технологий и бизнес-процессов»</li>
+        <li>«Используем передовой искусственный интеллект»</li>
+        <li>«Комплексная цифровая трансформация»</li>
+        <li>«Мы лучшие на рынке»</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     10. MOTION
+     ═══════════════════════════════════════════ -->
+<section id="motion" class="reveal">
+  <div class="section-header">
+    <span class="section-number">10 — Анимация и движение</span>
+    <h2 class="section-title">Живой интерфейс</h2>
+    <p class="section-desc">
+      Анимации должны быть функциональными: направлять внимание, подтверждать действия, 
+      создавать ощущение качества. Основной easing — cubic-bezier(0.16, 1, 0.3, 1).
+    </p>
+  </div>
+
+  <div class="motion-demos">
+    <div class="motion-demo">
+      <div class="motion-box motion-box-scale"></div>
+      <h4>Scale</h4>
+      <p>Hover на кнопках</p>
+    </div>
+    <div class="motion-demo">
+      <div class="motion-box motion-box-lift"></div>
+      <h4>Lift & Shadow</h4>
+      <p>Hover на карточках</p>
+    </div>
+    <div class="motion-demo">
+      <div class="motion-box motion-box-glow"></div>
+      <h4>Glow</h4>
+      <p>Фокус и акценты</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════
+     11. ENTRY POINTS PREVIEW
+     ═══════════════════════════════════════════ -->
+<section id="preview" class="reveal">
+  <div class="section-header">
+    <span class="section-number">11 — Превью главного экрана</span>
+    <h2 class="section-title">Три входа —<br>один asystem</h2>
+    <p class="section-desc">
+      Концепция главного экрана сайта. Три роли — три персонализированных пути.
+    </p>
+  </div>
+
+  <div class="entry-preview">
+    <h3>Что привело вас к нам?</h3>
+    <p>Выберите, чтобы мы могли помочь максимально точно</p>
+
+    <div class="entry-cards">
+      <div class="entry-card">
+        <div class="entry-card-icon">🤝</div>
+        <h4>Я партнёр</h4>
+        <p>Хочу предлагать IT-услуги своим клиентам и зарабатывать вместе</p>
+      </div>
+      <div class="entry-card">
+        <div class="entry-card-icon">🚀</div>
+        <h4>Мне нужен проект</h4>
+        <p>Сайт, бот, приложение или автоматизация бизнес-процессов</p>
+      </div>
+      <div class="entry-card">
+        <div class="entry-card-icon">⚡</div>
+        <h4>Ваши продукты</h4>
+        <p>Готовые решения и интеграции для моего бизнеса</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="divider"></div>
+<footer class="footer">
+  <div class="logo-wordmark logo-wordmark-light" style="font-size:20px; margin-bottom:12px;">asystem<span class="dot">.</span>ai</div>
+  <p>Brand Guidelines v1.0 — Февраль 2026</p>
+  <p style="margin-top:8px; font-size:12px; color:var(--text-muted);">Документ создан командой BMAD для внутреннего использования</p>
+</footer>
+
+</div><!-- .content -->
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════ -->
+<script>
+// ─── Particle System ───
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let w, h;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight * 3;
+  }
+
+  class Particle {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.3;
+      this.opacity = Math.random() * 0.5 + 0.1;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0 || this.x > w) this.speedX *= -1;
+      if (this.y < 0 || this.y > h) this.speedY *= -1;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(51, 129, 255, ${this.opacity})`;
+      ctx.fill();
+    }
+  }
+
+  function init() {
+    resize();
+    particles = [];
+    const count = Math.min(80, Math.floor((w * h) / 25000));
+    for (let i = 0; i < count; i++) {
+      particles.push(new Particle());
+    }
+  }
+
+  function connectParticles() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(51, 129, 255, ${0.06 * (1 - dist / 150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
+    connectParticles();
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', () => { resize(); });
+  init();
+  animate();
+})();
+
+// ─── Scroll Reveal ───
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ─── Copy Color ───
+function copyColor(el, hex) {
+  navigator.clipboard.writeText(hex).then(() => {
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 1000);
+  });
+}
+
+// ─── Nav scroll effect ───
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.nav');
+  if (window.scrollY > 50) {
+    nav.style.background = 'rgba(3, 7, 18, 0.95)';
+  } else {
+    nav.style.background = 'rgba(3, 7, 18, 0.8)';
+  }
+});
+</script>
+
+</body>
+</html>

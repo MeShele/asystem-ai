@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="32" height="32" version="1.1" viewBox="0 0 32 32"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil0 {fill:#063CC1;fill-rule:nonzero}
+   ]]>
+  </style>
+ </defs>
+ <g id="Слой_x0020_1" transform="translate(2.225 3.64)">
+  <path class="fil0" d="M15.77 0.39l-3.99 0 -11.17 23.94 2.36 0c1.06,0 1.86,-0.53 2.36,-1.6 3.69,-7.89 3.68,-7.93 8.45,-18.13 5.1,10.9 4.49,9.65 8.45,18.13 0.5,1.06 1.3,1.6 2.36,1.6l2.36 0 -11.17 -23.94 0 0z"/>
+  <path class="fil0" d="M15.77 15.47c-0.57,-0.57 -1.36,-0.93 -2.24,-0.93 -0.87,0 -1.67,0.35 -2.24,0.93 -0.57,0.57 -0.93,1.36 -0.93,2.24 0,0.88 0.35,1.67 0.92,2.24 0.57,0.57 1.37,0.93 2.24,0.93 0.87,0 1.67,-0.35 2.24,-0.93 0.57,-0.57 0.93,-1.36 0.93,-2.24 0,-0.87 -0.35,-1.67 -0.93,-2.24l0.01 0z"/>
+ </g>
+</svg>

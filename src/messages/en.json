@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "title": "asystem.ai — IT Solutions for Business",
+    "description": "We build websites, bots, apps and automate business processes. Fast, quality, guaranteed."
+  },
+  "nav": {
+    "services": "Services",
+    "cases": "Cases",
+    "request": "Get Started",
+    "partner": "Partners",
+    "login": "Sign In"
+  },
+  "splash": {
+    "question": "What brings you here?",
+    "partner": {
+      "title": "I'm a partner",
+      "desc": "I want to offer IT services to my clients and earn together"
+    },
+    "client": {
+      "title": "I need a project",
+      "desc": "Website, bot, app or business process automation"
+    },
+    "products": {
+      "title": "Your products",
+      "desc": "Ready-made solutions and integrations for my business"
+    }
+  },
+  "client": {
+    "hero": {
+      "title": "We build systems",
+      "titleAccent": "that drive business",
+      "subtitle": "From landing pages to enterprise systems — fast, quality, with guaranteed results",
+      "badge": "MVP with no upfront",
+      "cta": "Get Started",
+      "secondary": "Our Cases"
+    },
+    "stats": {
+      "transactions": "transactions / day",
+      "accuracy": "AI parsing accuracy",
+      "speed": "faster than market",
+      "noDeposit": "no upfront payment"
+    },
+    "services": {
+      "label": "Services",
+      "title": "Our Services",
+      "subtitle": "Full range of IT solutions for your business",
+      "website": {
+        "title": "Websites & Landing Pages",
+        "desc": "Converting landing pages, corporate websites, e-commerce. Responsive design, SEO optimization.",
+        "time": "from 2 days"
+      },
+      "bot": {
+        "title": "Bots & Automation",
+        "desc": "Telegram, WhatsApp bots for processing requests, customer support, routine automation.",
+        "time": "from 5 days"
+      },
+      "app": {
+        "title": "Mobile Apps",
+        "desc": "iOS and Android apps. Cross-platform development, native experience.",
+        "time": "from 2 weeks"
+      },
+      "automation": {
+        "title": "Enterprise Systems",
+        "desc": "CRM, ERP, accounting systems, integrations with existing services. Tailored to your processes.",
+        "time": "from 1 month"
+      }
+    },
+    "howItWorks": {
+      "label": "Process",
+      "title": "How We Work",
+      "subtitle": "4 simple steps from idea to launch",
+      "steps": {
+        "1": { "title": "Request", "desc": "Tell us about your project via quiz form in 2 minutes" },
+        "2": { "title": "Discussion", "desc": "We contact you within an hour, clarify details and propose a solution" },
+        "3": { "title": "Development", "desc": "We build your project, keeping you updated via personal dashboard" },
+        "4": { "title": "Launch", "desc": "We test, launch and deliver the finished product with support" }
+      }
+    },
+    "cases": {
+      "label": "Portfolio",
+      "title": "Our Cases",
+      "subtitle": "Projects that already work for business",
+      "viewAll": "View All",
+      "hosto": {
+        "title": "HOSTO — Channel Manager",
+        "tag": "ENTERPRISE",
+        "desc": "PMS for hotels with Booking.com, Airbnb, Channex API integration. Calendar auto-sync and smart locks",
+        "result": "$130/mo WhiteLabel"
+      },
+      "sceramus": {
+        "title": "Sceramus — Corporate Portal",
+        "tag": "ENTERPRISE",
+        "desc": "Full-featured corporate system with AI integrations, process automation and analytics",
+        "result": "Project $1400"
+      },
+      "aquahimiya": {
+        "title": "AQUAHIMIYA — Manufacturing",
+        "tag": "B2B",
+        "desc": "Chemical reagent production accounting, warehouse management, reporting and 1C integration",
+        "result": "Warehouse automation"
+      }
+    },
+    "socialProof": {
+      "workWith": "We work with",
+      "testimonial1": "Built in 3 weeks what others promised in 3 months. Truly no upfront payment — saw the result first.",
+      "testimonialRole1": "Director",
+      "testimonialMetric1": "−68% sync time",
+      "testimonial2": "1C integration went without a single accounting error. The team knows what they're doing.",
+      "testimonialRole2": "Manager",
+      "testimonialMetric2": "100% warehouse automation"
+    },
+    "team": {
+      "label": "Team",
+      "title": "Our Team",
+      "subtitle": "The people who build your projects",
+      "member1": {
+        "name": "Asylbek",
+        "role": "CEO / Founder",
+        "bio": "Product strategy, fintech expertise, AI engineering. Launched 10+ projects from idea to production."
+      },
+      "member2": {
+        "name": "Dastan",
+        "role": "CTO",
+        "bio": "System architecture, PHP/Laravel, enterprise security. 8 years building high-load systems."
+      },
+      "member3": {
+        "name": "Nasip",
+        "role": "Full-Stack Developer",
+        "bio": "Next.js, TypeScript, bot development. Builds interfaces that work fast and look clean."
+      },
+      "member4": {
+        "name": "Saadat",
+        "role": "Project Manager",
+        "bio": "Team coordination, deadline control, client communication. No deadline ever missed."
+      },
+      "member5": {
+        "name": "Suimonkul",
+        "role": "Backend Developer",
+        "bio": "PostgreSQL, API integrations, 1C data exchange. Reliable backend is his territory."
+      },
+      "member6": {
+        "name": "Urmat",
+        "role": "Business Development",
+        "bio": "Business growth, investor relations, partner network. Finds opportunities where others don't look."
+      },
+      "member7": {
+        "name": "Nerses",
+        "role": "Full-Stack Developer",
+        "bio": "React, Node.js, mobile development. Universal soldier — from frontend to backend."
+      },
+      "member8": {
+        "name": "Ivan",
+        "role": "DevOps Engineer",
+        "bio": "Docker, Kubernetes, CI/CD. If the code runs on prod without failures — that's his work."
+      },
+      "member9": {
+        "name": "Asel",
+        "role": "Finance Director",
+        "bio": "Financial planning, budgeting, cashflow control. Numbers always add up."
+      },
+      "member10": {
+        "name": "Azamat",
+        "role": "Product Designer",
+        "bio": "UX/UI, Figma, design systems. Turns complex into simple, and simple into beautiful."
+      },
+      "member11": {
+        "name": "Akylay",
+        "role": "Marketing Manager",
+        "bio": "SMM, content strategy, performance marketing. Makes sure people hear about us."
+      }
+    },
+    "cta": {
+      "label": "Get Started",
+      "title": "Ready to discuss your project?",
+      "subtitle": "Tell us your task — we'll propose a solution within 24 hours",
+      "button": "Get Started"
+    }
+  },
+  "partner": {
+    "hero": {
+      "title": "Earn together",
+      "titleAccent": "with asystem",
+      "subtitle": "Recommend IT services to your clients and earn commission from every project"
+    },
+    "benefits": {
+      "title": "Why it's profitable",
+      "commission": { "title": "Commission from every project", "desc": "Earn a percentage from every project that came through your recommendation" },
+      "support": { "title": "Full support", "desc": "We handle all technical work. You just need to recommend" },
+      "materials": { "title": "Marketing materials", "desc": "Ready presentations, cases and materials for your audience" },
+      "freedom": { "title": "No obligations", "desc": "No sales plans, no mandatory volumes. Recommend when you want" }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "steps": {
+        "1": { "title": "Register", "desc": "Fill out the form and get your personal referral link" },
+        "2": { "title": "Recommend", "desc": "Share the link or refer clients directly" },
+        "3": { "title": "Earn", "desc": "Track statuses and receive commissions in your dashboard" }
+      }
+    },
+    "apply": {
+      "title": "Become a Partner",
+      "name": "Your name",
+      "field": "Field of activity",
+      "audience": "Audience size",
+      "phone": "Phone",
+      "email": "Email",
+      "submit": "Submit Application",
+      "success": "Thank you! We'll contact you within 24 hours."
+    }
+  },
+  "products": {
+    "title": "Our Products",
+    "subtitle": "Ready-made solutions and integrations coming soon",
+    "notify": "Notify me about launch",
+    "emailPlaceholder": "Your email",
+    "subscribe": "Subscribe",
+    "thanks": "Thank you! We'll notify you about the launch."
+  },
+  "quiz": {
+    "title": "Tell us about your project",
+    "step": "Step {current} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit Request",
+    "step1": { "title": "What do you need?", "website": "Website / Landing", "bot": "Bot", "app": "Mobile App", "automation": "Automation", "custom": "Other" },
+    "step2": { "title": "Tell us more", "websiteType": "Website type", "landing": "Landing page", "corporate": "Corporate website", "ecommerce": "E-commerce", "hasDesign": "Have a ready design?", "yes": "Yes", "no": "No", "botPlatform": "Platform", "telegram": "Telegram", "whatsapp": "WhatsApp", "other": "Other", "botFunction": "Main bot function", "appPlatform": "Platforms", "ios": "iOS", "android": "Android", "both": "Both", "appDesc": "Describe main features", "automationDesc": "What process needs automation?", "customDesc": "Describe your task", "examples": "Example projects (links)" },
+    "step3": { "title": "When do you need it?", "asap": "ASAP", "weeks": "1-2 weeks", "month": "A month", "noRush": "No rush" },
+    "step4": { "title": "Your budget", "range1": "up to 30,000 KGS", "range2": "30,000 — 100,000 KGS", "range3": "100,000 — 500,000 KGS", "range4": "500,000+ KGS", "undefined": "Not defined yet" },
+    "step5": { "title": "How to contact you?", "name": "Your name", "company": "Company", "phone": "Phone", "email": "Email", "preferredContact": "Preferred contact method", "phoneCall": "Call", "whatsapp": "WhatsApp", "telegramContact": "Telegram", "emailContact": "Email" },
+    "success": { "title": "Request submitted!", "subtitle": "We'll contact you within an hour during business hours", "number": "Request number", "back": "Back to Home" }
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "company": "Company",
+    "products": "Products",
+    "contact": "Contact",
+    "email": "hello@asystem.ai",
+    "address": "Bishkek, Kyrgyzstan",
+    "phone": "+996 (555) 123-456"
+  }
+}

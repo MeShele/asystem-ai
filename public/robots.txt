@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://asystem.ai/sitemap.xml
+
+# Disallow admin
+Disallow: /*/admin
+Disallow: /*/admin/*

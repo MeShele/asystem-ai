@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>asystem.ai — Company Deck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --brand: #3381ff;
+    --brand-dark: #1b5ff5;
+    --accent: #ff6b35;
+    --dark: #0a0a14;
+    --dark-2: #12121e;
+    --dark-surface: #1a1a2e;
+    --light: #f8f9fc;
+    --light-2: #eef0f4;
+    --text: #111827;
+    --text-2: #6b7280;
+    --text-3: #9ca3af;
+    --border: #e2e4ea;
+    --green: #10b981;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: white;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Slide base ─── */
+  .slide {
+    width: 100%;
+    min-height: 100vh;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .slide-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ─── Dark slides ─── */
+  .slide-dark {
+    background: var(--dark);
+    color: #f0f0f0;
+  }
+  .slide-dark .text-2 { color: #8a8a9a; }
+  .slide-dark .label { color: var(--brand); }
+
+  /* ─── Accent slides ─── */
+  .slide-brand {
+    background: var(--brand);
+    color: white;
+  }
+  .slide-brand .label { color: rgba(255,255,255,0.6); }
+  .slide-brand .text-2 { color: rgba(255,255,255,0.7); }
+
+  /* ─── Typography ─── */
+  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+  h1 { font-size: 72px; font-weight: 800; line-height: 1.05; }
+  h2 { font-size: 48px; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+  h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+
+  .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-2);
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  .text-2 { color: var(--text-2); }
+  .brand { color: var(--brand); }
+  .accent { color: var(--accent); }
+  .green { color: var(--green); }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  /* ─── Decorative elements ─── */
+  .deco {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .deco-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    white-space: pre;
+    color: rgba(0,0,0,0.06);
+  }
+  .slide-dark .deco-code { color: rgba(255,255,255,0.06); }
+
+  .deco-ring {
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 50%;
+  }
+  .slide-dark .deco-ring { border-color: rgba(255,255,255,0.08); }
+
+  .deco-dots {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .slide-dark .deco-dots {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  }
+
+  .deco-line {
+    height: 1px;
+    background: rgba(0,0,0,0.08);
+  }
+  .slide-dark .deco-line { background: rgba(255,255,255,0.06); }
+  .slide-brand .deco-line { background: rgba(255,255,255,0.1); }
+
+  /* Gradient orbs */
+  .deco-orb {
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+  }
+  .slide-dark .deco-orb { opacity: 0.15; }
+
+  /* Grid overlay */
+  .deco-grid {
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 200px),
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 200px);
+  }
+  .slide-dark .deco-grid {
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 200px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 200px);
+  }
+
+  /* Noise texture */
+  .deco-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+  }
+
+  /* Corner bracket */
+  .deco-bracket {
+    width: 24px; height: 24px;
+  }
+  .deco-bracket-tl { border-top: 1.5px solid rgba(0,0,0,0.12); border-left: 1.5px solid rgba(0,0,0,0.12); }
+  .deco-bracket-tr { border-top: 1.5px solid rgba(0,0,0,0.12); border-right: 1.5px solid rgba(0,0,0,0.12); }
+  .deco-bracket-bl { border-bottom: 1.5px solid rgba(0,0,0,0.12); border-left: 1.5px solid rgba(0,0,0,0.12); }
+  .deco-bracket-br { border-bottom: 1.5px solid rgba(0,0,0,0.12); border-right: 1.5px solid rgba(0,0,0,0.12); }
+  .slide-dark .deco-bracket-tl, .slide-dark .deco-bracket-tr,
+  .slide-dark .deco-bracket-bl, .slide-dark .deco-bracket-br {
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  /* Horizontal line accent */
+  .deco-hline {
+    height: 2px;
+    background: var(--brand);
+    opacity: 0.15;
+  }
+
+  /* Number watermark */
+  .deco-watermark {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 300px;
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(0,0,0,0.02);
+  }
+  .slide-dark .deco-watermark { color: rgba(255,255,255,0.03); }
+  .slide-brand .deco-watermark { color: rgba(255,255,255,0.06); }
+
+  .deco-cross {
+    width: 20px; height: 20px;
+    position: relative;
+  }
+  .deco-cross::before, .deco-cross::after {
+    content: ''; position: absolute;
+    background: rgba(0,0,0,0.08);
+  }
+  .slide-dark .deco-cross::before, .slide-dark .deco-cross::after { background: rgba(255,255,255,0.08); }
+  .deco-cross::before { width: 1px; height: 100%; left: 50%; }
+  .deco-cross::after { height: 1px; width: 100%; top: 50%; }
+
+  /* ─── Big hero number ─── */
+  .hero-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 160px;
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+
+  /* ─── Grid ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+  }
+  .slide-dark .card {
+    background: var(--dark-surface);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .card-glow {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 0 0 1px rgba(51,129,255,0.05), 0 8px 40px rgba(51,129,255,0.04);
+  }
+
+  .card-dark {
+    background: var(--dark-surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 32px;
+    color: #e0e0e0;
+  }
+
+  .card-accent {
+    border-left: 3px solid var(--brand);
+    padding-left: 28px;
+  }
+
+  /* ─── Steps ─── */
+  .step-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .slide-dark .step-row { border-color: rgba(255,255,255,0.06); }
+  .step-row:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brand);
+    flex-shrink: 0;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: var(--green);
+    color: white;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  /* ─── Case ─── */
+  .case-card {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: white;
+  }
+  .case-img {
+    height: 140px;
+    background: var(--light-2);
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--text-3);
+  }
+  .case-body { padding: 24px; }
+  .case-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.06em;
+    padding: 3px 10px; border-radius: 4px;
+    background: rgba(51,129,255,0.08); color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .case-result {
+    margin-top: 12px;
+    font-size: 13px; font-weight: 600; color: var(--green);
+  }
+
+  /* ─── Tech ─── */
+  .tech-pill {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500;
+    background: white;
+    margin: 4px;
+  }
+  .slide-dark .tech-pill {
+    border-color: rgba(255,255,255,0.08);
+    background: var(--dark-surface);
+    color: #c0c0c0;
+  }
+
+  /* ─── Team ─── */
+  .team-row {
+    display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
+  }
+  .team-member { text-align: center; width: 90px; }
+  .team-avatar {
+    width: 72px; height: 72px;
+    border-radius: 14px;
+    background: var(--light-2);
+    margin: 0 auto 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .team-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .team-name { font-size: 13px; font-weight: 600; }
+  .team-role { font-size: 11px; color: var(--brand); }
+
+  /* ─── Metrics ─── */
+  .metric { text-align: center; }
+  .metric-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 56px; font-weight: 800; line-height: 1;
+  }
+  .metric-label { font-size: 14px; color: var(--text-2); margin-top: 8px; }
+
+  /* ─── Partner table ─── */
+  .p-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+  .p-table th, .p-table td {
+    padding: 14px 20px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .p-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  /* ─── Timeline ─── */
+  .tl { display: flex; gap: 20px; margin-top: 36px; }
+  .tl-item {
+    flex: 1;
+    padding: 28px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: white;
+  }
+  .tl-year {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px; font-weight: 800;
+    color: var(--brand);
+    margin-bottom: 12px;
+  }
+
+  /* ─── Check ─── */
+  .chk {
+    display: flex; gap: 16px; align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .chk-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: rgba(51,129,255,0.08);
+    color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* ─── CTA ─── */
+  .cta-btn {
+    display: inline-block;
+    padding: 16px 40px;
+    background: var(--brand);
+    color: white;
+    border-radius: 12px;
+    font-weight: 600; font-size: 16px;
+    text-decoration: none;
+    margin-top: 24px;
+  }
+
+  /* ─── Print ─── */
+  @media print {
+    .slide {
+      min-height: auto; height: 100vh;
+      padding: 48px 56px;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  }
+  @page { size: A4 landscape; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SLIDE 1: TITLE ═══ -->
+<div class="slide slide-dark" style="justify-content:center; align-items:center; text-align:center;">
+  <!-- Noise -->
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <!-- Grid -->
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <!-- Orbs -->
+  <div class="deco deco-orb" style="top:-100px;right:-80px;width:500px;height:500px;background:var(--brand);"></div>
+  <div class="deco deco-orb" style="bottom:-120px;left:-60px;width:400px;height:400px;background:var(--accent);opacity:0.08;"></div>
+  <!-- Dots -->
+  <div class="deco deco-dots" style="top:0;left:0;width:240px;height:240px;"></div>
+  <div class="deco deco-dots" style="bottom:0;right:0;width:240px;height:240px;"></div>
+  <!-- Rings -->
+  <div class="deco deco-ring" style="top:60px;right:100px;width:160px;height:160px;"></div>
+  <div class="deco deco-ring" style="top:90px;right:130px;width:100px;height:100px;"></div>
+  <div class="deco deco-ring" style="bottom:80px;left:80px;width:100px;height:100px;"></div>
+  <!-- Code -->
+  <div class="deco deco-code" style="top:50px;left:50px;">{"status": "building"}<br>{"team": 11}<br>{"mvp": "$0"}</div>
+  <div class="deco deco-code" style="bottom:50px;right:50px;">deploy: production<br>uptime: 99.9%<br>stack: next.js</div>
+  <div class="deco deco-code" style="top:50%;left:40px;transform:translateY(-50%);">const result =<br>  await build();</div>
+  <!-- Crosses -->
+  <div class="deco deco-cross" style="top:40px;left:50%;transform:translateX(-50%);"></div>
+  <div class="deco deco-cross" style="bottom:40px;left:50%;transform:translateX(-50%);"></div>
+  <!-- Brackets -->
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-tr" style="top:30px;right:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-bl" style="bottom:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+  <!-- Lines -->
+  <div class="deco deco-hline" style="top:50%;left:0;width:60px;"></div>
+  <div class="deco deco-hline" style="top:50%;right:0;width:60px;"></div>
+
+  <div class="slide-inner" style="text-align:center;">
+    <div style="font-family:'Space Grotesk'; font-size:24px; font-weight:600; margin-bottom:48px; color:#fff;">
+      asystem<span style="color:var(--brand);">.</span>ai
+    </div>
+    <h1 style="font-size:68px; color:#fff; margin-bottom:24px;">
+      IT-системы для бизнеса.<br>
+      <span style="color:var(--brand);">Без предоплаты.</span>
+    </h1>
+    <p style="font-size:20px; color:#8a8a9a; max-width:500px; margin:0 auto 48px;">
+      MVP-first разработка. Современный стек.<br>Центральная Азия.
+    </p>
+    <div style="font-family:'JetBrains Mono'; font-size:12px; color:#4a4a5a;">
+      Бишкек, Кыргызстан &nbsp;&middot;&nbsp; 2026
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2: PROBLEM ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-watermark" style="top:50%;right:-40px;transform:translateY(-50%);">70</div>
+  <div class="deco deco-orb" style="top:-80px;left:-60px;width:350px;height:350px;background:var(--accent);opacity:0.06;"></div>
+  <div class="deco deco-cross" style="top:60px;right:80px;"></div>
+  <div class="deco deco-cross" style="bottom:80px;left:80px;"></div>
+  <div class="deco deco-ring" style="bottom:60px;right:200px;width:60px;height:60px;"></div>
+  <div class="deco deco-ring" style="top:120px;right:300px;width:40px;height:40px;"></div>
+  <div class="deco deco-dots" style="bottom:40px;left:40px;width:120px;height:120px;"></div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+  <div class="deco deco-code" style="top:60px;left:60px;">// industry avg</div>
+  <div class="deco deco-hline" style="bottom:120px;left:0;width:100px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// проблема</span>
+    <div class="grid-2" style="align-items:center;">
+      <div>
+        <div class="hero-num" style="color:var(--text);">70<span style="color:var(--accent);">%</span></div>
+        <p style="font-size:16px; color:var(--text-2); margin-top:16px; max-width:400px;">
+          IT-проектов срывают сроки и бюджет. Бизнес платит вперёд и ждёт месяцами.
+        </p>
+      </div>
+      <div>
+        <div class="card-dark" style="font-family:'JetBrains Mono'; font-size:13px; line-height:2;">
+          <span style="color:#ff6b6b;">client.budget</span> -= $50K<br>
+          <span style="color:#ff6b6b;">project.deadline</span> += 6 months<br>
+          <span style="color:#ff6b6b;">result</span> = null<br>
+          <br>
+          <span style="color:#4ade80;">// asystem way:</span><br>
+          <span style="color:#4ade80;">client.risk</span> = 0<br>
+          <span style="color:#4ade80;">mvp.cost</span> = $0 upfront
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3: SOLUTION ═══ -->
+<div class="slide slide-brand">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-60px;right:-100px;width:500px;height:500px;background:#fff;opacity:0.06;filter:blur(100px);"></div>
+  <div class="deco deco-orb" style="bottom:-80px;left:-80px;width:400px;height:400px;background:#fff;opacity:0.04;filter:blur(100px);"></div>
+  <div class="deco deco-ring" style="top:40px;right:80px;width:160px;height:160px;border-color:rgba(255,255,255,0.12);"></div>
+  <div class="deco deco-ring" style="top:70px;right:110px;width:100px;height:100px;border-color:rgba(255,255,255,0.08);"></div>
+  <div class="deco deco-ring" style="bottom:60px;left:120px;width:80px;height:80px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco deco-dots" style="bottom:0;left:0;width:200px;height:200px;background-image:radial-gradient(circle,rgba(255,255,255,0.06) 1px,transparent 1px);"></div>
+  <div class="deco deco-dots" style="top:0;right:0;width:160px;height:160px;background-image:radial-gradient(circle,rgba(255,255,255,0.06) 1px,transparent 1px);"></div>
+  <div class="deco deco-code" style="top:50px;left:50px;color:rgba(255,255,255,0.08);">mvp.cost = $0</div>
+  <div class="deco deco-code" style="bottom:50px;right:50px;color:rgba(255,255,255,0.08);">client.risk = 0</div>
+  <div class="deco deco-watermark" style="bottom:-40px;right:-20px;color:rgba(255,255,255,0.05);">$0</div>
+  <div class="deco deco-cross" style="top:40px;left:50%;transform:translateX(-50%);"></div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco deco-hline" style="top:50%;left:0;width:50px;background:rgba(255,255,255,0.15);"></div>
+  <div class="deco deco-hline" style="top:50%;right:0;width:50px;background:rgba(255,255,255,0.15);"></div>
+
+  <div class="slide-inner">
+    <span class="label">// решение</span>
+    <h2 style="font-size:52px; color:#fff; margin-bottom:12px;">MVP без предоплаты</h2>
+    <p class="text-2" style="margin-bottom:48px; max-width:500px;">
+      Мы строим MVP бесплатно. Клиент платит только после того, как увидел работающий продукт.
+    </p>
+    <div class="grid-3" style="gap:16px;">
+      <div style="background:rgba(255,255,255,0.1); border-radius:16px; padding:32px; text-align:center;">
+        <div style="font-family:'Space Grotesk'; font-size:48px; font-weight:800; margin-bottom:12px;">01</div>
+        <h3 style="color:#fff;">Бриф</h3>
+        <p style="font-size:13px; color:rgba(255,255,255,0.6);">Анализ задачи,<br>архитектура, ТЗ</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.15); border-radius:16px; padding:32px; text-align:center; border:1px solid rgba(255,255,255,0.2);">
+        <div style="font-family:'Space Grotesk'; font-size:48px; font-weight:800; margin-bottom:12px;">02</div>
+        <h3 style="color:#fff;">MVP <span style="background:#10b981;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:4px;">$0</span></h3>
+        <p style="font-size:13px; color:rgba(255,255,255,0.6);">Разработка и<br>сдача результата</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); border-radius:16px; padding:32px; text-align:center;">
+        <div style="font-family:'Space Grotesk'; font-size:48px; font-weight:800; margin-bottom:12px;">03</div>
+        <h3 style="color:#fff;">Масштаб</h3>
+        <p style="font-size:13px; color:rgba(255,255,255,0.6);">Полная разработка,<br>ретейнер</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4: SERVICES ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="bottom:-100px;right:-60px;width:400px;height:400px;background:var(--brand);opacity:0.04;"></div>
+  <div class="deco deco-dots" style="top:40px;right:40px;width:160px;height:160px;"></div>
+  <div class="deco deco-dots" style="bottom:40px;left:40px;width:100px;height:100px;"></div>
+  <div class="deco deco-cross" style="bottom:80px;left:80px;"></div>
+  <div class="deco deco-cross" style="top:60px;right:200px;"></div>
+  <div class="deco deco-ring" style="top:100px;left:50px;width:50px;height:50px;"></div>
+  <div class="deco deco-code" style="bottom:50px;right:50px;">services.length // 6</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// услуги</span>
+    <h2>Что мы делаем</h2>
+    <div class="grid-3" style="margin-top:32px;">
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--brand);">01</div><h3>Веб-платформы</h3><p style="font-size:14px; color:var(--text-2);">SaaS, порталы, Channel Manager. PHP/Laravel + Next.js</p></div>
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--brand);">02</div><h3>AI и боты</h3><p style="font-size:14px; color:var(--text-2);">GPT-4, Telegram/WhatsApp, парсинг, автоматизация</p></div>
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--brand);">03</div><h3>Мобильные</h3><p style="font-size:14px; color:var(--text-2);">Flutter iOS/Android. Кросс-платформа</p></div>
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--accent);">04</div><h3>Enterprise / ERP</h3><p style="font-size:14px; color:var(--text-2);">CRM, учёт, склад, 1С интеграции</p></div>
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--accent);">05</div><h3>Блокчейн</h3><p style="font-size:14px; color:var(--text-2);">Smart-контракты, токенизация, DeFi</p></div>
+      <div class="card"><div class="mono" style="margin-bottom:12px; color:var(--accent);">06</div><h3>Поддержка</h3><p style="font-size:14px; color:var(--text-2);">Мониторинг, обслуживание, развитие</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5: PROCESS ═══ -->
+<div class="slide slide-dark">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-80px;left:-60px;width:400px;height:400px;background:var(--brand);"></div>
+  <div class="deco deco-ring" style="top:60px;left:80px;width:100px;height:100px;"></div>
+  <div class="deco deco-ring" style="bottom:80px;right:100px;width:70px;height:70px;"></div>
+  <div class="deco deco-cross" style="top:40px;right:80px;"></div>
+  <div class="deco deco-dots" style="top:40px;right:40px;width:120px;height:120px;"></div>
+  <div class="deco deco-code" style="bottom:40px;right:60px;">step.next()</div>
+  <div class="deco deco-code" style="top:40px;left:60px;">// pipeline</div>
+  <div class="deco deco-bracket deco-bracket-tr" style="top:30px;right:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-bl" style="bottom:30px;left:30px;"></div>
+  <div class="deco deco-watermark" style="bottom:-60px;left:-20px;">04</div>
+
+  <div class="slide-inner">
+    <span class="label">// процесс</span>
+    <h2 style="color:#fff;">От идеи до production</h2>
+    <div style="margin-top:32px;">
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div style="flex:1;"><h3 style="color:#fff;">Discovery <span class="badge" style="background:var(--green);">Бесплатно</span></h3><p style="font-size:14px; color:#8a8a9a;">Анализ, архитектура, ТЗ. 1-2 недели.</p></div>
+        <div class="mono" style="color:#4a4a5a;">1-2 нед</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div style="flex:1;"><h3 style="color:#fff;">MVP <span class="badge" style="background:var(--green);">$0 до результата</span></h3><p style="font-size:14px; color:#8a8a9a;">Дизайн, разработка, сдача работающего продукта.</p></div>
+        <div class="mono" style="color:#4a4a5a;">6-10 нед</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div style="flex:1;"><h3 style="color:#fff;">Валидация</h3><p style="font-size:14px; color:#8a8a9a;">Тестирование с реальными пользователями, итерации.</p></div>
+        <div class="mono" style="color:#4a4a5a;">1-2 нед</div>
+      </div>
+      <div class="step-row" style="border-bottom:none;">
+        <div class="step-num">4</div>
+        <div style="flex:1;"><h3 style="color:#fff;">Масштабирование</h3><p style="font-size:14px; color:#8a8a9a;">Выделенная команда, помесячный ретейнер.</p></div>
+        <div class="mono" style="color:#4a4a5a;">ongoing</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6: CASES ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-60px;right:-100px;width:350px;height:350px;background:var(--green);opacity:0.04;"></div>
+  <div class="deco deco-dots" style="top:40px;left:40px;width:120px;height:120px;"></div>
+  <div class="deco deco-dots" style="bottom:40px;right:40px;width:100px;height:100px;"></div>
+  <div class="deco deco-cross" style="bottom:60px;left:80px;"></div>
+  <div class="deco deco-ring" style="top:80px;right:80px;width:50px;height:50px;"></div>
+  <div class="deco deco-code" style="top:50px;right:50px;">shipped: 3</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// портфолио</span>
+    <h2>Проекты в production</h2>
+    <div class="grid-3" style="margin-top:32px;">
+      <div class="case-card">
+        <div class="case-img">[ HOSTO Dashboard ]</div>
+        <div class="case-body">
+          <span class="case-tag">ENTERPRISE</span>
+          <h3>HOSTO — Channel Manager</h3>
+          <p style="font-size:13px; color:var(--text-2);">PMS для гостиниц. Booking, Airbnb, Channex API. Умные замки.</p>
+          <div class="case-result">&#10003; $130/мес WhiteLabel</div>
+        </div>
+      </div>
+      <div class="case-card">
+        <div class="case-img">[ Sceramus Portal ]</div>
+        <div class="case-body">
+          <span class="case-tag">ENTERPRISE</span>
+          <h3>Sceramus — Портал</h3>
+          <p style="font-size:13px; color:var(--text-2);">Корпоративная система с AI, автоматизацией и аналитикой.</p>
+          <div class="case-result">&#10003; Проект $1 400</div>
+        </div>
+      </div>
+      <div class="case-card">
+        <div class="case-img">[ AQUAHIMIYA ERP ]</div>
+        <div class="case-body">
+          <span class="case-tag">B2B</span>
+          <h3>AQUAHIMIYA — ERP</h3>
+          <p style="font-size:13px; color:var(--text-2);">Учёт производства, склад, отчётность, интеграция 1С.</p>
+          <div class="case-result">&#10003; 100% автоматизация</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7: TECH ═══ -->
+<div class="slide slide-dark">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="bottom:-80px;right:-80px;width:400px;height:400px;background:var(--brand);"></div>
+  <div class="deco deco-cross" style="top:60px;right:80px;"></div>
+  <div class="deco deco-cross" style="bottom:60px;left:80px;"></div>
+  <div class="deco deco-ring" style="top:100px;left:60px;width:80px;height:80px;"></div>
+  <div class="deco deco-dots" style="bottom:40px;right:40px;width:140px;height:140px;"></div>
+  <div class="deco deco-code" style="top:40px;left:50px;">// stack.ts</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-tr" style="top:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// стек</span>
+    <h2 style="color:#fff;">Технологии</h2>
+    <div style="margin-top:32px;">
+      <div class="mono" style="margin-bottom:10px; color:var(--brand);">FRONTEND</div>
+      <div>
+        <span class="tech-pill">Next.js</span><span class="tech-pill">React</span><span class="tech-pill">TypeScript</span><span class="tech-pill">Tailwind</span><span class="tech-pill">Flutter</span>
+      </div>
+      <div class="mono" style="margin:24px 0 10px; color:var(--brand);">BACKEND</div>
+      <div>
+        <span class="tech-pill">PHP / Laravel</span><span class="tech-pill">Node.js</span><span class="tech-pill">PostgreSQL</span><span class="tech-pill">Redis</span><span class="tech-pill">REST API</span>
+      </div>
+      <div class="mono" style="margin:24px 0 10px; color:var(--brand);">INFRA & AI</div>
+      <div>
+        <span class="tech-pill">Docker</span><span class="tech-pill">Kubernetes</span><span class="tech-pill">CI/CD</span><span class="tech-pill">GPT-4 API</span><span class="tech-pill">Blockchain</span><span class="tech-pill">Vercel</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8: TEAM ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-80px;left:-60px;width:350px;height:350px;background:var(--brand);opacity:0.04;"></div>
+  <div class="deco deco-ring" style="bottom:60px;right:120px;width:80px;height:80px;"></div>
+  <div class="deco deco-ring" style="top:80px;right:80px;width:50px;height:50px;"></div>
+  <div class="deco deco-cross" style="top:40px;left:80px;"></div>
+  <div class="deco deco-dots" style="bottom:30px;left:30px;width:100px;height:100px;"></div>
+  <div class="deco deco-code" style="top:50px;right:50px;">team.length // 11</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// команда</span>
+    <h2>11 человек. Полный цикл.</h2>
+    <p class="subtitle" style="margin-bottom:40px;">Инженеры с опытом в финтехе, AI и enterprise</p>
+    <div class="team-row">
+      <div class="team-member"><div class="team-avatar"><img src="/team/asylbek.png" alt=""></div><div class="team-name">Асылбек</div><div class="team-role">CEO</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/dastan.png" alt=""></div><div class="team-name">Дастан</div><div class="team-role">CTO</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/nasip.png" alt=""></div><div class="team-name">Насип</div><div class="team-role">Full-Stack</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/saadat.png" alt=""></div><div class="team-name">Саадат</div><div class="team-role">PM</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/suimonkul.png" alt=""></div><div class="team-name">Суймонкул</div><div class="team-role">Backend</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/urmat.png" alt=""></div><div class="team-name">Урмат</div><div class="team-role">BizDev</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/nerses.png" alt=""></div><div class="team-name">Нерсес</div><div class="team-role">Full-Stack</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/ivan.png" alt=""></div><div class="team-name">Иван</div><div class="team-role">DevOps</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/asel.png" alt=""></div><div class="team-name">Асель</div><div class="team-role">Finance</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/azamat.png" alt=""></div><div class="team-name">Азамат</div><div class="team-role">Designer</div></div>
+      <div class="team-member"><div class="team-avatar"><img src="/team/akylay.png" alt=""></div><div class="team-name">Акылай</div><div class="team-role">Marketing</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9: PARTNER ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="bottom:-100px;left:-80px;width:400px;height:400px;background:var(--accent);opacity:0.05;"></div>
+  <div class="deco deco-dots" style="bottom:40px;right:40px;width:140px;height:140px;"></div>
+  <div class="deco deco-dots" style="top:40px;left:40px;width:100px;height:100px;"></div>
+  <div class="deco deco-cross" style="top:60px;right:80px;"></div>
+  <div class="deco deco-ring" style="top:100px;left:60px;width:60px;height:60px;"></div>
+  <div class="deco deco-code" style="bottom:50px;left:50px;">partner.earn()</div>
+  <div class="deco deco-bracket deco-bracket-tr" style="top:30px;right:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-bl" style="bottom:30px;left:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// партнёрам</span>
+    <h2>Партнёрская платформа</h2>
+    <div class="grid-2" style="margin-top:24px; gap:20px;">
+      <div>
+        <div class="grid-2" style="gap:12px; margin-bottom:20px;">
+          <div class="card" style="border-color:var(--brand); border-width:2px; padding:20px;">
+            <div class="mono" style="color:var(--brand); margin-bottom:8px;">РЕФЕРАЛ</div>
+            <div style="font-family:'Space Grotesk'; font-size:40px; font-weight:800; color:var(--brand);">15%</div>
+            <p style="font-size:12px; color:var(--text-2); margin-top:4px;">Просто рекомендуете</p>
+          </div>
+          <div class="card" style="border-color:var(--accent); border-width:2px; padding:20px;">
+            <div class="mono" style="color:var(--accent); margin-bottom:8px;">РЕСЕЙЛЕР</div>
+            <div style="font-family:'Space Grotesk'; font-size:32px; font-weight:800; color:var(--accent);">15%+50/50</div>
+            <p style="font-size:12px; color:var(--text-2); margin-top:4px;">Своя наценка</p>
+          </div>
+        </div>
+        <table class="p-table" style="font-size:13px;">
+          <tr><th>Модель</th><th>База</th><th>Продажа</th><th>Вам</th></tr>
+          <tr><td>Реферал</td><td>$2 000</td><td>$2 000</td><td style="color:var(--green); font-weight:700;">$300</td></tr>
+          <tr><td>Ресейлер</td><td>$2 000</td><td>$3 000</td><td style="color:var(--green); font-weight:700;">$800</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3 style="margin-bottom:16px;">Что получает партнёр</h3>
+        <div style="font-size:13px; color:var(--text-2); line-height:2.2;">
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Dashboard</strong> — личный кабинет с клиентами и статусами</div>
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Telegram Login</strong> — вход через Telegram, уведомления в ТГ</div>
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Авто-топики</strong> — для каждого проекта создаётся топик в группе</div>
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Реферальные ссылки</strong> — клиенты привязываются автоматически</div>
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Калькулятор проекта</strong> — собери проект, увидь комиссию</div>
+          <div><span style="color:var(--brand);">&#9679;</span> <strong>Создание проектов</strong> — партнёр сам заводит клиентов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10: PLATFORM ═══ -->
+<div class="slide slide-brand">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-80px;right:-100px;width:500px;height:500px;background:#fff;opacity:0.05;filter:blur(100px);"></div>
+  <div class="deco deco-ring" style="bottom:80px;left:100px;width:100px;height:100px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco deco-ring" style="top:60px;right:80px;width:140px;height:140px;border-color:rgba(255,255,255,0.08);"></div>
+  <div class="deco deco-dots" style="bottom:0;left:0;width:200px;height:200px;background-image:radial-gradient(circle,rgba(255,255,255,0.05) 1px,transparent 1px);"></div>
+  <div class="deco deco-code" style="top:50px;left:50px;color:rgba(255,255,255,0.07);">platform.v1()</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;border-color:rgba(255,255,255,0.1);"></div>
+
+  <div class="slide-inner">
+    <span class="label" style="color:rgba(255,255,255,0.5);">// платформа</span>
+    <h2 style="font-size:44px; color:#fff; margin-bottom:12px;">Не просто агентство.<br>Платформа.</h2>
+    <p style="font-size:16px; color:rgba(255,255,255,0.7); max-width:500px; margin-bottom:40px;">
+      Партнёр регистрируется, заводит клиента, отслеживает статус — всё в одном месте. Telegram-интеграция из коробки.
+    </p>
+    <div class="grid-3" style="gap:16px;">
+      <div style="background:rgba(255,255,255,0.08); border-radius:16px; padding:24px;">
+        <div style="font-size:28px; margin-bottom:8px;">&#128100;</div>
+        <h3 style="color:#fff; font-size:16px;">Регистрация</h3>
+        <p style="font-size:12px; color:rgba(255,255,255,0.6);">Вход через Telegram. Реферальная ссылка автоматически.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.12); border-radius:16px; padding:24px; border:1px solid rgba(255,255,255,0.15);">
+        <div style="font-size:28px; margin-bottom:8px;">&#128203;</div>
+        <h3 style="color:#fff; font-size:16px;">Создание проекта</h3>
+        <p style="font-size:12px; color:rgba(255,255,255,0.6);">Партнёр заводит клиента → бот создаёт топик в Telegram-группе.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.08); border-radius:16px; padding:24px;">
+        <div style="font-size:28px; margin-bottom:8px;">&#128200;</div>
+        <h3 style="color:#fff; font-size:16px;">Отслеживание</h3>
+        <p style="font-size:12px; color:rgba(255,255,255,0.6);">Dashboard + Telegram. Статусы, комиссия, история — в реальном времени.</p>
+      </div>
+    </div>
+    <div style="margin-top:24px; display:flex; gap:8px; flex-wrap:wrap;">
+      <span style="font-size:11px; padding:4px 10px; border-radius:100px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7);">Telegram Login</span>
+      <span style="font-size:11px; padding:4px 10px; border-radius:100px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7);">Авто-топики</span>
+      <span style="font-size:11px; padding:4px 10px; border-radius:100px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7);">Калькулятор проекта</span>
+      <span style="font-size:11px; padding:4px 10px; border-radius:100px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7);">Реферальная система</span>
+      <span style="font-size:11px; padding:4px 10px; border-radius:100px; background:rgba(16,185,129,0.3); color:#6ee7b7;">Работает сейчас</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11: ADVANTAGES ═══ -->
+<div class="slide slide-dark">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-60px;right:-80px;width:450px;height:450px;background:var(--brand);"></div>
+  <div class="deco deco-orb" style="bottom:-80px;left:-60px;width:300px;height:300px;background:var(--green);opacity:0.08;"></div>
+  <div class="deco deco-ring" style="top:80px;right:80px;width:140px;height:140px;"></div>
+  <div class="deco deco-ring" style="bottom:100px;left:80px;width:60px;height:60px;"></div>
+  <div class="deco deco-dots" style="top:40px;left:40px;width:120px;height:120px;"></div>
+  <div class="deco deco-cross" style="bottom:60px;right:100px;"></div>
+  <div class="deco deco-code" style="top:40px;right:60px;">// advantages</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// почему мы</span>
+    <h2 style="color:#fff; margin-bottom:36px;">Преимущества</h2>
+    <div class="grid-2" style="gap:20px;">
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">Без предоплаты</h3><p style="font-size:13px; color:#8a8a9a;">MVP готов до первого счёта</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">В 3-5× доступнее</h3><p style="font-size:13px; color:#8a8a9a;">Цены ЦА, качество EU/US</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">MVP за 6-10 недель</h3><p style="font-size:13px; color:#8a8a9a;">Production-ready продукт</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">100% IP клиента</h3><p style="font-size:13px; color:#8a8a9a;">Весь код ваш с первого дня</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">AI-native</h3><p style="font-size:13px; color:#8a8a9a;">GPT-4 в процессе и продукте</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">White-label</h3><p style="font-size:13px; color:#8a8a9a;">Ваш бренд, наша инженерия</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">Telegram-first</h3><p style="font-size:13px; color:#8a8a9a;">Заявки, статусы, группы — всё в ТГ</p></div></div>
+      <div class="chk"><div class="chk-icon">&#10003;</div><div><h3 style="color:#fff;">Партнёрская платформа</h3><p style="font-size:13px; color:#8a8a9a;">Dashboard, аналитика, self-service</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11: METRICS ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="top:-80px;right:50%;width:500px;height:500px;background:var(--brand);opacity:0.03;"></div>
+  <div class="deco deco-cross" style="top:60px;left:80px;"></div>
+  <div class="deco deco-cross" style="bottom:60px;right:80px;"></div>
+  <div class="deco deco-cross" style="top:60px;right:80px;"></div>
+  <div class="deco deco-cross" style="bottom:60px;left:80px;"></div>
+  <div class="deco deco-ring" style="top:80px;right:160px;width:40px;height:40px;"></div>
+  <div class="deco deco-ring" style="bottom:80px;left:160px;width:60px;height:60px;"></div>
+  <div class="deco deco-dots" style="top:30px;right:30px;width:100px;height:100px;"></div>
+  <div class="deco deco-dots" style="bottom:30px;left:30px;width:100px;height:100px;"></div>
+  <div class="deco deco-code" style="top:40px;left:50px;">metrics.show()</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-tr" style="top:30px;right:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-bl" style="bottom:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner" style="text-align:center;">
+    <span class="label">// метрики</span>
+    <h2>Где мы сейчас</h2>
+    <div class="grid-4" style="margin-top:48px;">
+      <div class="metric"><div class="metric-val brand">3</div><div class="metric-label">продукта<br>в production</div></div>
+      <div class="metric"><div class="metric-val">11</div><div class="metric-label">человек<br>в команде</div></div>
+      <div class="metric"><div class="metric-val accent">6-10</div><div class="metric-label">недель<br>до MVP</div></div>
+      <div class="metric"><div class="metric-val green">$0</div><div class="metric-label">предоплата<br>за MVP</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12: ROADMAP ═══ -->
+<div class="slide">
+  <div class="deco deco-noise" style="inset:0;"></div>
+  <div class="deco deco-grid" style="inset:0;"></div>
+  <div class="deco deco-orb" style="bottom:-60px;left:-60px;width:350px;height:350px;background:var(--brand);opacity:0.04;"></div>
+  <div class="deco deco-ring" style="top:60px;right:160px;width:60px;height:60px;"></div>
+  <div class="deco deco-ring" style="bottom:80px;left:100px;width:40px;height:40px;"></div>
+  <div class="deco deco-cross" style="top:40px;left:80px;"></div>
+  <div class="deco deco-dots" style="top:30px;right:30px;width:120px;height:120px;"></div>
+  <div class="deco deco-code" style="bottom:40px;right:50px;">roadmap.next()</div>
+  <div class="deco deco-bracket deco-bracket-tl" style="top:30px;left:30px;"></div>
+  <div class="deco deco-bracket deco-bracket-br" style="bottom:30px;right:30px;"></div>
+
+  <div class="slide-inner">
+    <span class="label">// roadmap</span>
+    <h2>Куда мы движемся</h2>
+    <div class="tl">
+      <div class="tl-item">
+        <div class="tl-year">Q2 2026</div>
+        <h3>Автоматизация</h3>
+        <p style="font-size:13px; color:var(--text-2);">Авто-запуск шаблонных проектов. Партнёр нажимает кнопку — бот/лендинг создаётся автоматически. API для агентств.</p>
+        <div style="margin-top:8px;">
+          <span style="font-size:10px; padding:2px 6px; border-radius:4px; background:var(--green); color:white; opacity:0.8;">Telegram-группы</span>
+          <span style="font-size:10px; padding:2px 6px; border-radius:4px; background:var(--brand); color:white; opacity:0.8; margin-left:4px;">Dashboard v2</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2027</div>
+        <h3>Масштабирование</h3>
+        <p style="font-size:13px; color:var(--text-2);">25-30 человек. Офис Dubai/EU. White-label маркетплейс шаблонов для партнёров.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2028+</div>
+        <h3>Экосистема</h3>
+        <p style="font-size:13px; color:var(--text-2);">Дефолтный tech-партнёр для не-IT агентств. Собственные SaaS-продукты. 100+ партнёров.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13: CTA ═══ -->
+<div class="slide slide-dark" style="justify-content:center; align-items:center; text-align:center;">
+  <div class="deco deco-dots" style="top:0;left:0;width:200px;height:200px;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);"></div>
+  <div class="deco deco-dots" style="bottom:0;right:0;width:200px;height:200px;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);"></div>
+  <div class="deco deco-ring" style="top:100px;left:120px;width:100px;height:100px;"></div>
+  <div class="deco deco-ring" style="bottom:80px;right:100px;width:140px;height:140px;"></div>
+
+  <div class="slide-inner" style="text-align:center;">
+    <div style="font-family:'Space Grotesk'; font-size:24px; font-weight:600; color:#fff; margin-bottom:32px;">
+      asystem<span style="color:var(--brand);">.</span>ai
+    </div>
+    <h1 style="font-size:56px; color:#fff; margin-bottom:16px;">Давайте строить<br>вместе</h1>
+    <p style="font-size:18px; color:#8a8a9a; margin-bottom:36px;">
+      Расскажите о задаче — предложим архитектуру и оценку за 48 часов
+    </p>
+    <a href="https://asystem.ai" class="cta-btn">Обсудить проект</a>
+    <div style="margin-top:36px; font-size:14px; color:#5a5a6a; line-height:2.2; font-family:'JetBrains Mono'; font-size:12px;">
+      hello@asystem.ai<br>
+      Telegram: @asystem_ai<br>
+      +996 (555) 123-456
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
