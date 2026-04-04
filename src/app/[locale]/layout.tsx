@@ -7,8 +7,8 @@ import "../globals.css";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
-import dynamic from "next/dynamic";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { CustomCursor } from "@/components/shared/custom-cursor";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -27,11 +27,6 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   display: "swap",
 });
-
-const CustomCursor = dynamic(
-  () => import("@/components/shared/custom-cursor").then((m) => m.CustomCursor),
-  { ssr: false }
-);
 
 export async function generateMetadata({
   params,
