@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, UserPlus, Mail, Phone } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MessageCircle } from "lucide-react";
 
 interface Partner {
+  partner_id: string;
   name: string;
-  field: string;
-  audience: string;
-  phone: string;
   email: string;
-  status?: string;
-  createdAt: string;
+  phone: string;
+  company: string;
+  ref_code: string;
+  commission_rate: number;
+  status: string;
+  telegram_username: string;
+  total_clients: number;
+  total_earned: number;
+  created_at: string;
 }
 
 export default function PartnersPage() {
@@ -19,35 +24,27 @@ export default function PartnersPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch('/api/partners')
-      .then(r => r.json())
-      .then(data => setPartners(Array.isArray(data) ? data.map((pp: Partner) => ({ ...pp, status: pp.status || "pending" })) : []))
+    fetch("/api/partners")
+      .then((r) => r.json())
+      .then((data) =>
+        setPartners(Array.isArray(data) ? data : [])
+      )
       .catch(() => setPartners([]));
   }, []);
-
-  function updateStatus(index: number, status: string) {
-    const updated = [...partners];
-    updated[index] = { ...updated[index], status };
-    setPartners(updated);
-    const partner = updated[index];
-    fetch(`/api/partners/${index}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, name: partner.name }),
-    }).catch(() => {});
-  }
 
   const filtered = partners.filter(
     (p) =>
       !search ||
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.field?.toLowerCase().includes(search.toLowerCase())
+      p.email?.toLowerCase().includes(search.toLowerCase()) ||
+      p.company?.toLowerCase().includes(search.toLowerCase()) ||
+      p.partner_id?.toLowerCase().includes(search.toLowerCase())
   );
 
   const statusConfig: Record<string, { label: string; color: string }> = {
+    active: { label: "Активен", color: "bg-green-500/10 text-green-500" },
     pending: { label: "Ожидает", color: "bg-yellow-500/10 text-yellow-500" },
-    approved: { label: "Активен", color: "bg-green-500/10 text-green-500" },
-    rejected: { label: "Отклонён", color: "bg-red-500/10 text-red-500" },
+    blocked: { label: "Заблокирован", color: "bg-red-500/10 text-red-500" },
   };
 
   return (
@@ -57,7 +54,7 @@ export default function PartnersPage() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Партнёры</h1>
           <p className="text-text-secondary text-sm">
-            {partners.length} всего · {partners.filter((p) => p.status === "pending").length} ожидают одобрения
+            {partners.length} всего · {partners.filter((p) => p.status === "active").length} активных
           </p>
         </div>
         <div className="relative">
@@ -72,11 +69,12 @@ export default function PartnersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Всего", value: partners.length, color: "text-brand-500", bg: "bg-brand-500/10" },
-          { label: "Активных", value: partners.filter((p) => p.status === "approved").length, color: "text-green-500", bg: "bg-green-500/10" },
-          { label: "Ожидают", value: partners.filter((p) => p.status === "pending").length, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+          { label: "Всего", value: partners.length, color: "text-brand-500" },
+          { label: "Активных", value: partners.filter((p) => p.status === "active").length, color: "text-green-500" },
+          { label: "Клиентов", value: partners.reduce((sum, p) => sum + Number(p.total_clients || 0), 0), color: "text-blue-500" },
+          { label: "Заработок", value: `${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString()} сом`, color: "text-purple-500" },
         ].map((s) => (
           <div key={s.label} className="p-4 rounded-xl border border-border-faint bg-surface">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -91,15 +89,14 @@ export default function PartnersPage() {
           <div className="p-12 text-center">
             <UserPlus className="w-10 h-10 text-text-muted mx-auto mb-3" />
             <p className="text-text-muted text-sm">Партнёров пока нет</p>
-            <p className="text-text-muted text-xs mt-1">Заявки появятся здесь после заполнения формы партнёра</p>
           </div>
         ) : (
           <div className="divide-y divide-border-faint">
             {filtered.map((partner, i) => {
-              const status = statusConfig[partner.status || "pending"];
+              const status = statusConfig[partner.status] || statusConfig.active;
               return (
                 <motion.div
-                  key={i}
+                  key={partner.partner_id}
                   className="flex items-center gap-4 p-4 hover:bg-surface-raised transition-colors"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -117,15 +114,38 @@ export default function PartnersPage() {
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${status.color}`}>
                         {status.label}
                       </span>
+                      {partner.telegram_username && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-500">
+                          @{partner.telegram_username}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-text-muted flex items-center gap-3">
-                      <span>{partner.field}</span>
-                      {partner.audience && (
+                    <div className="text-xs text-text-muted flex items-center gap-2">
+                      <span className="font-mono">{partner.partner_id}</span>
+                      <span>·</span>
+                      <span>ref: {partner.ref_code}</span>
+                      {partner.company && (
                         <>
                           <span>·</span>
-                          <span>Аудитория: {partner.audience}</span>
+                          <span>{partner.company}</span>
                         </>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="hidden md:flex items-center gap-4 text-xs text-text-secondary">
+                    <div className="text-center">
+                      <div className="font-bold text-sm">{partner.total_clients}</div>
+                      <div className="text-text-muted">клиентов</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-sm text-green-500">{Number(partner.total_earned).toLocaleString()}</div>
+                      <div className="text-text-muted">заработок</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-sm">{Math.round(Number(partner.commission_rate) * 100)}%</div>
+                      <div className="text-text-muted">комиссия</div>
                     </div>
                   </div>
 
@@ -143,20 +163,9 @@ export default function PartnersPage() {
                     )}
                   </div>
 
-                  {/* Status actions */}
-                  <select
-                    value={partner.status || "pending"}
-                    onChange={(e) => updateStatus(i, e.target.value)}
-                    className="px-2 py-1 rounded-md text-xs font-medium bg-surface border border-border-faint text-text-primary focus:outline-none focus:border-brand-500"
-                  >
-                    <option value="pending">Ожидает</option>
-                    <option value="approved">Одобрить</option>
-                    <option value="rejected">Отклонить</option>
-                  </select>
-
                   {/* Date */}
                   <span className="text-xs text-text-muted hidden lg:block">
-                    {new Date(partner.createdAt).toLocaleDateString("ru-RU")}
+                    {new Date(partner.created_at).toLocaleDateString("ru-RU")}
                   </span>
                 </motion.div>
               );

@@ -25,10 +25,14 @@ interface Request {
 }
 
 interface Partner {
-  id: number;
   partner_id: string;
   name: string;
-  specialization: string;
+  email: string;
+  company: string;
+  ref_code: string;
+  total_clients: number;
+  total_earned: number;
+  status: string;
   created_at: string;
 }
 
@@ -245,8 +249,9 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{p.name}</div>
-                      <div className="text-xs text-text-muted">{p.specialization}</div>
+                      <div className="text-xs text-text-muted">{p.company || p.email}</div>
                     </div>
+                    <div className="text-xs font-medium text-green-500">{Number(p.total_clients || 0)} кл.</div>
                   </div>
                 ))}
               </div>
