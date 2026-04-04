@@ -1,10 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Navbar } from "./navbar";
 import { Footer } from "./footer";
-import { ParticlesBg } from "@/components/splash/particles-bg";
-import { NoiseGrain } from "@/components/shared/decorations";
+
+const ParticlesBg = dynamic(
+  () => import("@/components/splash/particles-bg").then((m) => m.ParticlesBg),
+  { ssr: false }
+);
+const NoiseGrain = dynamic(
+  () => import("@/components/shared/decorations").then((m) => m.NoiseGrain),
+  { ssr: false }
+);
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

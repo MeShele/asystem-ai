@@ -7,7 +7,31 @@ import "../globals.css";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
-import { CustomCursor } from "@/components/shared/custom-cursor";
+import dynamic from "next/dynamic";
+import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const CustomCursor = dynamic(
+  () => import("@/components/shared/custom-cursor").then((m) => m.CustomCursor),
+  { ssr: false }
+);
 
 export async function generateMetadata({
   params,
@@ -59,19 +83,9 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning className={`${spaceGrotesk.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
