@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { TelegramLoginButton } from "@/components/partner/telegram-login-button";
-
 const inputClass =
   "w-full p-3 bg-bg-primary border border-border-faint rounded-xl text-text-primary text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all placeholder:text-text-muted";
 
@@ -70,13 +68,9 @@ export default function PartnerLoginPage() {
           </h1>
         </div>
 
-        <TelegramLoginButton />
-
-        <div className="flex items-center gap-3 my-5">
-          <div className="flex-1 h-px bg-border-faint" />
-          <span className="text-xs text-text-muted">или через email</span>
-          <div className="flex-1 h-px bg-border-faint" />
-        </div>
+        <p className="text-center text-xs text-text-muted mb-6">
+          Telegram-уведомления можно подключить после входа в Настройках
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === "register" && (

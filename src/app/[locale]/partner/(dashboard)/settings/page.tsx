@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Building, Percent, MessageCircle } from "lucide-react";
 import type { Partner } from "@/types/partner";
-import { TelegramLoginButton } from "@/components/partner/telegram-login-button";
 
 export default function PartnerSettingsPage() {
   const [partner, setPartner] = useState<Partner | null>(null);
@@ -122,12 +121,8 @@ export default function PartnerSettingsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <TelegramLoginButton />
-
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border-faint" />
-              <span className="text-xs text-text-muted">или введите Telegram ID</span>
-              <div className="flex-1 h-px bg-border-faint" />
+            <div className="p-3 rounded-lg bg-blue-500/[0.04] border border-blue-500/10 text-xs text-text-secondary leading-relaxed">
+              Чтобы узнать ваш Telegram ID, напишите боту <a href="https://t.me/userinfobot" target="_blank" rel="noopener" className="text-brand-500 hover:underline">@userinfobot</a> — он ответит вашим ID. Вставьте его ниже.
             </div>
 
             <div className="flex gap-2">
