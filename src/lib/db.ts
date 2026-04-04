@@ -102,6 +102,13 @@ export async function initPartnerTables() {
     });
   }
 
+  // App settings (AI keys, etc)
+  await db`CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // KP AI chat messages table
   await db`CREATE TABLE IF NOT EXISTS kp_messages (
     id SERIAL PRIMARY KEY,

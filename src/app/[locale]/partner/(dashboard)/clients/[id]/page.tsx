@@ -20,6 +20,7 @@ import { useParams } from "next/navigation";
 import type { Client, CalculatorConfig, KpStatus } from "@/types/partner";
 import { statusLabels } from "@/types/partner";
 import { ProjectCalculator } from "@/components/partner/project-calculator";
+import { KpChat } from "@/components/partner/kp-chat";
 
 /* ─── Helpers ─── */
 
@@ -173,27 +174,33 @@ export default function ProjectDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [savingDesc, setSavingDesc] = useState(false);
   const [savingKp, setSavingKp] = useState(false);
+  const [kpMessages, setKpMessages] = useState<Array<{id: number; role: string; content: string; created_at: string}>>([]);
 
   /* Fetch project */
-  useEffect(() => {
+  const fetchProject = useCallback(() => {
     if (!projectId) return;
     fetch(`/api/partner/clients/${projectId}`)
       .then((r) => {
         if (!r.ok) throw new Error("unauthorized");
         return r.json();
       })
-      .then((data: Client) => {
+      .then((data: Client & { kpMessages?: Array<{id: number; role: string; content: string; created_at: string}> }) => {
         setProject(data);
         setDescription(data.description ?? "");
         setKpContent(data.kp_content ?? "");
         setBasePrice(data.base_price ?? 0);
         setPartnerPrice(data.partner_price ?? 0);
+        setKpMessages(data.kpMessages ?? []);
       })
       .catch(() => {
         window.location.href = `/${locale}/partner/login`;
       })
       .finally(() => setLoading(false));
   }, [projectId, locale]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
 
   /* Save description */
   async function saveDescription() {
@@ -447,6 +454,22 @@ export default function ProjectDetailPage() {
                 </button>
               </div>
             )}
+          </motion.div>
+
+          {/* KP AI Chat */}
+          <motion.div
+            className="space-y-3"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+          >
+            <KpChat
+              projectId={project.id}
+              kpMessages={kpMessages}
+              onKpGenerated={() => {
+                fetchProject();
+              }}
+            />
           </motion.div>
         </div>
 
