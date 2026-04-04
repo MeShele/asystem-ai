@@ -83,4 +83,31 @@ export async function initPartnerTables() {
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+
+  // KP workflow columns on partner_clients
+  const kpColumns = [
+    { name: "description", def: "TEXT" },
+    { name: "calculator_config", def: "JSONB" },
+    { name: "kp_status", def: "TEXT DEFAULT 'none'" },
+    { name: "kp_content", def: "TEXT" },
+    { name: "kp_admin_feedback", def: "TEXT" },
+    { name: "kp_submitted_at", def: "TIMESTAMP" },
+    { name: "kp_reviewed_at", def: "TIMESTAMP" },
+  ];
+  for (const col of kpColumns) {
+    await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partner_clients' AND column_name = ${col.name}`.then(async (rows) => {
+      if (rows.length === 0) {
+        await getPool().query(`ALTER TABLE partner_clients ADD COLUMN ${col.name} ${col.def}`);
+      }
+    });
+  }
+
+  // KP AI chat messages table
+  await db`CREATE TABLE IF NOT EXISTS kp_messages (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, Plus } from "lucide-react";
 import type { Client } from "@/types/partner";
@@ -8,6 +9,7 @@ import { statusLabels } from "@/types/partner";
 import { CreateProjectModal } from "@/components/partner/create-project-modal";
 
 export default function PartnerClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -101,7 +103,11 @@ export default function PartnerClientsPage() {
                   return (
                     <motion.tr
                       key={client.id}
-                      className="border-b border-border-faint last:border-0 hover:bg-surface-raised transition-colors"
+                      onClick={() => {
+                        const locale = window.location.pathname.split("/")[1] || "ru";
+                        router.push(`/${locale}/partner/clients/${client.id}`);
+                      }}
+                      className="border-b border-border-faint last:border-0 hover:bg-surface-raised transition-colors cursor-pointer"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}

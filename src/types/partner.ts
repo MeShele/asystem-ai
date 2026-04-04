@@ -1,3 +1,11 @@
+export type CalculatorConfig = {
+  selected: string[];
+  quantities: Record<string, number>;
+  discount: number;
+};
+
+export type KpStatus = "none" | "draft" | "submitted" | "approved" | "rejected";
+
 export type Client = {
   id: number;
   request_id: string;
@@ -11,6 +19,21 @@ export type Client = {
   commission: number;
   status: string;
   notes: string;
+  description: string | null;
+  calculator_config: CalculatorConfig | null;
+  kp_status: KpStatus;
+  kp_content: string | null;
+  kp_admin_feedback: string | null;
+  kp_submitted_at: string | null;
+  kp_reviewed_at: string | null;
+  created_at: string;
+};
+
+export type KpMessage = {
+  id: number;
+  project_id: number;
+  role: "user" | "assistant" | "system";
+  content: string;
   created_at: string;
 };
 
