@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables } from "@/lib/db";
 import { notifyAdmin, createProjectTopic, createGroupInvite } from "@/lib/telegram";
 
+export async function GET(req: NextRequest) {
+  const partnerId = req.cookies.get("partner_session")?.value;
+  if (!partnerId) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const db = getDb();
+  await initPartnerTables();
+
+  const clients = await db`
+    SELECT * FROM partner_clients
+    WHERE partner_id = ${partnerId}
+    ORDER BY created_at DESC
+  `;
+
+  return NextResponse.json({ clients });
+}
+
 export async function POST(req: NextRequest) {
   const partnerId = req.cookies.get("partner_session")?.value;
   if (!partnerId) {

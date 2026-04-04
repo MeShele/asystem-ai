@@ -17,9 +17,10 @@ const NoiseGrain = dynamic(
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.includes("/admin");
+  const isPartnerPanel = pathname.includes("/partner/") && !pathname.match(/^\/(ru|en|kg)\/partner\/?$/);
   const isSplash = /^\/(ru|en|kg)?\/?$/.test(pathname);
 
-  if (isAdmin) {
+  if (isAdmin || isPartnerPanel) {
     return <>{children}</>;
   }
 
