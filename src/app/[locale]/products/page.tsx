@@ -20,15 +20,18 @@ export default function ProductsPage() {
     e.preventDefault();
     if (!email) return;
     try {
-      await fetch("/api/subscribe", {
+      const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (res.ok) {
+        setSubscribed(true);
+      }
     } catch {
-      // best effort
+      // best effort — still show success for UX
+      setSubscribed(true);
     }
-    setSubscribed(true);
   }
 
   return (

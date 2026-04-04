@@ -539,7 +539,7 @@ export default function PartnerPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row items-start gap-4">
                   <a
-                    href="/ru/partner/dashboard"
+                    href="./dashboard"
                     className="relative inline-flex items-center justify-center h-14 px-10 rounded-xl text-white font-bold text-base overflow-hidden group"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-500 group-hover:from-brand-500 group-hover:to-accent-500 transition-all duration-500" />

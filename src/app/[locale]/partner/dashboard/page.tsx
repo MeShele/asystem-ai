@@ -83,7 +83,8 @@ export default function PartnerDashboard() {
   }
 
   const { partner, clients, stats } = data;
-  const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/ru/client/request?ref=${partner.ref_code}`;
+  const currentLocale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] || "ru" : "ru";
+  const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${currentLocale}/client/request?ref=${partner.ref_code}`;
 
   async function copyRef() {
     await navigator.clipboard.writeText(refLink);

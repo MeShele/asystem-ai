@@ -4,6 +4,17 @@ import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   const data = await req.json();
+
+  if (!data.name || typeof data.name !== "string" || !data.name.trim()) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+  if (!data.email || typeof data.email !== "string" || !data.email.includes("@")) {
+    return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
+  }
+  if (!data.password || typeof data.password !== "string" || data.password.length < 6) {
+    return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+  }
+
   const db = getDb();
   await initPartnerTables();
 

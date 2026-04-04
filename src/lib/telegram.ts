@@ -1,13 +1,29 @@
-const BOT_TOKEN = () => process.env.TELEGRAM_BOT_TOKEN!;
-const ADMIN_CHAT = () => process.env.TELEGRAM_CHAT_ID!;
-const PROJECT_GROUP = () => process.env.TELEGRAM_GROUP_ID!;
+const BOT_TOKEN = () => process.env.TELEGRAM_BOT_TOKEN || "";
+const ADMIN_CHAT = () => process.env.TELEGRAM_CHAT_ID || "";
+const PROJECT_GROUP = () => process.env.TELEGRAM_GROUP_ID || "";
 
-const api = (method: string, body?: Record<string, unknown>) =>
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN()}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  }).then((r) => r.json());
+const api = async (method: string, body?: Record<string, unknown>) => {
+  const token = BOT_TOKEN();
+  if (!token) {
+    console.warn(`Telegram API skipped (no BOT_TOKEN): ${method}`);
+    return { ok: false, description: "BOT_TOKEN not configured" };
+  }
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.error(`Telegram API error (${method}):`, data.description);
+    }
+    return data;
+  } catch (e) {
+    console.error(`Telegram API fetch failed (${method}):`, e);
+    return { ok: false, description: "Network error" };
+  }
+};
 
 // Send message to a chat
 export async function sendMessage(chatId: string, text: string) {

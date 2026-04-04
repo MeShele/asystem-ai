@@ -15,18 +15,18 @@ import {
 } from "lucide-react";
 
 interface Request {
-  id: string;
-  serviceType: string;
+  id: number;
+  request_id: string;
+  services: string[];
   name: string;
   phone: string;
   email?: string;
   company?: string;
   budget?: string;
   timeline?: string;
-  preferredContact?: string;
-  details?: Record<string, string>;
+  description?: string;
   status?: string;
-  createdAt: string;
+  created_at: string;
 }
 
 const columns = [
@@ -75,15 +75,15 @@ export default function RequestsPage() {
 
   function updateStatus(requestId: string, newStatus: string) {
     const updated = requests.map((r) =>
-      r.id === requestId ? { ...r, status: newStatus } : r
+      r.request_id === requestId ? { ...r, status: newStatus } : r
     );
     setRequests(updated);
     fetch(`/api/requests/${requestId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
-    }).catch(() => {});
-    if (selectedRequest?.id === requestId) {
+    }).catch((e) => console.error("Failed to update status:", e));
+    if (selectedRequest?.request_id === requestId) {
       setSelectedRequest({ ...selectedRequest, status: newStatus });
     }
   }
@@ -92,8 +92,8 @@ export default function RequestsPage() {
     (r) =>
       !search ||
       r.name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.id?.toLowerCase().includes(search.toLowerCase()) ||
-      r.serviceType?.toLowerCase().includes(search.toLowerCase())
+      r.request_id?.toLowerCase().includes(search.toLowerCase()) ||
+      (Array.isArray(r.services) && r.services.some(s => s.toLowerCase().includes(search.toLowerCase())))
   );
 
   return (
@@ -150,11 +150,11 @@ export default function RequestsPage() {
                 {/* Cards */}
                 <div className="space-y-2">
                   {colRequests.map((req) => {
-                    const service = serviceLabels[req.serviceType] || serviceLabels.custom;
+                    const service = serviceLabels[req.services?.[0]] || serviceLabels.custom;
                     return (
                       <motion.div
-                        key={req.id}
-                        layoutId={req.id}
+                        key={req.request_id}
+                        layoutId={req.request_id}
                         className="p-4 rounded-xl border border-border-faint bg-surface hover:bg-surface-raised hover:border-border-muted transition-all cursor-pointer group"
                         onClick={() => setSelectedRequest(req)}
                         whileHover={{ y: -2 }}
@@ -165,7 +165,7 @@ export default function RequestsPage() {
                             <span className="text-xs">{service.icon}</span>
                             <span className="font-mono text-[10px] text-brand-400">{service.label}</span>
                           </div>
-                          <span className="font-mono text-[10px] text-text-muted">{req.id}</span>
+                          <span className="font-mono text-[10px] text-text-muted">{req.request_id}</span>
                         </div>
 
                         {/* Client name */}
@@ -194,7 +194,7 @@ export default function RequestsPage() {
 
                         {/* Date */}
                         <div className="mt-2 pt-2 border-t border-border-faint text-[10px] text-text-muted">
-                          {new Date(req.createdAt).toLocaleString("ru-RU", {
+                          {new Date(req.created_at).toLocaleString("ru-RU", {
                             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
                           })}
                         </div>
@@ -232,7 +232,7 @@ export default function RequestsPage() {
               </thead>
               <tbody className="divide-y divide-border-faint">
                 {filtered.map((req, i) => {
-                  const service = serviceLabels[req.serviceType] || serviceLabels.custom;
+                  const service = serviceLabels[req.services?.[0]] || serviceLabels.custom;
                   const col = columns.find((c) => c.id === req.status) || columns[0];
                   return (
                     <tr
@@ -240,7 +240,7 @@ export default function RequestsPage() {
                       className="hover:bg-surface-raised transition-colors cursor-pointer"
                       onClick={() => setSelectedRequest(req)}
                     >
-                      <td className="py-3 px-4 font-mono text-xs text-text-muted">{req.id}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-text-muted">{req.request_id}</td>
                       <td className="py-3 px-4">
                         <div className="font-medium">{req.name || "—"}</div>
                         {req.company && <div className="text-xs text-text-muted">{req.company}</div>}
@@ -256,7 +256,7 @@ export default function RequestsPage() {
                       <td className="py-3 px-4">
                         <select
                           value={req.status}
-                          onChange={(e) => { e.stopPropagation(); updateStatus(req.id, e.target.value); }}
+                          onChange={(e) => { e.stopPropagation(); updateStatus(req.request_id, e.target.value); }}
                           onClick={(e) => e.stopPropagation()}
                           className="px-2 py-1 rounded-md text-xs font-medium bg-surface border border-border-faint text-text-primary focus:outline-none focus:border-brand-500"
                         >
@@ -266,7 +266,7 @@ export default function RequestsPage() {
                         </select>
                       </td>
                       <td className="py-3 px-4 text-text-muted text-xs">
-                        {new Date(req.createdAt).toLocaleDateString("ru-RU")}
+                        {new Date(req.created_at).toLocaleDateString("ru-RU")}
                       </td>
                     </tr>
                   );
@@ -306,7 +306,7 @@ export default function RequestsPage() {
               {/* Header */}
               <div className="sticky top-0 bg-bg-primary border-b border-border-faint p-5 flex items-center justify-between z-10">
                 <div>
-                  <div className="font-mono text-xs text-text-muted mb-0.5">{selectedRequest.id}</div>
+                  <div className="font-mono text-xs text-text-muted mb-0.5">{selectedRequest.request_id}</div>
                   <h2 className="text-lg font-bold">{selectedRequest.name || "Без имени"}</h2>
                 </div>
                 <button
@@ -325,7 +325,7 @@ export default function RequestsPage() {
                     {columns.map((col) => (
                       <button
                         key={col.id}
-                        onClick={() => updateStatus(selectedRequest.id, col.id)}
+                        onClick={() => updateStatus(selectedRequest.request_id, col.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                           selectedRequest.status === col.id
                             ? "border-brand-500 bg-brand-500/10 text-brand-500"
@@ -342,8 +342,8 @@ export default function RequestsPage() {
                 <div>
                   <label className="text-xs text-text-muted block mb-2">Услуга</label>
                   <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border-faint bg-surface">
-                    <span>{(serviceLabels[selectedRequest.serviceType] || serviceLabels.custom).icon}</span>
-                    <span className="font-medium text-sm">{(serviceLabels[selectedRequest.serviceType] || serviceLabels.custom).label}</span>
+                    <span>{(serviceLabels[selectedRequest.services?.[0]] || serviceLabels.custom).icon}</span>
+                    <span className="font-medium text-sm">{(serviceLabels[selectedRequest.services?.[0]] || serviceLabels.custom).label}</span>
                   </div>
                 </div>
 
@@ -405,7 +405,7 @@ export default function RequestsPage() {
                       <div className="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-brand-500 border-2 border-bg-primary" />
                       <div className="text-sm font-medium">Заявка создана</div>
                       <div className="text-xs text-text-muted">
-                        {new Date(selectedRequest.createdAt).toLocaleString("ru-RU")}
+                        {new Date(selectedRequest.created_at).toLocaleString("ru-RU")}
                       </div>
                     </div>
                   </div>

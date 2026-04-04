@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, initPartnerTables } from '@/lib/db';
 
 // GET — список партнёров для админа (из основной таблицы partners)
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const cookie = req.cookies.get("admin_session");
+  if (!cookie?.value) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const db = getDb();
     await initPartnerTables();

@@ -20,7 +20,12 @@ async function ensureTable() {
   )`;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const cookie = req.cookies.get("admin_session");
+  if (!cookie?.value) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   await ensureTable();
   const rows = await db`SELECT * FROM asystem_requests ORDER BY created_at DESC`;
