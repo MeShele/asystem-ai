@@ -382,17 +382,12 @@ export default function RequestsPage() {
                   </div>
                 </div>
 
-                {/* Details */}
-                {selectedRequest.details && Object.keys(selectedRequest.details).length > 0 && (
+                {/* Description */}
+                {selectedRequest.description && (
                   <div>
-                    <label className="text-xs text-text-muted block mb-2">Детали проекта</label>
-                    <div className="space-y-2">
-                      {Object.entries(selectedRequest.details).map(([key, value]) => (
-                        <div key={key} className="px-3 py-2.5 rounded-lg border border-border-faint bg-surface">
-                          <div className="text-[10px] font-mono text-text-muted mb-0.5">{key}</div>
-                          <div className="text-sm">{value}</div>
-                        </div>
-                      ))}
+                    <label className="text-xs text-text-muted block mb-2">Описание проекта</label>
+                    <div className="px-3 py-2.5 rounded-lg border border-border-faint bg-surface text-sm">
+                      {selectedRequest.description}
                     </div>
                   </div>
                 )}
