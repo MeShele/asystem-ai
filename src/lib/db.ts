@@ -1,14 +1,40 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool } from "pg";
 
-let sql: ReturnType<typeof neon> | null = null;
+let pool: Pool | null = null;
 
-export function getDb() {
+function getPool() {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not set");
   }
-  if (!sql) {
-    sql = neon(process.env.DATABASE_URL);
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+    });
   }
+  return pool;
+}
+
+type SqlResult = Record<string, unknown>[];
+
+export function getDb() {
+  const p = getPool();
+
+  const sql = async (
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<SqlResult> => {
+    let query = "";
+    strings.forEach((str, i) => {
+      query += str;
+      if (i < values.length) {
+        query += `$${i + 1}`;
+      }
+    });
+    const result = await p.query(query, values);
+    return result.rows;
+  };
+
   return sql;
 }
 

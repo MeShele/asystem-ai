@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
 
-let neonSql: ReturnType<typeof import('@neondatabase/serverless').neon> | null = null;
+let initialized = false;
 
 async function getSql() {
   if (!process.env.DATABASE_URL) return null;
-  if (!neonSql) {
-    const { neon } = await import('@neondatabase/serverless');
-    neonSql = neon(process.env.DATABASE_URL!);
-    await neonSql`CREATE TABLE IF NOT EXISTS asystem_partners (
+  const db = getDb();
+  if (!initialized) {
+    await db`CREATE TABLE IF NOT EXISTS asystem_partners (
       id SERIAL PRIMARY KEY,
       partner_id TEXT UNIQUE,
       name TEXT,
@@ -19,8 +19,9 @@ async function getSql() {
       status TEXT DEFAULT 'new',
       created_at TIMESTAMP DEFAULT NOW()
     )`;
+    initialized = true;
   }
-  return neonSql;
+  return db;
 }
 
 // GET — список партнёров для админа
