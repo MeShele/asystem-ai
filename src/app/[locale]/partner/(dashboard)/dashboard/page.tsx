@@ -20,7 +20,8 @@ export default function PartnerDashboardPage() {
       })
       .then(setData)
       .catch(() => {
-        window.location.href = "/partner/login";
+        const locale = window.location.pathname.split("/")[1] || "ru";
+        window.location.href = `/${locale}/partner/login`;
       })
       .finally(() => setLoading(false));
   }, []);

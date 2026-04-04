@@ -103,7 +103,8 @@ export default function PartnerDashboardLayout({ children }: { children: React.R
             onClick={async () => {
               await fetch("/api/partner/login", { method: "DELETE" });
               document.cookie = "partner_session=; path=/; max-age=0";
-              window.location.href = "/partner/login";
+              const locale = window.location.pathname.split("/")[1] || "ru";
+              window.location.href = `/${locale}/partner/login`;
             }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-text-muted hover:text-red-400 hover:bg-red-500/5 transition-all w-full ${
               collapsed ? "justify-center" : ""

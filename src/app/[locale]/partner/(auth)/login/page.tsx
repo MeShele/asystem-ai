@@ -45,7 +45,8 @@ export default function PartnerLoginPage() {
         });
       }
 
-      window.location.href = "/partner/dashboard";
+      const locale = window.location.pathname.split("/")[1] || "ru";
+      window.location.href = `/${locale}/partner/dashboard`;
     } catch {
       setError("Ошибка сети");
     } finally {

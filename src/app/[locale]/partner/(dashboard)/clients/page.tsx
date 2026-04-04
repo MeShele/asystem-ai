@@ -21,7 +21,8 @@ export default function PartnerClientsPage() {
       })
       .then((data) => setClients(data.clients || []))
       .catch(() => {
-        window.location.href = "/partner/login";
+        const locale = window.location.pathname.split("/")[1] || "ru";
+        window.location.href = `/${locale}/partner/login`;
       })
       .finally(() => setLoading(false));
   }, []);
