@@ -40,7 +40,29 @@ export async function POST(
     ORDER BY created_at ASC
   `;
 
-  // Build system prompt with project context
+  // Fetch partner stats (total projects, completed, types)
+  const partnerStatsRows = await db`
+    SELECT
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE status = 'completed')::int as completed,
+      ARRAY_AGG(DISTINCT project_type) FILTER (WHERE project_type IS NOT NULL) as types
+    FROM partner_clients WHERE partner_id = ${partnerId}
+  `;
+  const pStats = partnerStatsRows[0] || {};
+
+  // Fetch approved KPs from this partner (learning from past successes)
+  const approvedKps = await db`
+    SELECT project_type, client_company, kp_content
+    FROM partner_clients
+    WHERE partner_id = ${partnerId}
+      AND kp_status = 'approved'
+      AND kp_content IS NOT NULL
+      AND id != ${Number(id)}
+    ORDER BY kp_reviewed_at DESC
+    LIMIT 3
+  `;
+
+  // Build system prompt with project context + partner history
   const calcConfig = project.calculator_config as { selected?: string[]; quantities?: Record<string, number>; discount?: number } | null;
   const systemPrompt = buildSystemPrompt({
     partnerName: String(project.partner_name || ""),
@@ -53,6 +75,16 @@ export async function POST(
     discount: calcConfig?.discount || 0,
     partnerPrice: Number(project.partner_price) || 0,
     description: String(project.description || ""),
+    partnerStats: {
+      totalProjects: Number(pStats.total) || 0,
+      completedProjects: Number(pStats.completed) || 0,
+      projectTypes: Array.isArray(pStats.types) ? pStats.types.filter(Boolean).map(String) : [],
+    },
+    approvedKps: approvedKps.map((kp) => ({
+      projectType: String(kp.project_type || ""),
+      clientCompany: String(kp.client_company || ""),
+      kpContent: String(kp.kp_content || ""),
+    })),
   });
 
   // Build messages array for AI

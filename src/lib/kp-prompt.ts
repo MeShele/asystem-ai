@@ -1,6 +1,12 @@
 import { categories } from "./calculator-data";
 
-interface KpContext {
+interface ApprovedKp {
+  projectType: string;
+  clientCompany: string;
+  kpContent: string;
+}
+
+export interface KpContext {
   partnerName: string;
   partnerCompany: string;
   clientName: string;
@@ -11,6 +17,12 @@ interface KpContext {
   discount: number;
   partnerPrice: number;
   description: string;
+  partnerStats?: {
+    totalProjects: number;
+    completedProjects: number;
+    projectTypes: string[];
+  };
+  approvedKps?: ApprovedKp[];
 }
 
 function buildServicesList(selectedIds: string[], quantities: Record<string, number>): string {
@@ -64,7 +76,24 @@ ${servicesList}
 ## Полный каталог услуг Asystem (для рекомендаций):
 ${buildFullServiceCatalog()}
 
-## Как вести диалог
+${ctx.partnerStats && ctx.partnerStats.totalProjects > 0 ? `## Опыт партнёра
+- Всего проектов: ${ctx.partnerStats.totalProjects}
+- Завершённых: ${ctx.partnerStats.completedProjects}
+- Типы проектов: ${ctx.partnerStats.projectTypes.join(", ") || "—"}
+
+Учитывай опыт партнёра при рекомендациях. Если он уже делал похожие проекты — ссылайся на это.
+` : ""}${ctx.approvedKps && ctx.approvedKps.length > 0 ? `## Одобренные КП партнёра (используй как образец стиля)
+
+Ниже — примеры ранее одобренных КП этого партнёра. Изучи их стиль, структуру и подход. Используй лучшие практики из них для нового КП. Адаптируй под текущий проект, не копируй дословно.
+
+${ctx.approvedKps.map((kp, i) => `### Одобренное КП #${i + 1} (${kp.projectType}, ${kp.clientCompany || "—"})
+${kp.kpContent.slice(0, 2000)}${kp.kpContent.length > 2000 ? "\n...[сокращено]" : ""}`).join("\n\n")}
+
+**Принципы из одобренных КП:**
+- Повторяй удачную структуру и тон
+- Если определённые формулировки были одобрены — используй похожие
+- Каждое новое КП должно быть лучше предыдущего
+` : ""}## Как вести диалог
 
 ### Определи язык
 Определяй язык по первому сообщению партнёра. Если пишет на русском — отвечай на русском. На английском — на английском. На кыргызском — на кыргызском. КП формируй на том же языке.
