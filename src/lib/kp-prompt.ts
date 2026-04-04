@@ -16,11 +16,11 @@ interface KpContext {
 function buildServicesList(selectedIds: string[], quantities: Record<string, number>): string {
   const lines: string[] = [];
   for (const cat of categories) {
-    const items = cat.items.filter((item) => selectedIds.includes(item.id));
+    const items = cat.items.filter((item) => selectedIds.includes(item.name));
     if (items.length === 0) continue;
     lines.push(`\n**${cat.name}:**`);
     for (const item of items) {
-      const qty = quantities[item.id] || item.qty || 1;
+      const qty = quantities[item.name] || item.defaultQty || 1;
       const total = item.price * qty;
       const unit = item.unit ? ` × ${qty} ${item.unit}` : "";
       lines.push(`- ${item.name}${unit}: $${total}`);
