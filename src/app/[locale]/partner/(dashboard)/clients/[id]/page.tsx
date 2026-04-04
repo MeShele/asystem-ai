@@ -38,7 +38,8 @@ function formatDate(iso: string): string {
 
 /* ─── Debounce hook ─── */
 
-function useDebouncedCallback<T extends (...args: unknown[]) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function useDebouncedCallback<T extends (...args: any[]) => void>(
   callback: T,
   delay: number,
 ): T {
@@ -47,7 +48,8 @@ function useDebouncedCallback<T extends (...args: unknown[]) => void>(
   callbackRef.current = callback;
 
   return useCallback(
-    ((...args: unknown[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((...args: any[]) => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => callbackRef.current(...args), delay);
     }) as T,
