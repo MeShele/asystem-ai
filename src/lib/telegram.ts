@@ -1,12 +1,47 @@
-const BOT_TOKEN = () => process.env.TELEGRAM_BOT_TOKEN || "";
-const ADMIN_CHAT = () => process.env.TELEGRAM_CHAT_ID || "";
-const PROJECT_GROUP = () => process.env.TELEGRAM_GROUP_ID || "";
+import { getDb } from "./db";
+
+// Cache settings for 60 seconds to avoid DB hit on every call
+let cachedSettings: Record<string, string> | null = null;
+let cacheTime = 0;
+
+async function getTelegramSettings(): Promise<Record<string, string>> {
+  const now = Date.now();
+  if (cachedSettings && now - cacheTime < 60000) {
+    return cachedSettings;
+  }
+
+  try {
+    const db = getDb();
+    const rows = await db`SELECT key, value FROM app_settings WHERE key IN ('telegram_bot_token', 'telegram_chat_id', 'telegram_group_id')`;
+    const settings: Record<string, string> = {};
+    for (const row of rows) {
+      settings[row.key as string] = row.value as string;
+    }
+
+    // Fallback to env vars if DB is empty
+    if (!settings.telegram_bot_token) settings.telegram_bot_token = process.env.TELEGRAM_BOT_TOKEN || "";
+    if (!settings.telegram_chat_id) settings.telegram_chat_id = process.env.TELEGRAM_CHAT_ID || "";
+    if (!settings.telegram_group_id) settings.telegram_group_id = process.env.TELEGRAM_GROUP_ID || "";
+
+    cachedSettings = settings;
+    cacheTime = now;
+    return settings;
+  } catch {
+    // If DB not ready, fall back to env
+    return {
+      telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
+      telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
+      telegram_group_id: process.env.TELEGRAM_GROUP_ID || "",
+    };
+  }
+}
 
 const api = async (method: string, body?: Record<string, unknown>) => {
-  const token = BOT_TOKEN();
+  const settings = await getTelegramSettings();
+  const token = settings.telegram_bot_token;
   if (!token) {
-    console.warn(`Telegram API skipped (no BOT_TOKEN): ${method}`);
-    return { ok: false, description: "BOT_TOKEN not configured" };
+    console.warn(`Telegram API skipped (no bot token): ${method}`);
+    return { ok: false, description: "Bot token not configured" };
   }
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -25,29 +60,32 @@ const api = async (method: string, body?: Record<string, unknown>) => {
   }
 };
 
-// Send message to a chat
 export async function sendMessage(chatId: string, text: string) {
   return api("sendMessage", { chat_id: chatId, text, parse_mode: "Markdown" });
 }
 
-// Send message to admin
 export async function notifyAdmin(text: string) {
-  return sendMessage(ADMIN_CHAT(), text);
+  const settings = await getTelegramSettings();
+  const chatId = settings.telegram_chat_id;
+  if (!chatId) return { ok: false, description: "Admin chat ID not configured" };
+  return sendMessage(chatId, text);
 }
 
-// Send message to a specific topic in the project group
 export async function sendToTopic(topicId: number, text: string) {
+  const settings = await getTelegramSettings();
+  const groupId = settings.telegram_group_id;
+  if (!groupId) return { ok: false, description: "Group ID not configured" };
   return api("sendMessage", {
-    chat_id: PROJECT_GROUP(),
+    chat_id: groupId,
     message_thread_id: topicId,
     text,
     parse_mode: "Markdown",
   });
 }
 
-// Create a forum topic for a new project
 export async function createProjectTopic(projectId: string, clientName: string, partnerName: string) {
-  const groupId = PROJECT_GROUP();
+  const settings = await getTelegramSettings();
+  const groupId = settings.telegram_group_id;
   if (!groupId) return null;
 
   try {
@@ -64,7 +102,6 @@ export async function createProjectTopic(projectId: string, clientName: string, 
 
     const topicId = result.result.message_thread_id;
 
-    // Send welcome message to topic
     await sendToTopic(topicId, [
       `📋 *Проект ${projectId}*`,
       ``,
@@ -83,9 +120,9 @@ export async function createProjectTopic(projectId: string, clientName: string, 
   }
 }
 
-// Create invite link for the project group
 export async function createGroupInvite(expireSeconds = 86400) {
-  const groupId = PROJECT_GROUP();
+  const settings = await getTelegramSettings();
+  const groupId = settings.telegram_group_id;
   if (!groupId) return null;
 
   try {
@@ -101,16 +138,17 @@ export async function createGroupInvite(expireSeconds = 86400) {
   }
 }
 
-// Update topic name (e.g., add status)
 export async function updateTopicName(topicId: number, name: string) {
+  const settings = await getTelegramSettings();
+  const groupId = settings.telegram_group_id;
+  if (!groupId) return { ok: false, description: "Group ID not configured" };
   return api("editForumTopic", {
-    chat_id: PROJECT_GROUP(),
+    chat_id: groupId,
     message_thread_id: topicId,
     name,
   });
 }
 
-// Notify partner about status change
 export async function notifyPartnerStatus(
   partnerTelegramId: string,
   projectId: string,

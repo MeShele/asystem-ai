@@ -7,10 +7,11 @@ type AiProvider = "openrouter" | "anthropic";
 
 interface Settings {
   company_name?: string;
-  notification_email?: string;
-  phone?: string;
+  company_email?: string;
+  company_phone?: string;
   telegram_bot_token?: string;
   telegram_chat_id?: string;
+  telegram_group_id?: string;
   resend_api_key?: string;
   ai_provider?: AiProvider;
   ai_api_key?: string;
@@ -101,8 +102,8 @@ export default function SettingsPage() {
     desc: "Название компании, контакты, адрес",
     fields: [
       { key: "company_name" as const, label: "Название компании", placeholder: "asystem.ai", type: "text" },
-      { key: "notification_email" as const, label: "Email для уведомлений", placeholder: "admin@asystem.ai", type: "email" },
-      { key: "phone" as const, label: "Телефон", placeholder: "+996 XXX XXX XXX", type: "tel" },
+      { key: "company_email" as const, label: "Email для уведомлений", placeholder: "admin@asystem.ai", type: "email" },
+      { key: "company_phone" as const, label: "Телефон", placeholder: "+996 XXX XXX XXX", type: "tel" },
     ],
   };
 
@@ -111,8 +112,9 @@ export default function SettingsPage() {
     title: "Уведомления",
     desc: "Telegram-бот и email-уведомления",
     fields: [
-      { key: "telegram_bot_token" as const, label: "Telegram Bot Token", placeholder: "bot123456:ABC...", type: "text" },
-      { key: "telegram_chat_id" as const, label: "Telegram Chat ID", placeholder: "-1001234567890", type: "text" },
+      { key: "telegram_bot_token" as const, label: "Telegram Bot Token", placeholder: "bot123456:ABC...", type: "password" },
+      { key: "telegram_chat_id" as const, label: "Telegram Chat ID (уведомления админу)", placeholder: "-1001234567890", type: "text" },
+      { key: "telegram_group_id" as const, label: "Telegram Group ID (топики проектов)", placeholder: "-1001234567890", type: "text" },
       { key: "resend_api_key" as const, label: "Resend API Key", placeholder: "re_...", type: "password" },
     ],
   };

@@ -16,12 +16,14 @@ export async function GET(req: NextRequest) {
     settings[row.key as string] = row.value as string;
   }
 
-  // Mask API key for display
-  if (settings.ai_api_key) {
-    const key = settings.ai_api_key;
-    settings.ai_api_key_masked = key.length > 8
-      ? key.slice(0, 4) + "..." + key.slice(-4)
-      : "****";
+  // Mask sensitive keys for display
+  for (const sensitiveKey of ["ai_api_key", "telegram_bot_token", "resend_api_key"]) {
+    if (settings[sensitiveKey]) {
+      const val = settings[sensitiveKey];
+      settings[`${sensitiveKey}_masked`] = val.length > 8
+        ? val.slice(0, 4) + "..." + val.slice(-4)
+        : "****";
+    }
   }
 
   return NextResponse.json(settings);
@@ -37,7 +39,12 @@ export async function PUT(req: NextRequest) {
   const db = getDb();
   await initPartnerTables();
 
-  const allowedKeys = ["ai_provider", "ai_api_key", "ai_model"];
+  const allowedKeys = [
+    "ai_provider", "ai_api_key", "ai_model",
+    "telegram_bot_token", "telegram_chat_id", "telegram_group_id",
+    "company_name", "company_email", "company_phone",
+    "resend_api_key",
+  ];
 
   for (const key of allowedKeys) {
     if (data[key] !== undefined) {
