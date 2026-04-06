@@ -475,6 +475,25 @@ export default function ProjectDetailPage() {
             />
           </motion.div>
 
+          {/* Calculator (shown when calculator mode is active) */}
+          {pricingMode === "calculator" && (
+            <motion.div
+              className="rounded-xl border border-border-faint bg-surface p-5"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+            >
+              <ProjectCalculator
+                initialConfig={project.calculator_config ?? undefined}
+                onConfigChange={(config) => debouncedCalcSave(config)}
+                onPriceChange={(base) => {
+                  setBasePrice(base);
+                  debouncedPricingSave(base, partnerPrice, "calculator");
+                }}
+              />
+            </motion.div>
+          )}
+
           {/* KP Editor */}
           <motion.div
             className="rounded-xl border border-border-faint bg-surface p-5 space-y-3"
@@ -587,13 +606,7 @@ export default function ProjectDetailPage() {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <ProjectCalculator
-                    initialConfig={project.calculator_config ?? undefined}
-                    onConfigChange={(config) => debouncedCalcSave(config)}
-                    onPriceChange={(base) => {
-                      setBasePrice(base);
-                    }}
-                  />
+                  <div className="text-xs text-text-muted">Калькулятор — в левой колонке ниже</div>
                   <div className="space-y-1.5">
                     <label className="text-xs text-text-muted">
                       Цена для клиента, $

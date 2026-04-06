@@ -3,14 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-const projectTypes = [
-  { value: "website", label: "Веб-платформа" },
-  { value: "bot", label: "AI / Бот" },
-  { value: "app", label: "Мобильное приложение" },
-  { value: "erp", label: "Enterprise / ERP" },
-  { value: "integration", label: "Интеграция 1С" },
-  { value: "other", label: "Другое" },
-];
 
 const inputClass =
   "w-full p-3 bg-bg-primary border border-border-faint rounded-xl text-text-primary text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all placeholder:text-text-muted";
@@ -26,7 +18,7 @@ export function CreateProjectModal({
     clientName: "",
     clientPhone: "",
     clientCompany: "",
-    projectType: "website",
+    projectType: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -75,11 +67,7 @@ export function CreateProjectModal({
           <input className={inputClass} placeholder="Телефон клиента" type="tel" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} />
           <input className={inputClass} placeholder="Компания клиента" value={form.clientCompany} onChange={(e) => setForm({ ...form, clientCompany: e.target.value })} />
 
-          <select className={inputClass} value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })}>
-            {projectTypes.map((pt) => (
-              <option key={pt.value} value={pt.value}>{pt.label}</option>
-            ))}
-          </select>
+          <input className={inputClass} placeholder="Тип проекта (например: сайт, бот, приложение, CRM...)" value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })} />
 
           <div className="p-3 rounded-lg bg-brand-500/[0.04] border border-brand-500/10 text-xs text-text-secondary leading-relaxed">
             Цену проекта можно настроить после создания — через калькулятор или вручную.
