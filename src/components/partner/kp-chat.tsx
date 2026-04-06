@@ -73,11 +73,12 @@ export function KpChat({ projectId, kpMessages, onKpGenerated }: KpChatProps) {
       const data = await res.json();
 
       if (data.message) {
+        const content = typeof data.message === "string" ? data.message : data.message.content ?? "";
         const assistantMsg: KpMessage = {
-          id: data.message.id ?? Date.now() + 1,
+          id: Date.now() + 1,
           role: "assistant",
-          content: data.message.content,
-          created_at: data.message.created_at ?? new Date().toISOString(),
+          content,
+          created_at: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
       }
