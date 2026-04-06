@@ -8,7 +8,6 @@ import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
-import { CustomCursor } from "@/components/shared/custom-cursor";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -102,7 +101,6 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
-            <CustomCursor />
             <LayoutShell>{children}</LayoutShell>
             <ThemeModal />
           </ThemeProvider>

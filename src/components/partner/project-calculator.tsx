@@ -341,11 +341,10 @@ export function ProjectCalculator({
   const discountAmount = Math.round(subtotal * (discount / 100));
   const total = subtotal - discountAmount;
 
-  // Notify parent when prices change
-  const partnerPrice = Math.round(total * 0.15);
+  // Notify parent when base price changes
   useEffect(() => {
-    onPriceChange?.(total, partnerPrice);
-  }, [total, partnerPrice, onPriceChange]);
+    onPriceChange?.(total, 0);
+  }, [total, onPriceChange]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-3">
@@ -415,11 +414,6 @@ export function ProjectCalculator({
                 <AnimatedPrice value={total} />
               </span>
             </div>
-          </div>
-
-          {/* Partner markup slider */}
-          <div className="border-t border-border-faint pt-5">
-            <PartnerMarkup basePrice={total} />
           </div>
 
           {/* Selected count */}
