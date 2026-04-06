@@ -93,6 +93,7 @@ export async function initPartnerTables() {
     { name: "kp_admin_feedback", def: "TEXT" },
     { name: "kp_submitted_at", def: "TIMESTAMP" },
     { name: "kp_reviewed_at", def: "TIMESTAMP" },
+    { name: "pricing_mode", def: "TEXT DEFAULT 'manual'" },
   ];
   for (const col of kpColumns) {
     await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partner_clients' AND column_name = ${col.name}`.then(async (rows) => {

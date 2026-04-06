@@ -96,7 +96,9 @@ export async function POST(
     selectedServices: calcConfig?.selected || [],
     quantities: calcConfig?.quantities || {},
     discount: calcConfig?.discount || 0,
+    basePrice: Number(project.base_price) || 0,
     partnerPrice: Number(project.partner_price) || 0,
+    pricingMode: (String(project.pricing_mode) === "calculator" ? "calculator" : "manual") as "calculator" | "manual",
     description: String(project.description || ""),
     clientRequestInfo: clientRequestInfo || undefined,
     partnerStats: {

@@ -14,7 +14,6 @@ import {
   Clock,
   Download,
   Pencil,
-  Calculator,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import type { Client, CalculatorConfig, KpStatus } from "@/types/partner";
@@ -171,6 +170,7 @@ export default function ProjectDetailPage() {
   const [editingKp, setEditingKp] = useState(false);
   const [basePrice, setBasePrice] = useState(0);
   const [partnerPrice, setPartnerPrice] = useState(0);
+  const [pricingMode, setPricingMode] = useState<"calculator" | "manual">("manual");
   const [submitting, setSubmitting] = useState(false);
   const [savingDesc, setSavingDesc] = useState(false);
   const [savingKp, setSavingKp] = useState(false);
@@ -192,6 +192,7 @@ export default function ProjectDetailPage() {
         setKpContent(p.kp_content ?? "");
         setBasePrice(p.base_price ?? 0);
         setPartnerPrice(p.partner_price ?? 0);
+        setPricingMode(p.pricing_mode || "manual");
         setKpMessages(data.kpMessages ?? []);
         setClientRequest(data.clientRequest as typeof clientRequest ?? null);
       })
@@ -247,7 +248,7 @@ export default function ProjectDetailPage() {
     }
   }
 
-  /* Debounced calculator save */
+  /* Debounced calculator config save (also saves prices) */
   const debouncedCalcSave = useDebouncedCallback((config: CalculatorConfig) => {
     if (!project) return;
     fetch(`/api/partner/clients/${project.id}/calculator`, {
@@ -256,6 +257,30 @@ export default function ProjectDetailPage() {
       body: JSON.stringify(config),
     });
   }, 1000);
+
+  /* Debounced manual pricing save */
+  const debouncedPricingSave = useDebouncedCallback(
+    (base: number, partner: number, mode: "calculator" | "manual") => {
+      if (!project) return;
+      fetch(`/api/partner/clients/${project.id}/calculator`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pricingMode: mode, basePrice: base, partnerPrice: partner }),
+      });
+    },
+    800,
+  );
+
+  /* Switch pricing mode */
+  function switchPricingMode(mode: "calculator" | "manual") {
+    setPricingMode(mode);
+    if (!project) return;
+    fetch(`/api/partner/clients/${project.id}/calculator`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pricingMode: mode, basePrice, partnerPrice }),
+    });
+  }
 
   /* Submit KP */
   async function submitKp() {
@@ -450,27 +475,6 @@ export default function ProjectDetailPage() {
             />
           </motion.div>
 
-          {/* Calculator */}
-          <motion.div
-            className="space-y-3"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-          >
-            <div className="flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-text-muted" />
-              <h2 className="text-lg font-semibold">Калькулятор проекта</h2>
-            </div>
-            <ProjectCalculator
-              initialConfig={project.calculator_config ?? undefined}
-              onConfigChange={(config) => debouncedCalcSave(config)}
-              onPriceChange={(base, partner) => {
-                setBasePrice(base);
-                setPartnerPrice(partner);
-              }}
-            />
-          </motion.div>
-
           {/* KP Editor */}
           <motion.div
             className="rounded-xl border border-border-faint bg-surface p-5 space-y-3"
@@ -542,41 +546,138 @@ export default function ProjectDetailPage() {
           transition={{ duration: 0.4, delay: 0.1 }}
         >
           <div className="lg:sticky lg:top-6 space-y-4">
-            {/* Price card */}
+            {/* Pricing card */}
             <div className="rounded-xl border border-border-faint bg-surface p-5 space-y-4">
               <div className="text-xs text-text-muted uppercase tracking-wider">
                 Стоимость
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-text-secondary">
-                    Базовая цена
-                  </span>
-                  <span className="text-xl font-bold text-text-primary">
-                    ${basePrice.toLocaleString()}
-                  </span>
-                </div>
+              {/* Mode toggle */}
+              <div className="flex rounded-lg overflow-hidden border border-border-faint">
+                <button
+                  type="button"
+                  onClick={() => switchPricingMode("calculator")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                    pricingMode === "calculator"
+                      ? "bg-brand-500 text-white"
+                      : "bg-bg-secondary text-text-secondary hover:bg-overlay-subtle"
+                  }`}
+                >
+                  Калькулятор
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchPricingMode("manual")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                    pricingMode === "manual"
+                      ? "bg-brand-500 text-white"
+                      : "bg-bg-secondary text-text-secondary hover:bg-overlay-subtle"
+                  }`}
+                >
+                  Своя цена
+                </button>
+              </div>
 
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-text-secondary">
-                    Партнёрская наценка
-                  </span>
-                  <span className="text-sm font-medium text-text-primary">
-                    ${partnerPrice.toLocaleString()}
-                  </span>
-                </div>
+              {/* Calculator mode */}
+              {pricingMode === "calculator" && (
+                <motion.div
+                  className="space-y-4"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ProjectCalculator
+                    initialConfig={project.calculator_config ?? undefined}
+                    onConfigChange={(config) => debouncedCalcSave(config)}
+                    onPriceChange={(base) => {
+                      setBasePrice(base);
+                    }}
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-text-muted">
+                      Цена для клиента, $
+                    </label>
+                    <input
+                      type="number"
+                      value={partnerPrice || ""}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0;
+                        setPartnerPrice(v);
+                        debouncedPricingSave(basePrice, v, "calculator");
+                      }}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border-faint text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500/40 transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              )}
 
-                <div className="border-t border-border-faint pt-3">
+              {/* Manual mode */}
+              {pricingMode === "manual" && (
+                <motion.div
+                  className="space-y-3"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-text-muted">
+                      Себестоимость проекта, $
+                    </label>
+                    <input
+                      type="number"
+                      value={basePrice || ""}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0;
+                        setBasePrice(v);
+                        debouncedPricingSave(v, partnerPrice, "manual");
+                      }}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border-faint text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500/40 transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-text-muted">
+                      Цена для клиента, $
+                    </label>
+                    <input
+                      type="number"
+                      value={partnerPrice || ""}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0;
+                        setPartnerPrice(v);
+                        debouncedPricingSave(basePrice, v, "manual");
+                      }}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border-faint text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500/40 transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Commission breakdown */}
+              <div className="border-t border-border-faint pt-3 space-y-2">
+                <div className="text-xs text-text-muted uppercase tracking-wider">
+                  Ваш заработок
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">15% от базы</span>
+                    <span className="text-text-primary font-medium">
+                      ${Math.round(basePrice * 0.15).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">50% от накрутки</span>
+                    <span className="text-text-primary font-medium">
+                      ${Math.round(Math.max(0, (partnerPrice - basePrice) * 0.5)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="border-t border-border-faint my-1" />
                   <div className="flex justify-between items-baseline">
-                    <div>
-                      <div className="text-sm font-semibold text-text-primary">
-                        Ваша комиссия
-                      </div>
-                      <div className="text-[10px] text-text-muted">
-                        15% от базы + 50% от наценки
-                      </div>
-                    </div>
+                    <span className="text-sm font-semibold text-text-primary">Итого</span>
                     <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                       ${commission.toLocaleString()}
                     </span>

@@ -15,7 +15,9 @@ export interface KpContext {
   selectedServices: string[];
   quantities: Record<string, number>;
   discount: number;
+  basePrice: number;
   partnerPrice: number;
+  pricingMode: "calculator" | "manual";
   description: string;
   clientRequestInfo?: string;
   partnerStats?: {
@@ -68,7 +70,9 @@ export function buildSystemPrompt(ctx: KpContext): string {
 - **Клиент:** ${ctx.clientName}${ctx.clientCompany ? ` (${ctx.clientCompany})` : ""}
 - **Тип проекта:** ${ctx.projectType}
 - **Описание:** ${ctx.description || "Не заполнено"}
-- **Итоговая цена для клиента:** $${ctx.partnerPrice}
+- **Себестоимость проекта:** $${ctx.basePrice}
+- **Цена для клиента:** $${ctx.partnerPrice}
+- **Режим ценообразования:** ${ctx.pricingMode === "calculator" ? "Калькулятор (детальная разбивка по услугам)" : "Ручная цена (партнёр указал сумму)"}
 - **Скидка:** ${ctx.discount}%
 ${ctx.clientRequestInfo ? `
 ## Данные из заявки клиента (заполнил сам клиент):
@@ -176,7 +180,7 @@ ${kp.kpContent.slice(0, 2000)}${kp.kpContent.length > 2000 ? "\n...[сокращ
 - Ключевые milestones
 
 ## 7. Инвестиции
-- Разбивка по категориям
+${ctx.pricingMode === "calculator" ? `- Разбивка по категориям из калькулятора (используй выбранные услуги выше)` : `- Самостоятельно распредели $${ctx.partnerPrice} по разделам проекта (дизайн, разработка, тестирование и т.д.) на основе описания`}
 - Скидка (если есть)
 - **ИТОГО: $${ctx.partnerPrice}**
 - График платежей: 30% предоплата, 35% по milestone, 35% при сдаче

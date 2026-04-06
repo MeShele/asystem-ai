@@ -5,6 +5,7 @@ export type CalculatorConfig = {
 };
 
 export type KpStatus = "none" | "draft" | "submitted" | "approved" | "rejected";
+export type PricingMode = "calculator" | "manual";
 
 export type Client = {
   id: number;
@@ -21,6 +22,7 @@ export type Client = {
   notes: string;
   description: string | null;
   calculator_config: CalculatorConfig | null;
+  pricing_mode: PricingMode;
   kp_status: KpStatus;
   kp_content: string | null;
   kp_admin_feedback: string | null;

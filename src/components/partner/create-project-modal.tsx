@@ -27,8 +27,6 @@ export function CreateProjectModal({
     clientPhone: "",
     clientCompany: "",
     projectType: "website",
-    budget: "",
-    partnerPrice: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -83,10 +81,8 @@ export function CreateProjectModal({
             ))}
           </select>
 
-          <input className={inputClass} placeholder="Цена для клиента, $ (если уже обсудили)" type="number" value={form.partnerPrice} onChange={(e) => setForm({ ...form, partnerPrice: e.target.value })} />
-
           <div className="p-3 rounded-lg bg-brand-500/[0.04] border border-brand-500/10 text-xs text-text-secondary leading-relaxed">
-            Базовую цену мы назначим после оценки проекта. Ваша комиссия: 15% от базы + 50% от разницы между базой и вашей ценой клиенту.
+            Цену проекта можно настроить после создания — через калькулятор или вручную.
           </div>
 
           {error && <div className="text-sm text-red-500 text-center">{error}</div>}
