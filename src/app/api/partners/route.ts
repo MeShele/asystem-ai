@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, initPartnerTables } from '@/lib/db';
+import { notifyAdmin } from '@/lib/telegram';
 
 // GET — список партнёров для админа (из основной таблицы partners)
 export async function GET(req: NextRequest) {
@@ -68,23 +69,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Telegram notification
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (botToken && chatId) {
-    try {
-      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `🤝 Новый партнёр *${partnerId}*\nИмя: ${data.name || '—'}\nКомпания: ${data.company || '—'}\nТелефон: ${data.phone || '—'}\nСпециализация: ${data.specialization || '—'}`,
-          parse_mode: 'Markdown',
-        }),
-      });
-    } catch (e) {
-      console.error('Telegram notify failed:', e);
-    }
-  }
+  await notifyAdmin(`🤝 Новый партнёр *${partnerId}*\nИмя: ${data.name || '—'}\nКомпания: ${data.company || '—'}\nТелефон: ${data.phone || '—'}\nСпециализация: ${data.specialization || '—'}`).catch(() => {});
 
   return NextResponse.json({ success: true, partnerId });
 }

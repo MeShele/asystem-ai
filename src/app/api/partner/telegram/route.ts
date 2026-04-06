@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { sendMessage } from "@/lib/telegram";
 
 // Link Telegram to partner account
 export async function POST(req: NextRequest) {
@@ -9,6 +10,12 @@ export async function POST(req: NextRequest) {
   }
 
   const { telegramId, telegramUsername } = await req.json();
+
+  // Validate telegramId is a non-empty numeric value
+  if (!telegramId || !/^\d+$/.test(String(telegramId))) {
+    return NextResponse.json({ error: "Invalid Telegram ID" }, { status: 400 });
+  }
+
   const db = getDb();
 
   await db`
@@ -16,6 +23,19 @@ export async function POST(req: NextRequest) {
     SET telegram_id = ${telegramId}, telegram_username = ${telegramUsername || null}
     WHERE partner_id = ${partnerId}
   `;
+
+  // Send test message to verify the connection
+  const result = await sendMessage(
+    String(telegramId),
+    "✅ Telegram подключён!\n\nВы будете получать уведомления о ваших проектах и клиентах."
+  );
+
+  if (!result?.ok) {
+    return NextResponse.json(
+      { error: "Не удалось отправить сообщение. Убедитесь что вы начали чат с ботом @asystem_notify_bot" },
+      { status: 400 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

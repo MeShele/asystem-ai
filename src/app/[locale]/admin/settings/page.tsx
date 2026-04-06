@@ -139,6 +139,17 @@ export default function SettingsPage() {
                 <h2 className="font-semibold">{section.title}</h2>
               </div>
               <p className="text-text-muted text-xs mb-5">{section.desc}</p>
+              {section.title === "Уведомления" && (
+                <div className="bg-blue-500/[0.04] border border-blue-500/10 rounded-xl p-4 text-xs text-text-secondary mb-5">
+                  <p className="font-medium mb-2">Как настроить Telegram-уведомления:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Откройте @BotFather → /newbot → создайте бота</li>
+                    <li>Скопируйте токен бота и вставьте в поле ниже</li>
+                    <li>Напишите @userinfobot чтобы узнать ваш Chat ID</li>
+                    <li>Для топиков проектов: создайте группу с Topics → добавьте бота → получите Group ID</li>
+                  </ol>
+                </div>
+              )}
               <div className="space-y-4">
                 {section.fields.map((field) => (
                   <div key={field.key}>

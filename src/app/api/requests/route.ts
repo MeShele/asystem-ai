@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables } from "@/lib/db";
+import { notifyAdmin, sendMessage } from "@/lib/telegram";
 
 async function ensureTable() {
   const db = getDb();
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
   // If partner found, create partner_client record
   if (partnerId) {
-    await db`INSERT INTO partner_clients (partner_id, request_id, client_name, client_phone, client_company, project_type, budget, status)
+    await db`INSERT INTO partner_clients (partner_id, request_id, client_name, client_phone, client_company, project_type, budget, description, status)
       VALUES (
         ${partnerId},
         ${requestId},
@@ -94,37 +95,18 @@ export async function POST(req: NextRequest) {
         ${data.company ?? null},
         ${Array.isArray(data.services) ? data.services.join(", ") : data.services ?? null},
         ${data.budget ?? null},
+        ${data.description ?? null},
         'new'
       )`;
   }
 
   // Telegram to admin
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (botToken && chatId) {
-    const partnerInfo = partnerId ? `\nПартнёр: ${partnerId} (ref: ${refCode})` : "";
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: `🆕 Новая заявка *${requestId}*\nИмя: ${data.name || "—"}\nТелефон: ${data.phone || "—"}\nКомпания: ${data.company || "—"}\nБюджет: ${budgetLabel}\nСроки: ${timelineLabel}${partnerInfo}`,
-        parse_mode: "Markdown",
-      }),
-    }).catch(() => {});
-  }
+  const partnerInfo = partnerId ? `\nПартнёр: ${partnerId} (ref: ${refCode})` : "";
+  await notifyAdmin(`🆕 Новая заявка *${requestId}*\nИмя: ${data.name || "—"}\nТелефон: ${data.phone || "—"}\nКомпания: ${data.company || "—"}\nБюджет: ${budgetLabel}\nСроки: ${timelineLabel}${partnerInfo}`).catch(() => {});
 
   // Telegram to partner
-  if (partnerTelegramId && botToken) {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: partnerTelegramId,
-        text: `🎉 Ваш клиент оставил заявку!\n\nЗаявка: *${requestId}*\nИмя: ${data.name || "—"}\nТелефон: ${data.phone || "—"}\nБюджет: ${budgetLabel}\nСроки: ${timelineLabel}\n\nМы свяжемся с клиентом и будем держать вас в курсе.`,
-        parse_mode: "Markdown",
-      }),
-    }).catch(() => {});
+  if (partnerTelegramId) {
+    await sendMessage(partnerTelegramId, `🎉 Ваш клиент оставил заявку!\n\nЗаявка: *${requestId}*\nИмя: ${data.name || "—"}\nТелефон: ${data.phone || "—"}\nБюджет: ${budgetLabel}\nСроки: ${timelineLabel}\n\nМы свяжемся с клиентом и будем держать вас в курсе.`).catch(() => {});
   }
 
   return NextResponse.json({ success: true, requestId });

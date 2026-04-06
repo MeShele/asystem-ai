@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { notifyAdmin } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -8,18 +9,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Notify admin via Telegram
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (botToken && chatId) {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: `📧 Новая подписка на продукты\nEmail: ${email}`,
-      }),
-    }).catch(() => {});
-  }
+  await notifyAdmin(`📧 Новая подписка на продукты\nEmail: ${email}`).catch(() => {});
 
   // Save to DB if available
   try {

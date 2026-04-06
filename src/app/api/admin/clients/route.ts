@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables } from "@/lib/db";
+import { sendMessage } from "@/lib/telegram";
 
 const statusLabels: Record<string, string> = {
   new: "Новая",
@@ -64,9 +65,8 @@ export async function PATCH(req: NextRequest) {
     if (rows.length > 0) {
       const row = rows[0];
       const telegramId = row.telegram_id as string | null;
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
-      if (telegramId && botToken) {
+      if (telegramId) {
         const statusText = statusLabels[status] || status;
         let msg = `📋 Обновление проекта *${row.request_id}*\n\nКлиент: ${row.client_name}\nСтатус: *${statusText}*`;
 
@@ -74,15 +74,7 @@ export async function PATCH(req: NextRequest) {
           msg += `\n\n💰 Ваша комиссия: *$${commission}*`;
         }
 
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: telegramId,
-            text: msg,
-            parse_mode: "Markdown",
-          }),
-        }).catch(() => {});
+        await sendMessage(telegramId, msg).catch(() => {});
       }
     }
   }

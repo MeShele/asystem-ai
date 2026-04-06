@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables } from "@/lib/db";
+import { notifyAdmin } from "@/lib/telegram";
 import crypto from "crypto";
 
 // Verify Telegram Login Widget data
@@ -65,18 +66,7 @@ export async function POST(req: NextRequest) {
       )`;
 
     // Notify admin
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-    if (chatId) {
-      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `🤝 Новый партнёр через Telegram\nID: ${partnerId}\nИмя: ${fullName}\nTG: @${username || "—"}`,
-          parse_mode: "Markdown",
-        }),
-      }).catch(() => {});
-    }
+    await notifyAdmin(`🤝 Новый партнёр через Telegram\nID: ${partnerId}\nИмя: ${fullName}\nTG: @${username || "—"}`).catch(() => {});
   }
 
   // Set session cookie
