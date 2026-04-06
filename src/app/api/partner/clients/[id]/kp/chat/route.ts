@@ -33,6 +33,29 @@ export async function POST(
   }
   const project = projects[0];
 
+  // Fetch original client request data
+  let clientRequestInfo = "";
+  if (project.request_id) {
+    const requests = await db`
+      SELECT name, phone, company, services, budget, timeline, description
+      FROM asystem_requests
+      WHERE request_id = ${String(project.request_id)}
+      LIMIT 1
+    `;
+    if (requests.length > 0) {
+      const cr = requests[0];
+      const parts = [];
+      if (cr.name) parts.push(`Имя: ${cr.name}`);
+      if (cr.phone) parts.push(`Телефон: ${cr.phone}`);
+      if (cr.company) parts.push(`Компания: ${cr.company}`);
+      if (cr.budget) parts.push(`Бюджет: ${cr.budget}`);
+      if (cr.timeline) parts.push(`Сроки: ${cr.timeline}`);
+      if (cr.services && Array.isArray(cr.services)) parts.push(`Услуги: ${cr.services.join(", ")}`);
+      if (cr.description) parts.push(`Описание от клиента: ${cr.description}`);
+      clientRequestInfo = parts.join("\n");
+    }
+  }
+
   // Fetch existing messages (limit last 20)
   const existingMessages = await db`
     SELECT role, content FROM kp_messages
@@ -75,6 +98,7 @@ export async function POST(
     discount: calcConfig?.discount || 0,
     partnerPrice: Number(project.partner_price) || 0,
     description: String(project.description || ""),
+    clientRequestInfo: clientRequestInfo || undefined,
     partnerStats: {
       totalProjects: Number(pStats.total) || 0,
       completedProjects: Number(pStats.completed) || 0,

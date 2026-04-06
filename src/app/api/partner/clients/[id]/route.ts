@@ -26,13 +26,27 @@ export async function GET(
 
   const project = projects[0];
 
+  // Fetch original client request data if linked
+  let clientRequest = null;
+  if (project.request_id) {
+    const requests = await db`
+      SELECT name, phone, company, services, budget, timeline, description
+      FROM asystem_requests
+      WHERE request_id = ${project.request_id}
+      LIMIT 1
+    `;
+    if (requests.length > 0) {
+      clientRequest = requests[0];
+    }
+  }
+
   const kpMessages = await db`
     SELECT * FROM kp_messages
     WHERE project_id = ${project.id}
     ORDER BY created_at ASC
   `;
 
-  return NextResponse.json({ project, kpMessages });
+  return NextResponse.json({ project, clientRequest, kpMessages });
 }
 
 export async function PATCH(

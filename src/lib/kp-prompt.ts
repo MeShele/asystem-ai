@@ -17,6 +17,7 @@ export interface KpContext {
   discount: number;
   partnerPrice: number;
   description: string;
+  clientRequestInfo?: string;
   partnerStats?: {
     totalProjects: number;
     completedProjects: number;
@@ -69,7 +70,12 @@ export function buildSystemPrompt(ctx: KpContext): string {
 - **Описание:** ${ctx.description || "Не заполнено"}
 - **Итоговая цена для клиента:** $${ctx.partnerPrice}
 - **Скидка:** ${ctx.discount}%
+${ctx.clientRequestInfo ? `
+## Данные из заявки клиента (заполнил сам клиент):
+${ctx.clientRequestInfo}
 
+Используй эту информацию при формировании КП. Клиент уже описал свои потребности — не переспрашивай то, что уже известно.
+` : ""}
 ## Выбранные услуги из калькулятора:
 ${servicesList}
 

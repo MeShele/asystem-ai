@@ -175,6 +175,7 @@ export default function ProjectDetailPage() {
   const [savingDesc, setSavingDesc] = useState(false);
   const [savingKp, setSavingKp] = useState(false);
   const [kpMessages, setKpMessages] = useState<Array<{id: number; role: string; content: string; created_at: string}>>([]);
+  const [clientRequest, setClientRequest] = useState<{name?: string; phone?: string; company?: string; services?: string[]; budget?: string; timeline?: string; description?: string} | null>(null);
 
   /* Fetch project */
   const fetchProject = useCallback(() => {
@@ -184,13 +185,15 @@ export default function ProjectDetailPage() {
         if (!r.ok) throw new Error("unauthorized");
         return r.json();
       })
-      .then((data: Client & { kpMessages?: Array<{id: number; role: string; content: string; created_at: string}> }) => {
-        setProject(data);
-        setDescription(data.description ?? "");
-        setKpContent(data.kp_content ?? "");
-        setBasePrice(data.base_price ?? 0);
-        setPartnerPrice(data.partner_price ?? 0);
+      .then((data: { project: Client; clientRequest?: Record<string, unknown>; kpMessages?: Array<{id: number; role: string; content: string; created_at: string}> }) => {
+        const p = data.project;
+        setProject(p);
+        setDescription(p.description ?? "");
+        setKpContent(p.kp_content ?? "");
+        setBasePrice(p.base_price ?? 0);
+        setPartnerPrice(p.partner_price ?? 0);
         setKpMessages(data.kpMessages ?? []);
+        setClientRequest(data.clientRequest as typeof clientRequest ?? null);
       })
       .catch(() => {
         window.location.href = `/${locale}/partner/login`;
@@ -363,6 +366,64 @@ export default function ProjectDetailPage() {
               </span>
             </div>
           </motion.div>
+
+          {/* Client request data */}
+          {clientRequest && (
+            <motion.div
+              className="rounded-xl border border-blue-500/20 bg-blue-500/[0.03] p-5 space-y-3"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.08 }}
+            >
+              <div className="text-xs text-blue-500 uppercase tracking-wider font-medium">
+                Заявка от клиента
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {clientRequest.name && (
+                  <div>
+                    <span className="text-text-muted text-xs">Имя:</span>
+                    <div className="font-medium">{clientRequest.name}</div>
+                  </div>
+                )}
+                {clientRequest.phone && (
+                  <div>
+                    <span className="text-text-muted text-xs">Телефон:</span>
+                    <div className="font-medium">{clientRequest.phone}</div>
+                  </div>
+                )}
+                {clientRequest.company && (
+                  <div>
+                    <span className="text-text-muted text-xs">Компания:</span>
+                    <div className="font-medium">{clientRequest.company}</div>
+                  </div>
+                )}
+                {clientRequest.budget && (
+                  <div>
+                    <span className="text-text-muted text-xs">Бюджет:</span>
+                    <div className="font-medium">{clientRequest.budget}</div>
+                  </div>
+                )}
+                {clientRequest.timeline && (
+                  <div>
+                    <span className="text-text-muted text-xs">Сроки:</span>
+                    <div className="font-medium">{clientRequest.timeline}</div>
+                  </div>
+                )}
+                {clientRequest.services && Array.isArray(clientRequest.services) && clientRequest.services.length > 0 && (
+                  <div>
+                    <span className="text-text-muted text-xs">Услуги:</span>
+                    <div className="font-medium">{clientRequest.services.join(", ")}</div>
+                  </div>
+                )}
+              </div>
+              {clientRequest.description && (
+                <div>
+                  <span className="text-text-muted text-xs">Описание от клиента:</span>
+                  <div className="text-sm mt-1 whitespace-pre-wrap">{clientRequest.description}</div>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Description */}
           <motion.div
