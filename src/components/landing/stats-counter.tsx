@@ -56,7 +56,7 @@ export function StatsCounter() {
         <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
         <div className="h-px bg-border-faint" />
 
-        <div className="py-20 lg:py-24 px-4">
+        <div className="py-12 lg:py-16 px-4">
           <div className="flex flex-wrap justify-center lg:justify-between items-center gap-10 lg:gap-0">
             {stats.map((stat, i) => (
               <motion.div
@@ -67,7 +67,7 @@ export function StatsCounter() {
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.25, 0.4, 0, 1] }}
               >
                 <div className="text-center lg:text-left">
-                  <div className="text-5xl lg:text-7xl font-semibold tracking-tighter text-text-primary">
+                  <div className="text-4xl lg:text-5xl font-semibold tracking-tighter text-text-primary">
                     <Counter end={stat.value} suffix={stat.suffix} />
                   </div>
                   <div className="text-xs tracking-[0.2em] uppercase text-text-muted mt-3">{t(stat.key)}</div>

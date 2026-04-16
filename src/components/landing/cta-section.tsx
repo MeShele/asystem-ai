@@ -21,12 +21,12 @@ export function CTASection() {
         >
           <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-brand-500/[0.05] blur-[150px] pointer-events-none" />
 
-          <div className="relative z-10 py-32 lg:py-40 px-6 lg:px-16">
+          <div className="relative z-10 py-20 lg:py-28 px-6 lg:px-16">
             <div className="max-w-2xl">
               <span className="text-xs tracking-[0.2em] uppercase text-text-muted">
                 {t("label")}
               </span>
-              <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter mt-4 mb-2 leading-[1]">
+              <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mt-4 mb-2 leading-[1]">
                 {t("title")}
               </h2>
               <p className="text-text-muted text-lg lg:text-xl mb-10 max-w-md">

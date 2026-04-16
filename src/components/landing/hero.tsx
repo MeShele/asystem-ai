@@ -47,10 +47,10 @@ export function Hero() {
         {/* Text — parallaxes away */}
         <motion.div
           style={{ y: textY, opacity: textOpacity, scale: textScale }}
-          className="pt-40 lg:pt-52 pb-12 relative px-4"
+          className="pt-20 lg:pt-24 pb-6 relative px-4"
         >
           <motion.div variants={stagger} initial="hidden" animate="show" className="text-center">
-            <motion.div variants={fadeUp} className="mb-8 lg:mb-10 flex flex-wrap items-center justify-center gap-3">
+            <motion.div variants={fadeUp} className="mb-5 lg:mb-6 flex flex-wrap items-center justify-center gap-3">
               <span className="text-[13px] font-medium tracking-[0.2em] uppercase text-brand-500">
                 Enterprise IT
               </span>
@@ -62,7 +62,7 @@ export function Hero() {
 
             <motion.h1
               variants={fadeUp}
-              className="text-6xl md:text-[8rem] font-semibold leading-[0.9] tracking-tighter mb-8"
+              className="text-5xl md:text-7xl lg:text-[6.5rem] font-semibold leading-[0.9] tracking-tighter mb-6"
             >
               <span className="text-text-primary">{t("title")}</span>
               <br />
@@ -78,24 +78,23 @@ export function Hero() {
               {t("subtitle")}
             </motion.p>
 
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-14">
-              <MagneticButton className="relative h-14 px-10 text-base font-bold rounded-xl text-white overflow-hidden">
-                <Link href="/client/request" className="relative z-10 flex items-center gap-2">
-                  <span>{t("cta")}</span>
-                  <span className="text-lg">→</span>
-                </Link>
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-500" />
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-accent-500 opacity-0 hover:opacity-100 transition-opacity duration-300" />
-              </MagneticButton>
-              <MagneticButton className="fc-button-secondary h-14 px-10 text-base">
-                <a href="#cases">{t("secondary")}</a>
-              </MagneticButton>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+              <Link
+                href="/client/request"
+                className="fc-button-primary h-14 px-10 text-base font-bold"
+              >
+                <span>{t("cta")}</span>
+                <span className="text-lg">→</span>
+              </Link>
+              <a href="#cases" className="fc-button-secondary h-14 px-10 text-base">
+                {t("secondary")}
+              </a>
             </motion.div>
           </motion.div>
         </motion.div>
 
         {/* Terminal */}
-        <div className="relative px-4 pb-24 lg:pb-32">
+        <div className="relative px-4 pb-16 lg:pb-20">
           <HeroAnimation />
         </div>
       </div>

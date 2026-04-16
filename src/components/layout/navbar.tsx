@@ -77,7 +77,7 @@ export function Navbar() {
 
             <Link
               href="/client/request"
-              className="text-sm h-10 px-4 fc-button-primary !hidden lg:!inline-flex"
+              className="text-sm fc-button-primary hidden lg:!inline-flex"
             >
               <span>{t("request")}</span>
             </Link>

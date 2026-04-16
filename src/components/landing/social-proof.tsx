@@ -23,7 +23,7 @@ export function SocialProof() {
         <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
         <div className="h-px bg-border-faint" />
 
-        <div className="py-32 px-4">
+        <div className="py-20 px-4">
           {/* Client logos */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

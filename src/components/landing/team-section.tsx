@@ -90,16 +90,21 @@ function useScrambleText(text: string, trigger: boolean) {
 
 const teamMembers = [
   { key: "member1" as const, photo: "/team/asylbek.png" },
-  { key: "member2" as const, photo: "/team/dastan.png" },
+  { key: "member2" as const, photo: "/team/urmat.png" },
   { key: "member3" as const, photo: "/team/nasip.png" },
-  { key: "member4" as const, photo: "/team/saadat.png" },
-  { key: "member5" as const, photo: "/team/suimonkul.png" },
-  { key: "member6" as const, photo: "/team/urmat.png" },
-  { key: "member7" as const, photo: "/team/nerses.png" },
-  { key: "member8" as const, photo: "/team/ivan.png" },
-  { key: "member9" as const, photo: "/team/asel.png" },
-  { key: "member10" as const, photo: "/team/azamat.png" },
-  { key: "member11" as const, photo: "/team/akylay.png" },
+  { key: "member4" as const, photo: "/team/dastan.png" },
+  { key: "member5" as const, photo: "/team/saadat.png" },
+  { key: "member6" as const, photo: "/team/suimonkul.png" },
+  { key: "member7" as const, photo: "/team/akylay.png" },
+  { key: "member8" as const, photo: "/team/ermek.png" },
+  { key: "member9" as const, photo: "/team/ruslan.png" },
+  { key: "member10" as const, photo: "/team/emir.png" },
+  { key: "member11" as const, photo: "/team/alan.png" },
+  { key: "member12" as const, photo: "/team/alinur.png" },
+  { key: "member13" as const, photo: "/team/nerses.png" },
+  { key: "member14" as const, photo: "/team/azamat.png" },
+  { key: "member15" as const, photo: "/team/ivan.png" },
+  { key: "member16" as const, photo: "/team/asel.png" },
 ];
 
 export function TeamSection() {
@@ -112,7 +117,7 @@ export function TeamSection() {
         <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
         <div className="h-px bg-border-faint" />
 
-        <div className="py-32 px-4">
+        <div className="py-20 px-4">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +125,7 @@ export function TeamSection() {
             transition={{ duration: 0.6 }}
           >
             <span className="text-xs tracking-[0.2em] uppercase text-text-muted">{t("label")}</span>
-            <h2 className="text-5xl md:text-7xl font-semibold leading-[1] tracking-tighter mt-4 mb-2">
+            <h2 className="text-4xl md:text-5xl font-semibold leading-[1] tracking-tighter mt-4 mb-2">
               {t("title")}
             </h2>
             <p className="text-text-muted text-lg lg:text-xl max-w-lg mb-20">

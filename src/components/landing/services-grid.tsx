@@ -20,7 +20,7 @@ export function ServicesGrid() {
         <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
         <div className="h-px bg-border-faint" />
 
-        <div className="py-32 px-4">
+        <div className="py-20 px-4">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -28,10 +28,10 @@ export function ServicesGrid() {
             transition={{ duration: 0.6 }}
           >
             <span className="text-xs tracking-[0.2em] uppercase text-text-muted">{t("label")}</span>
-            <h2 className="text-5xl md:text-7xl font-semibold leading-[1] tracking-tighter mt-4 mb-2">
+            <h2 className="text-4xl md:text-5xl font-semibold leading-[1] tracking-tighter mt-4 mb-2">
               {t("title")}
             </h2>
-            <p className="text-text-muted text-5xl md:text-7xl font-semibold leading-[1] tracking-tighter mb-6">
+            <p className="text-text-muted text-4xl md:text-5xl font-semibold leading-[1] tracking-tighter mb-6">
               {t("subtitle")}
             </p>
           </motion.div>
