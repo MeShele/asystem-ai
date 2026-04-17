@@ -2,12 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, TrendingUp, DollarSign, Plus, Zap } from "lucide-react";
+import { Users, DollarSign, Plus, Trophy, Lock, CheckCircle2, TrendingUp } from "lucide-react";
 import type { DashboardData } from "@/types/partner";
 import { CreateProjectModal } from "@/components/partner/create-project-modal";
+import dynamic from "next/dynamic";
+
+const EarningsChart = dynamic(() => import("@/components/partner/earnings-chart").then((m) => m.EarningsChart), { ssr: false });
+
+interface MilestoneData {
+  key: string;
+  amount: number;
+  bonus: number;
+  title: string;
+  icon: string;
+}
+
+interface AchievementData {
+  milestone_key: string;
+  milestone_amount: number;
+  bonus_amount: number;
+  achieved_at: string;
+  paid: boolean;
+}
+
+interface ExtendedDashboardData extends DashboardData {
+  achievements: AchievementData[];
+  milestones: MilestoneData[];
+  currentLevel: MilestoneData | null;
+  nextLevel: MilestoneData | null;
+  progressPercent: number;
+  monthlyEarnings: { month: string; earned: number }[];
+}
 
 export default function PartnerDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<ExtendedDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -34,9 +62,10 @@ export default function PartnerDashboardPage() {
     );
   }
 
-  const { partner, stats } = data;
+  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings } = data;
   const currentLocale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] || "ru" : "ru";
   const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${currentLocale}/client/request?ref=${partner.ref_code}`;
+  const achievedKeys = new Set(achievements.map((a) => a.milestone_key));
 
   async function copyRef() {
     await navigator.clipboard.writeText(refLink);
@@ -45,19 +74,63 @@ export default function PartnerDashboardPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-1">Дашборд</h1>
-        <p className="text-text-secondary text-sm">Добро пожаловать, {partner.name}</p>
-      </div>
+    <div className="p-6 lg:p-8 max-w-5xl">
+      {/* ─── Premium Welcome ─── */}
+      <motion.div
+        className="mb-8 relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-r from-brand-500/[0.06] to-brand-700/[0.04] p-6 lg:p-8"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-brand-500/[0.06] blur-[100px] pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            {currentLevel && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 border border-brand-500/20 text-brand-500 text-xs font-semibold">
+                <span>{currentLevel.icon}</span>
+                {currentLevel.title}
+              </span>
+            )}
+          </div>
+          <h1 className="text-2xl lg:text-3xl font-bold mb-1">
+            Добро пожаловать, {partner.name}
+          </h1>
+          <p className="text-text-secondary text-sm">
+            {nextLevel
+              ? `До уровня ${nextLevel.title} ${nextLevel.icon} осталось $${(nextLevel.amount - stats.totalEarned).toLocaleString()}`
+              : "Вы достигли максимального уровня — Legend 🔥"
+            }
+          </p>
+        </div>
+      </motion.div>
 
-      {/* Stats */}
+      {/* ─── KPI Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
-          { label: "Всего клиентов", value: stats.totalClients, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { label: "Активных", value: stats.activeClients, icon: TrendingUp, color: "text-brand-500", bg: "bg-brand-500/10" },
-          { label: "Заработано", value: `$${stats.totalEarned.toLocaleString()}`, icon: DollarSign, color: "text-green-500", bg: "bg-green-500/10" },
+          {
+            label: "Общий доход",
+            value: `$${stats.totalEarned.toLocaleString()}`,
+            icon: DollarSign,
+            color: "text-green-500",
+            bg: "bg-green-500/10",
+            large: true,
+          },
+          {
+            label: "Проектов",
+            value: `${stats.completedClients ?? 0} / ${stats.totalClients}`,
+            icon: Users,
+            color: "text-brand-500",
+            bg: "bg-brand-500/10",
+            sub: "завершено / всего",
+          },
+          {
+            label: "Текущий уровень",
+            value: currentLevel ? currentLevel.title : "Новичок",
+            icon: Trophy,
+            color: "text-amber-500",
+            bg: "bg-amber-500/10",
+            sub: currentLevel ? `бонус +$${currentLevel.bonus.toLocaleString()}` : "заработайте $1,000",
+          },
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -73,19 +146,152 @@ export default function PartnerDashboardPage() {
                   <Icon className={`w-[18px] h-[18px] ${stat.color}`} />
                 </div>
               </div>
-              <div className="text-2xl font-bold mb-0.5">{stat.value}</div>
-              <div className="text-xs text-text-muted">{stat.label}</div>
+              <div className={`font-bold mb-0.5 ${stat.large ? "text-3xl" : "text-2xl"}`}>
+                {stat.value}
+              </div>
+              <div className="text-xs text-text-muted">
+                {stat.sub ?? stat.label}
+              </div>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Ref link */}
+      {/* ─── Progress to Next Level ─── */}
+      {nextLevel && (
+        <motion.div
+          className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-brand-500" />
+              <span className="text-sm font-semibold">Прогресс до {nextLevel.title} {nextLevel.icon}</span>
+            </div>
+            <span className="text-sm font-bold text-brand-500">{progressPercent}%</span>
+          </div>
+          <div className="relative h-3 rounded-full bg-bg-secondary overflow-hidden">
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-500 to-brand-400"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+            />
+            {/* Shimmer */}
+            <div
+              className="absolute inset-y-0 left-0 rounded-full opacity-30"
+              style={{
+                width: `${progressPercent}%`,
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                animation: "shimmer-sweep 2s ease-in-out infinite",
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-text-muted">
+            <span>${stats.totalEarned.toLocaleString()}</span>
+            <span>Бонус: +${nextLevel.bonus.toLocaleString()}</span>
+            <span>${nextLevel.amount.toLocaleString()}</span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── Earnings Chart ─── */}
       <motion.div
         className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.25 }}
+      >
+        <div className="text-sm font-semibold mb-4">Заработок по месяцам</div>
+        <div className="h-[250px]">
+          <EarningsChart data={monthlyEarnings} />
+        </div>
+      </motion.div>
+
+      {/* ─── Achievements Grid ─── */}
+      <motion.div
+        className="mb-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Trophy className="w-5 h-5 text-amber-500" />
+          <h2 className="text-lg font-bold">Достижения</h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {milestones.map((milestone, i) => {
+            const achieved = achievedKeys.has(milestone.key);
+            const achievement = achievements.find((a) => a.milestone_key === milestone.key);
+            return (
+              <motion.div
+                key={milestone.key}
+                className={`relative p-4 rounded-xl border transition-all duration-300 ${
+                  achieved
+                    ? "border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50"
+                    : "border-border-faint bg-surface opacity-60 hover:opacity-80"
+                }`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: achieved ? 1 : 0.6, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 + i * 0.04 }}
+              >
+                {/* Icon */}
+                <div className="text-2xl mb-2">
+                  {achieved ? milestone.icon : "🔒"}
+                </div>
+
+                {/* Title */}
+                <div className="text-sm font-semibold mb-0.5">{milestone.title}</div>
+
+                {/* Amount */}
+                <div className={`text-xs ${achieved ? "text-amber-600 dark:text-amber-400" : "text-text-muted"}`}>
+                  ${milestone.amount.toLocaleString()}
+                </div>
+
+                {/* Bonus badge */}
+                <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                  achieved
+                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                    : "bg-bg-secondary text-text-muted"
+                }`}>
+                  {achieved ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3" />
+                      +${milestone.bonus.toLocaleString()}
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3 h-3" />
+                      Бонус +${milestone.bonus.toLocaleString()}
+                    </>
+                  )}
+                </div>
+
+                {/* Date achieved */}
+                {achieved && achievement?.achieved_at && (
+                  <div className="text-[10px] text-text-muted mt-1">
+                    {new Date(achievement.achieved_at).toLocaleDateString("ru-RU")}
+                  </div>
+                )}
+
+                {/* Glow effect for achieved */}
+                {achieved && (
+                  <div className="absolute inset-0 rounded-xl border border-amber-500/20 pointer-events-none" />
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* ─── Ref link ─── */}
+      <motion.div
+        className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
       >
         <div className="text-xs text-text-muted mb-2">Ваша реферальная ссылка</div>
         <div className="flex gap-2">
@@ -95,33 +301,13 @@ export default function PartnerDashboardPage() {
             className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border-faint text-sm font-mono text-text-secondary"
           />
           <button onClick={copyRef} className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors">
-            {copied ? "Скопировано!" : "Копировать"}
+            {copied ? "✓" : "Копировать"}
           </button>
         </div>
       </motion.div>
 
-      {/* Telegram status */}
-      <motion.div
-        className={`p-4 rounded-xl border mb-6 flex items-center gap-3 ${
-          partner.telegram_id
-            ? "border-green-500/20 bg-green-500/[0.04]"
-            : "border-accent-500/20 bg-accent-500/[0.04]"
-        }`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.25 }}
-      >
-        <span className={`w-2 h-2 rounded-full ${partner.telegram_id ? "bg-green-500" : "bg-accent-500"}`} />
-        <span className={`text-sm ${partner.telegram_id ? "text-green-600 dark:text-green-400" : "text-accent-500"}`}>
-          {partner.telegram_id
-            ? `Telegram подключён ${partner.telegram_username ? `(@${partner.telegram_username})` : ""}`
-            : "Telegram не подключён — перейдите в Настройки для подключения"
-          }
-        </span>
-      </motion.div>
-
-      {/* Create project CTA */}
-      <motion.div className="mb-6" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+      {/* ─── Create project CTA ─── */}
+      <motion.div className="mb-6" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <button
           onClick={() => setShowCreateForm(true)}
           className="w-full p-5 rounded-xl border-2 border-dashed border-brand-500/30 bg-brand-500/[0.03] hover:bg-brand-500/[0.06] hover:border-brand-500/50 transition-all text-center group flex items-center justify-center gap-2"
@@ -137,30 +323,6 @@ export default function PartnerDashboardPage() {
           onCreated={() => { setShowCreateForm(false); window.location.reload(); }}
         />
       )}
-
-      {/* Coming soon */}
-      <motion.div
-        className="p-5 rounded-xl border border-border-faint bg-surface"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-      >
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-accent-500/10 flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5 text-accent-500" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold mb-1">Скоро: Авто-запуск проектов</h3>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Для шаблонных продуктов — партнёр сможет запускать проекты автоматически. White-label — ваш бренд, наша инженерия.
-            </p>
-            <div className="flex gap-2 mt-3">
-              <span className="text-[10px] px-2 py-0.5 rounded bg-accent-500/10 text-accent-500 font-medium">Q2 2026</span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-500 font-medium">API для агентств</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 }

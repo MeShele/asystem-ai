@@ -7,19 +7,11 @@ import {
   Hash,
   Building2,
   Calendar,
-  FileText,
-  Send,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Download,
-  Pencil,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import type { Client, CalculatorConfig, KpStatus } from "@/types/partner";
+import type { Client, CalculatorConfig } from "@/types/partner";
 import { statusLabels } from "@/types/partner";
 import { ProjectCalculator } from "@/components/partner/project-calculator";
-import { KpChat } from "@/components/partner/kp-chat";
 
 /* ─── Helpers ─── */
 
@@ -57,105 +49,6 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
   );
 }
 
-/* ─── KP Status Section ─── */
-
-function KpStatusCard({
-  project,
-  onSubmitKp,
-  onResetToDraft,
-  submitting,
-}: {
-  project: Client;
-  onSubmitKp: () => void;
-  onResetToDraft: () => void;
-  submitting: boolean;
-}) {
-  const locale = getLocale();
-
-  const statusMap: Record<KpStatus, React.ReactNode> = {
-    none: (
-      <div className="flex items-center gap-3 text-text-muted">
-        <FileText className="w-5 h-5" />
-        <span className="text-sm">КП не создано</span>
-      </div>
-    ),
-    draft: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-text-secondary">
-          <Pencil className="w-4 h-4" />
-          <span className="text-sm font-medium">Черновик КП</span>
-        </div>
-        <button
-          onClick={onSubmitKp}
-          disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors disabled:opacity-50"
-        >
-          <Send className="w-4 h-4" />
-          {submitting ? "Отправка..." : "Отправить на согласование"}
-        </button>
-      </div>
-    ),
-    submitted: (
-      <div className="flex items-center gap-3">
-        <span className="relative flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500" />
-        </span>
-        <div>
-          <div className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
-            Ожидает проверки...
-          </div>
-          {project.kp_submitted_at && (
-            <div className="text-xs text-text-muted mt-0.5">
-              Отправлено {formatDate(project.kp_submitted_at)}
-            </div>
-          )}
-        </div>
-      </div>
-    ),
-    rejected: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-red-500">
-          <XCircle className="w-4 h-4" />
-          <span className="text-sm font-medium">КП отклонено</span>
-        </div>
-        {project.kp_admin_feedback && (
-          <div className="p-3 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-sm text-red-600 dark:text-red-400">
-            {project.kp_admin_feedback}
-          </div>
-        )}
-        <button
-          onClick={onResetToDraft}
-          disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border-faint text-sm font-medium hover:bg-overlay-subtle transition-colors disabled:opacity-50"
-        >
-          <Pencil className="w-4 h-4" />
-          Исправить
-        </button>
-      </div>
-    ),
-    approved: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-          <CheckCircle2 className="w-4 h-4" />
-          <span className="text-sm font-medium">КП одобрено</span>
-        </div>
-        <a
-          href={`/${locale}/partner/clients/${project.id}/kp-print`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Скачать PDF
-        </a>
-      </div>
-    ),
-  };
-
-  return statusMap[project.kp_status] ?? statusMap.none;
-}
-
 /* ─── Main Page ─── */
 
 export default function ProjectDetailPage() {
@@ -166,15 +59,10 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState("");
-  const [kpContent, setKpContent] = useState("");
-  const [editingKp, setEditingKp] = useState(false);
   const [basePrice, setBasePrice] = useState(0);
   const [partnerPrice, setPartnerPrice] = useState(0);
   const [pricingMode, setPricingMode] = useState<"calculator" | "manual">("manual");
-  const [submitting, setSubmitting] = useState(false);
   const [savingDesc, setSavingDesc] = useState(false);
-  const [savingKp, setSavingKp] = useState(false);
-  const [kpMessages, setKpMessages] = useState<Array<{id: number; role: string; content: string; created_at: string}>>([]);
   const [clientRequest, setClientRequest] = useState<{name?: string; phone?: string; company?: string; services?: string[]; budget?: string; timeline?: string; description?: string} | null>(null);
 
   /* Fetch project */
@@ -185,15 +73,13 @@ export default function ProjectDetailPage() {
         if (!r.ok) throw new Error("unauthorized");
         return r.json();
       })
-      .then((data: { project: Client; clientRequest?: Record<string, unknown>; kpMessages?: Array<{id: number; role: string; content: string; created_at: string}> }) => {
+      .then((data: { project: Client; clientRequest?: Record<string, unknown> }) => {
         const p = data.project;
         setProject(p);
         setDescription(p.description ?? "");
-        setKpContent(p.kp_content ?? "");
         setBasePrice(p.base_price ?? 0);
         setPartnerPrice(p.partner_price ?? 0);
         setPricingMode(p.pricing_mode || "manual");
-        setKpMessages(data.kpMessages ?? []);
         setClientRequest(data.clientRequest as typeof clientRequest ?? null);
       })
       .catch(() => {
@@ -218,33 +104,6 @@ export default function ProjectDetailPage() {
       });
     } finally {
       setSavingDesc(false);
-    }
-  }
-
-  /* Save KP content */
-  async function saveKpContent() {
-    if (!project) return;
-    setSavingKp(true);
-    try {
-      const res = await fetch(`/api/partner/clients/${project.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kp_content: kpContent }),
-      });
-      if (res.ok) {
-        setProject((prev) =>
-          prev
-            ? {
-                ...prev,
-                kp_content: kpContent,
-                kp_status: prev.kp_status === "none" ? "draft" : prev.kp_status,
-              }
-            : prev,
-        );
-        setEditingKp(false);
-      }
-    } finally {
-      setSavingKp(false);
     }
   }
 
@@ -280,39 +139,6 @@ export default function ProjectDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pricingMode: mode, basePrice, partnerPrice }),
     });
-  }
-
-  /* Submit KP */
-  async function submitKp() {
-    if (!project) return;
-    setSubmitting(true);
-    try {
-      const res = await fetch(
-        `/api/partner/clients/${project.id}/kp/submit`,
-        { method: "POST" },
-      );
-      if (res.ok) {
-        setProject((prev) =>
-          prev ? { ...prev, kp_status: "submitted" as KpStatus } : prev,
-        );
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  /* Reset to draft (after rejection) */
-  async function resetToDraft() {
-    if (!project) return;
-    setSubmitting(true);
-    try {
-      setProject((prev) =>
-        prev ? { ...prev, kp_status: "draft" as KpStatus } : prev,
-      );
-      setEditingKp(true);
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   /* Commission formula */
@@ -494,67 +320,6 @@ export default function ProjectDetailPage() {
             </motion.div>
           )}
 
-          {/* KP Editor */}
-          <motion.div
-            className="rounded-xl border border-border-faint bg-surface p-5 space-y-3"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-text-muted" />
-                <h2 className="text-lg font-semibold">
-                  Коммерческое предложение
-                </h2>
-              </div>
-              {savingKp && (
-                <span className="text-xs text-text-muted">Сохранение...</span>
-              )}
-            </div>
-
-            {(!project.kp_content && !editingKp) || editingKp ? (
-              <div className="space-y-3">
-                <textarea
-                  value={kpContent}
-                  onChange={(e) => setKpContent(e.target.value)}
-                  onBlur={saveKpContent}
-                  placeholder="Опишите коммерческое предложение..."
-                  rows={8}
-                  className="w-full px-3 py-2.5 rounded-lg bg-bg-secondary border border-border-faint text-sm text-text-primary placeholder:text-text-muted resize-y focus:outline-none focus:border-brand-500/40 transition-colors"
-                />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="px-3 py-2.5 rounded-lg bg-bg-secondary border border-border-faint text-sm text-text-primary whitespace-pre-wrap min-h-[80px]">
-                  {project.kp_content}
-                </div>
-                <button
-                  onClick={() => setEditingKp(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-faint text-xs text-text-secondary hover:bg-overlay-subtle transition-colors"
-                >
-                  <Pencil className="w-3 h-3" />
-                  Редактировать
-                </button>
-              </div>
-            )}
-          </motion.div>
-
-          {/* KP AI Chat */}
-          <motion.div
-            className="space-y-3"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-          >
-            <KpChat
-              projectId={project.id}
-              kpMessages={kpMessages}
-              onKpGenerated={() => {
-                fetchProject();
-              }}
-            />
-          </motion.div>
         </div>
 
         {/* ─── RIGHT COLUMN (40%, sticky) ─── */}
@@ -697,19 +462,6 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* KP Status card */}
-            <div className="rounded-xl border border-border-faint bg-surface p-5 space-y-3">
-              <div className="text-xs text-text-muted uppercase tracking-wider">
-                Статус КП
-              </div>
-              <KpStatusCard
-                project={project}
-                onSubmitKp={submitKp}
-                onResetToDraft={resetToDraft}
-                submitting={submitting}
-              />
             </div>
 
             {/* Project info card */}
