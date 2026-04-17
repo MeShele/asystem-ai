@@ -3,7 +3,7 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm install --force
 
 FROM base AS builder
 WORKDIR /app
