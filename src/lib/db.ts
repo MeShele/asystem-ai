@@ -110,12 +110,16 @@ export async function initPartnerTables() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
-  // KP AI chat messages table
-  await db`CREATE TABLE IF NOT EXISTS kp_messages (
+  // Partner achievements
+  await db`CREATE TABLE IF NOT EXISTS partner_achievements (
     id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL,
-    role TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    partner_id TEXT NOT NULL,
+    milestone_key TEXT NOT NULL,
+    milestone_amount NUMERIC NOT NULL,
+    bonus_amount NUMERIC NOT NULL,
+    achieved_at TIMESTAMP DEFAULT NOW(),
+    paid BOOLEAN DEFAULT FALSE,
+    paid_at TIMESTAMP,
+    UNIQUE(partner_id, milestone_key)
   )`;
 }

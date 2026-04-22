@@ -167,6 +167,31 @@
         "name": "Akylay",
         "role": "Marketing Manager",
         "bio": "SMM, content strategy, performance marketing. Makes sure people hear about us."
+      },
+      "member12": {
+        "name": "Alinur Beishenbekov",
+        "role": "Graphic Designer",
+        "bio": "Creates visual concepts and designs premium user-friendly interfaces."
+      },
+      "member13": {
+        "name": "Nerses Dapagyan",
+        "role": "Project Manager",
+        "bio": "Organizes development processes, controls deadlines and project quality."
+      },
+      "member14": {
+        "name": "Azamat Sultan",
+        "role": "Communications Manager",
+        "bio": "Coordinates external relations and shapes the company image in media and partnerships."
+      },
+      "member15": {
+        "name": "Ivan Shishkin",
+        "role": "Creative Director",
+        "bio": "Develops visual concepts and creative strategies for ASystem projects."
+      },
+      "member16": {
+        "name": "Asel Kadyrova",
+        "role": "Chief Accountant",
+        "bio": "Controls financial flows and ensures transparency of company reporting."
       }
     },
     "cta": {

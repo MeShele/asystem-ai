@@ -57,6 +57,7 @@ export type DashboardData = {
   stats: {
     totalClients: number;
     activeClients: number;
+    completedClients: number;
     totalEarned: number;
   };
 };
