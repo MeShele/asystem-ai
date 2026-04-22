@@ -18,15 +18,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.includes("/admin");
   const isPartnerPanel = pathname.includes("/partner/") && !pathname.match(/^\/(ru|en|kg)\/partner\/?$/);
+  const isPartnerLanding = /^\/(ru|en|kg)\/partner\/?$/.test(pathname);
+  const isQuizPage = /^\/(ru|en|kg)\/client\/request\/?$/.test(pathname);
   const isSplash = /^\/(ru|en|kg)?\/?$/.test(pathname);
 
-  if (isAdmin || isPartnerPanel) {
+  if (isAdmin || isPartnerPanel || isSplash || isPartnerLanding || isQuizPage) {
+    // Home (splash) и admin/partner panels рендерят свой layout
     return <>{children}</>;
   }
 
   return (
     <>
-      {!isSplash && <ParticlesBg />}
+      <ParticlesBg />
       <NoiseGrain />
       <Navbar />
       <main id="main-content" className="relative z-10">{children}</main>

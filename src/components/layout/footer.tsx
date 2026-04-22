@@ -1,81 +1,183 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { useEffect, useState } from "react";
 
 export function Footer() {
-  const t = useTranslations("footer");
-  const nav = useTranslations("nav");
+  const [time, setTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fmt = new Intl.DateTimeFormat("ru-RU", {
+      timeZone: "Asia/Almaty",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const update = () => setTime(fmt.format(new Date()));
+    update();
+    const id = setInterval(update, 30000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
-    <footer className="relative">
-      <div className="fc-container">
-        <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
-        <div className="h-px bg-border-faint" />
+    <footer
+      className="relative"
+      style={{
+        background: "#0a0a0a",
+        color: "#fff",
+        borderTop: "1px solid #e5e5e5",
+      }}
+    >
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-20 lg:py-28">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          {/* Brand + meta */}
+          <div className="md:col-span-5">
+            <Link href="/" className="inline-flex items-baseline gap-1 group">
+              <span className="text-[32px] font-semibold tracking-tight">asystem</span>
+              <span className="text-[32px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+              <span className="text-[32px] font-semibold tracking-tight">ai</span>
+            </Link>
+            <p
+              className="mt-5 max-w-sm"
+              style={{
+                fontSize: "14px",
+                lineHeight: 1.55,
+                color: "rgba(255,255,255,0.55)",
+              }}
+            >
+              Independent AI-first IT studio · Bishkek, KG.
+              <br />
+              16 people · 4 production clients · no prepay · fixed price.
+            </p>
 
-        <div className="py-12 lg:py-16 px-4 lg:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            {/* Brand */}
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-3">
-                <svg viewBox="0 0 48 48" fill="none" className="w-5 h-5 text-brand-500" aria-hidden="true">
-                  <circle cx="24" cy="12" r="5" stroke="currentColor" strokeWidth="2.5" />
-                  <circle cx="12" cy="36" r="5" stroke="currentColor" strokeWidth="2.5" />
-                  <circle cx="36" cy="36" r="5" stroke="currentColor" strokeWidth="2.5" />
-                  <line x1="24" y1="17" x2="14" y2="32" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                  <line x1="24" y1="17" x2="34" y2="32" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                  <line x1="17" y1="36" x2="31" y2="36" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                  <circle cx="24" cy="12" r="2.5" fill="currentColor" />
-                  <circle cx="12" cy="36" r="2.5" fill="currentColor" />
-                  <circle cx="36" cy="36" r="2.5" fill="currentColor" />
-                </svg>
-                <span className="text-text-primary text-sm font-semibold">
-                  asystem<span className="text-brand-500">.</span>ai
-                </span>
+            {time && (
+              <div
+                className="mt-8 font-mono text-[11px] flex items-center gap-2"
+                style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.1em" }}
+              >
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: "#10b981", boxShadow: "0 0 8px rgba(16,185,129,0.6)" }}
+                />
+                СЕЙЧАС · {time} · ALMATY · ONLINE
               </div>
-              <p className="text-xs text-text-muted leading-relaxed">
-                Enterprise IT, AI & Blockchain.<br />Bishkek, Kyrgyzstan.
-              </p>
-            </div>
-
-            {/* Services */}
-            <div>
-              <div className="text-xs text-text-muted font-medium tracking-wider uppercase mb-4">{nav("services").toUpperCase()}</div>
-              <ul className="space-y-2.5">
-                <li><a href="/#services" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Fintech</a></li>
-                <li><a href="/#services" className="text-sm text-text-secondary hover:text-text-primary transition-colors">AI</a></li>
-                <li><a href="/#services" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Blockchain</a></li>
-                <li><a href="/#services" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Enterprise</a></li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <div className="text-xs text-text-muted font-medium tracking-wider uppercase mb-4">{t("company")}</div>
-              <ul className="space-y-2.5">
-                <li><a href="/#cases" className="text-sm text-text-secondary hover:text-text-primary transition-colors">{nav("cases")}</a></li>
-                <li><Link href="/products" className="text-sm text-text-secondary hover:text-text-primary transition-colors">{t("products")}</Link></li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <div className="text-xs text-text-muted font-medium tracking-wider uppercase mb-4">{t("contact")}</div>
-              <ul className="space-y-2.5">
-                <li><a href="mailto:hello@asystem.ai" className="text-sm text-text-secondary hover:text-text-primary transition-colors">hello@asystem.ai</a></li>
-                <li><a href="https://t.me/asystem_ai" target="_blank" rel="noopener noreferrer" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Telegram</a></li>
-                <li><Link href="/client/request" className="text-sm text-brand-400 hover:text-brand-300 transition-colors">{nav("request")} →</Link></li>
-              </ul>
-            </div>
+            )}
           </div>
 
-          {/* Bottom */}
-          <div className="border-t border-border-faint pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <span className="text-xs text-text-muted">© {new Date().getFullYear()} asystem.ai — {t("rights")}</span>
-            <div className="flex gap-4 text-xs text-text-muted">
-              <Link href="/privacy" className="hover:text-text-secondary transition-colors">{t("privacy")}</Link>
-              <Link href="/terms" className="hover:text-text-secondary transition-colors">{t("terms")}</Link>
+          {/* Works */}
+          <div className="md:col-span-3">
+            <div
+              className="font-mono text-[10px] mb-5"
+              style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em" }}
+            >
+              WORKS
             </div>
+            <ul className="flex flex-col gap-3">
+              {[
+                { href: "/#clients", label: "клиенты" },
+                { href: "/#lab", label: "лаборатория" },
+                { href: "/#team", label: "команда" },
+                { href: "/partner", label: "партнёрам" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="transition-colors"
+                    style={{ fontSize: "14px", color: "#fff" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div className="md:col-span-4">
+            <div
+              className="font-mono text-[10px] mb-5"
+              style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em" }}
+            >
+              CONTACT
+            </div>
+            <ul className="flex flex-col gap-3">
+              <li>
+                <a
+                  href="mailto:hello@asystem.ai"
+                  className="transition-colors"
+                  style={{ fontSize: "14px", color: "#fff" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                >
+                  hello@asystem.ai
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/asystem_ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors"
+                  style={{ fontSize: "14px", color: "#fff" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                >
+                  Telegram · @asystem_ai
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/996"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors"
+                  style={{ fontSize: "14px", color: "#fff" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                >
+                  WhatsApp
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div
+          className="mt-20 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <div
+            className="font-mono text-[11px]"
+            style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em" }}
+          >
+            © 2026 asystem.ai · BISHKEK, KG · 42.87°N 74.57°E
+          </div>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/privacy"
+              className="font-mono"
+              style={{
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.4)",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="font-mono"
+              style={{
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.4)",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Terms
+            </Link>
           </div>
         </div>
       </div>

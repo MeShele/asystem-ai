@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { contactMethods } from "@/lib/validations/request";
+import { Phone, MessageCircle, Send, Mail } from "lucide-react";
 import type { RequestFormData } from "@/lib/validations/request";
 
 interface Props {
@@ -9,85 +10,123 @@ interface Props {
   onChange: (v: Partial<RequestFormData>) => void;
 }
 
-const contactIcons: Record<string, string> = {
-  phoneCall: "📞",
-  whatsapp: "💬",
-  telegramContact: "✈️",
-  emailContact: "📧",
+type LucideIconProps = { size?: number; strokeWidth?: number; style?: React.CSSProperties; className?: string };
+
+const contactIcons: Record<string, React.ComponentType<LucideIconProps>> = {
+  phoneCall: Phone,
+  whatsapp: MessageCircle,
+  telegramContact: Send,
+  emailContact: Mail,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 0",
+  borderBottom: "1px solid #e5e5e5",
+  background: "transparent",
+  fontSize: "16px",
+  color: "#0a0a0a",
+  outline: "none",
+  transition: "border-color 180ms ease",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "var(--font-mono, monospace)",
+  fontSize: "11px",
+  color: "#9ca3af",
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  marginBottom: "6px",
 };
 
 export function StepContact({ data, onChange }: Props) {
   const t = useTranslations("quiz.step5");
 
-  const inputClass =
-    "w-full p-3 bg-bg-primary border border-border-faint rounded-lg text-text-primary text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all placeholder:text-text-muted";
-
   return (
     <div>
-      <h2 className="text-xl font-bold mb-6">{t("title")}</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">
-            {t("name")} <span className="text-red-400">*</span>
-          </label>
+      <div className="flex flex-col gap-8">
+        <Field label={`${t("name")} · обязательно`}>
           <input
-            className={inputClass}
+            style={inputStyle}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             type="text"
+            placeholder="Как к вам обращаться"
             value={data.name || ""}
             onChange={(e) => onChange({ name: e.target.value })}
           />
-        </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">{t("company")}</label>
+        </Field>
+
+        <Field label={t("company")}>
           <input
-            className={inputClass}
+            style={inputStyle}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             type="text"
+            placeholder="Название компании"
             value={data.company || ""}
             onChange={(e) => onChange({ company: e.target.value })}
           />
+        </Field>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Field label={`${t("phone")} · обязательно`}>
+            <input
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+              type="tel"
+              placeholder="+996 ___ ___ ___"
+              value={data.phone || ""}
+              onChange={(e) => onChange({ phone: e.target.value })}
+            />
+          </Field>
+          <Field label={t("email")}>
+            <input
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+              type="email"
+              placeholder="name@company.kg"
+              value={data.email || ""}
+              onChange={(e) => onChange({ email: e.target.value })}
+            />
+          </Field>
         </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">
-            {t("phone")} <span className="text-red-400">*</span>
-          </label>
-          <input
-            className={inputClass}
-            type="tel"
-            value={data.phone || ""}
-            onChange={(e) => onChange({ phone: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">{t("email")}</label>
-          <input
-            className={inputClass}
-            type="email"
-            value={data.email || ""}
-            onChange={(e) => onChange({ email: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">
-            {t("preferredContact")} <span className="text-red-400">*</span>
-          </label>
-          <div className="flex flex-wrap gap-3">
-            {contactMethods.map((method) => (
-              <button
-                key={method}
-                onClick={() => onChange({ preferredContact: method })}
-                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  data.preferredContact === method
-                    ? "border-brand-500 bg-brand-500/[0.08] text-brand-400"
-                    : "border-border-faint bg-surface text-text-secondary hover:border-border-muted hover:bg-surface-raised"
-                }`}
-              >
-                <span>{contactIcons[method]}</span>
-                {t(method)}
-              </button>
-            ))}
+
+        <Field label={`${t("preferredContact")} · обязательно`}>
+          <div className="flex flex-wrap gap-px mt-2" style={{ background: "#e5e5e5" }}>
+            {contactMethods.map((method) => {
+              const Icon = contactIcons[method];
+              const selected = data.preferredContact === method;
+              return (
+                <button
+                  key={method}
+                  onClick={() => onChange({ preferredContact: method })}
+                  className="px-5 py-3 flex items-center gap-2 transition-all"
+                  style={{
+                    background: selected ? "#0a0a0a" : "#fff",
+                    color: selected ? "#fff" : "#0a0a0a",
+                  }}
+                >
+                  {Icon && <Icon size={16} strokeWidth={1.5} />}
+                  <span className="text-[13px] font-medium">{t(method)}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </Field>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
     </div>
   );
 }

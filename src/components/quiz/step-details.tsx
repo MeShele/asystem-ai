@@ -8,6 +8,55 @@ interface Props {
   onChange: (v: Record<string, string>) => void;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 0",
+  borderBottom: "1px solid #e5e5e5",
+  background: "transparent",
+  fontSize: "16px",
+  color: "#0a0a0a",
+  outline: "none",
+  transition: "border-color 180ms ease",
+  fontFamily: "inherit",
+  resize: "vertical",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "var(--font-mono, monospace)",
+  fontSize: "11px",
+  color: "#9ca3af",
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  marginBottom: "10px",
+};
+
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-4 py-2 transition-all duration-200"
+      style={{
+        background: active ? "#0a0a0a" : "#fff",
+        color: active ? "#fff" : "#0a0a0a",
+        border: "1px solid #e5e5e5",
+        fontSize: "13px",
+        fontWeight: 500,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function StepDetails({ serviceType, details, onChange }: Props) {
   const t = useTranslations("quiz.step2");
 
@@ -15,39 +64,28 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
     onChange({ ...details, [key]: val });
   }
 
-  const inputClass =
-    "w-full p-3 bg-bg-primary border border-border-faint rounded-lg text-text-primary text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all placeholder:text-text-muted";
-
-  const radioClass = (active: boolean) =>
-    `px-4 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 cursor-pointer ${
-      active
-        ? "border-brand-500 bg-brand-500/[0.08] text-brand-400"
-        : "border-border-faint bg-surface text-text-secondary hover:border-border-muted hover:bg-surface-raised"
-    }`;
-
   return (
     <div>
-      <h2 className="text-xl font-bold mb-6">{t("title")}</h2>
-      <div className="space-y-5">
+      <div className="flex flex-col gap-8">
         {serviceType === "website" && (
           <>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("websiteType")}</label>
-              <div className="flex flex-wrap gap-3">
+              <label style={labelStyle}>{t("websiteType")}</label>
+              <div className="flex flex-wrap gap-2">
                 {["landing", "corporate", "ecommerce"].map((v) => (
-                  <button key={v} className={radioClass(details.websiteType === v)} onClick={() => set("websiteType", v)} aria-label={t(v)}>
+                  <Pill key={v} active={details.websiteType === v} onClick={() => set("websiteType", v)}>
                     {t(v)}
-                  </button>
+                  </Pill>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("hasDesign")}</label>
-              <div className="flex gap-3">
+              <label style={labelStyle}>{t("hasDesign")}</label>
+              <div className="flex gap-2">
                 {["yes", "no"].map((v) => (
-                  <button key={v} className={radioClass(details.hasDesign === v)} onClick={() => set("hasDesign", v)} aria-label={t(v)}>
+                  <Pill key={v} active={details.hasDesign === v} onClick={() => set("hasDesign", v)}>
                     {t(v)}
-                  </button>
+                  </Pill>
                 ))}
               </div>
             </div>
@@ -57,18 +95,25 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
         {serviceType === "bot" && (
           <>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("botPlatform")}</label>
-              <div className="flex flex-wrap gap-3">
+              <label style={labelStyle}>{t("botPlatform")}</label>
+              <div className="flex flex-wrap gap-2">
                 {["telegram", "whatsapp", "other"].map((v) => (
-                  <button key={v} className={radioClass(details.botPlatform === v)} onClick={() => set("botPlatform", v)} aria-label={t(v)}>
+                  <Pill key={v} active={details.botPlatform === v} onClick={() => set("botPlatform", v)}>
                     {t(v)}
-                  </button>
+                  </Pill>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("botFunction")}</label>
-              <textarea className={inputClass} rows={3} value={details.botFunction || ""} onChange={(e) => set("botFunction", e.target.value)} />
+              <label style={labelStyle}>{t("botFunction")}</label>
+              <textarea
+                style={inputStyle}
+                rows={3}
+                value={details.botFunction || ""}
+                onChange={(e) => set("botFunction", e.target.value)}
+                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+                onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+              />
             </div>
           </>
         )}
@@ -76,39 +121,68 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
         {serviceType === "app" && (
           <>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("appPlatform")}</label>
-              <div className="flex flex-wrap gap-3">
+              <label style={labelStyle}>{t("appPlatform")}</label>
+              <div className="flex flex-wrap gap-2">
                 {["ios", "android", "both"].map((v) => (
-                  <button key={v} className={radioClass(details.appPlatform === v)} onClick={() => set("appPlatform", v)} aria-label={t(v)}>
+                  <Pill key={v} active={details.appPlatform === v} onClick={() => set("appPlatform", v)}>
                     {t(v)}
-                  </button>
+                  </Pill>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-2">{t("appDesc")}</label>
-              <textarea className={inputClass} rows={3} value={details.appDesc || ""} onChange={(e) => set("appDesc", e.target.value)} />
+              <label style={labelStyle}>{t("appDesc")}</label>
+              <textarea
+                style={inputStyle}
+                rows={3}
+                value={details.appDesc || ""}
+                onChange={(e) => set("appDesc", e.target.value)}
+                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+                onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+              />
             </div>
           </>
         )}
 
         {serviceType === "automation" && (
           <div>
-            <label className="block text-sm text-text-secondary mb-2">{t("automationDesc")}</label>
-            <textarea className={inputClass} rows={4} value={details.automationDesc || ""} onChange={(e) => set("automationDesc", e.target.value)} />
+            <label style={labelStyle}>{t("automationDesc")}</label>
+            <textarea
+              style={inputStyle}
+              rows={4}
+              value={details.automationDesc || ""}
+              onChange={(e) => set("automationDesc", e.target.value)}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+            />
           </div>
         )}
 
         {serviceType === "custom" && (
           <div>
-            <label className="block text-sm text-text-secondary mb-2">{t("customDesc")}</label>
-            <textarea className={inputClass} rows={4} value={details.customDesc || ""} onChange={(e) => set("customDesc", e.target.value)} />
+            <label style={labelStyle}>{t("customDesc")}</label>
+            <textarea
+              style={inputStyle}
+              rows={4}
+              value={details.customDesc || ""}
+              onChange={(e) => set("customDesc", e.target.value)}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+            />
           </div>
         )}
 
         <div>
-          <label className="block text-sm text-text-secondary mb-2">{t("examples")}</label>
-          <input className={inputClass} type="text" value={details.examples || ""} onChange={(e) => set("examples", e.target.value)} />
+          <label style={labelStyle}>{t("examples")}</label>
+          <input
+            style={inputStyle}
+            type="text"
+            placeholder="https://..."
+            value={details.examples || ""}
+            onChange={(e) => set("examples", e.target.value)}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
+          />
         </div>
       </div>
     </div>

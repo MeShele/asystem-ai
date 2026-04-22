@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { LanguageSwitcher } from "./language-switcher";
-import { ThemeToggle } from "./theme-toggle";
+
+/* ═══════════════════════════════════════════════════════════
+   Минималистичный Navbar для не-home страниц.
+   Home использует WorksWall с собственным sidebar.
+   ═══════════════════════════════════════════════════════════ */
 
 export function Navbar() {
-  const t = useTranslations("nav");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -18,107 +19,135 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: "/#services", label: t("services") },
-    { href: "/#cases", label: t("cases") },
+    { href: "/#clients", label: "Работы" },
+    { href: "/partner", label: "Партнёрам" },
+    { href: "/client/request", label: "Заявка" },
   ];
 
   return (
-    <header className={`sticky top-0 left-0 w-full z-[101] transition-all duration-300 ${
-      scrolled
-        ? "bg-bg-primary/80 backdrop-blur-md border-b border-border-faint shadow-sm"
-        : "bg-bg-primary"
-    }`}>
-      <div className={`absolute bottom-0 left-0 right-0 h-px transition-opacity duration-300 bg-border-faint ${scrolled ? "opacity-0" : "opacity-100"}`} />
-
-      <div className="fc-container">
-        <div className="absolute top-0 left-0 right-0 bottom-0 border-x border-border-faint pointer-events-none" />
-
-        <div className="flex justify-between items-center py-4 lg:py-5 px-4 lg:px-6">
+    <header
+      className="sticky top-0 left-0 w-full z-[101] transition-all duration-300"
+      style={{
+        background: scrolled ? "rgba(255,255,255,0.95)" : "#fff",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        borderBottom: scrolled ? "1px solid #e5e5e5" : "1px solid transparent",
+      }}
+    >
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
+        <div className="flex justify-between items-center py-5">
           {/* Logo */}
-          <div className="flex gap-6 items-center">
-            <Link href="/" className="flex items-center gap-2 relative" aria-label="asystem.ai — home">
-              <svg viewBox="0 0 48 48" fill="none" className="w-6 h-6 text-brand-500" aria-hidden="true">
-                <circle cx="24" cy="12" r="5" stroke="currentColor" strokeWidth="2.5" />
-                <circle cx="12" cy="36" r="5" stroke="currentColor" strokeWidth="2.5" />
-                <circle cx="36" cy="36" r="5" stroke="currentColor" strokeWidth="2.5" />
-                <line x1="24" y1="17" x2="14" y2="32" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                <line x1="24" y1="17" x2="34" y2="32" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                <line x1="17" y1="36" x2="31" y2="36" stroke="currentColor" strokeWidth="2" opacity="0.4" />
-                <circle cx="24" cy="12" r="2.5" fill="currentColor" />
-                <circle cx="12" cy="36" r="2.5" fill="currentColor" />
-                <circle cx="36" cy="36" r="2.5" fill="currentColor" />
-              </svg>
-              <span className="text-text-primary font-semibold text-sm tracking-tight">
-                asystem<span className="text-brand-500">.</span>ai
-              </span>
-            </Link>
-
-            <span className="text-border-muted text-xs select-none hidden lg:block">·</span>
-
-            {/* Desktop nav */}
-            <div className="hidden lg:flex gap-1">
-              {navLinks.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="relative flex min-h-11 items-center group rounded-lg px-3 active:scale-[0.98] transition-all duration-[50ms]"
-                >
-                  <div className="overlay pointer-events-none rounded-lg transition-all scale-95 group-hover:scale-100 group-hover:bg-overlay-muted group-active:bg-overlay-strong" />
-                  <span className="text-sm font-medium text-text-primary relative">{item.label}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Right side */}
-          <div className="flex gap-1.5 items-center">
-            <ThemeToggle />
-            <span className="hidden sm:block"><LanguageSwitcher /></span>
-
-            <Link
-              href="/client/request"
-              className="text-sm fc-button-primary hidden lg:!inline-flex"
+          <Link
+            href="/"
+            className="flex items-baseline gap-1 group"
+            aria-label="asystem.ai"
+          >
+            <span className="text-[18px] font-semibold tracking-tight">asystem</span>
+            <span className="text-[18px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+            <span className="text-[18px] font-semibold tracking-tight">ai</span>
+            <span
+              className="ml-2 font-mono text-[10px]"
+              style={{ color: "#9ca3af", letterSpacing: "0.1em" }}
             >
-              <span>{t("request")}</span>
-            </Link>
+              [r2026]
+            </span>
+          </Link>
 
-            {/* Mobile burger */}
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="font-mono text-[13px] transition-colors duration-200"
+                style={{
+                  color: "#0a0a0a",
+                  letterSpacing: "0.05em",
+                }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right — language + contact */}
+          <div className="flex items-center gap-6">
+            <div
+              className="hidden md:flex font-mono text-[12px] items-center gap-2"
+              style={{ color: "#78716c", letterSpacing: "0.1em" }}
+            >
+              <span style={{ color: "#0a0a0a" }}>RU</span>
+              <span style={{ color: "#d4d4d4" }}>·</span>
+              <span className="opacity-40">KG</span>
+              <span style={{ color: "#d4d4d4" }}>·</span>
+              <span className="opacity-40">EN</span>
+            </div>
+
+            <a
+              href="mailto:hello@asystem.ai"
+              className="hidden md:inline-flex font-mono text-[13px] transition-colors"
+              style={{
+                color: "#0a0a0a",
+                borderBottom: "1px dotted #78716c",
+                paddingBottom: "2px",
+                letterSpacing: "0.05em",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "#ef4444";
+                (e.currentTarget as HTMLElement).style.borderBottomColor = "#ef4444";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "#0a0a0a";
+                (e.currentTarget as HTMLElement).style.borderBottomColor = "#78716c";
+              }}
+            >
+              hello@asystem.ai
+            </a>
+
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden flex flex-col gap-1 p-2 -mr-2"
+              className="md:hidden w-8 h-8 flex items-center justify-center"
               aria-expanded={mobileOpen}
-              aria-label="Меню навигации"
+              aria-label="Меню"
             >
-              <span className={`block w-5 h-0.5 bg-text-primary transition-all duration-200 ${mobileOpen ? "rotate-45 translate-y-[3px]" : ""}`} />
-              <span className={`block w-5 h-0.5 bg-text-primary transition-all duration-200 ${mobileOpen ? "-rotate-45 -translate-y-[3px]" : ""}`} />
+              <span
+                className="block rounded-full transition-all"
+                style={{
+                  width: mobileOpen ? "16px" : "8px",
+                  height: "8px",
+                  background: "#ef4444",
+                }}
+              />
             </button>
           </div>
         </div>
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden border-t border-border-faint px-4 pb-4">
-            <nav className="flex flex-col gap-1 pt-3">
+          <div
+            className="md:hidden pb-6 pt-2"
+            style={{ borderTop: "1px solid #e5e5e5" }}
+          >
+            <nav className="flex flex-col gap-4 pt-4">
               {navLinks.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-sm font-medium text-text-primary py-2.5 px-3 rounded-lg hover:bg-overlay-muted transition-colors"
+                  className="font-mono text-[14px]"
+                  style={{ color: "#0a0a0a", letterSpacing: "0.05em" }}
                 >
                   {item.label}
-                </a>
-              ))}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-faint">
-                <span className="sm:hidden"><LanguageSwitcher /></span>
-                <Link
-                  href="/client/request"
-                  onClick={() => setMobileOpen(false)}
-                  className="fc-button-primary text-sm h-10 px-4"
-                >
-                  <span>{t("request")}</span>
                 </Link>
-              </div>
+              ))}
+              <a
+                href="mailto:hello@asystem.ai"
+                className="font-mono text-[13px] mt-2"
+                style={{ color: "#ef4444", letterSpacing: "0.05em" }}
+              >
+                hello@asystem.ai →
+              </a>
             </nav>
           </div>
         )}

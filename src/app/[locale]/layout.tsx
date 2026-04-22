@@ -86,6 +86,10 @@ export default async function LocaleLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('asystem_theme');
+                  if (!theme) {
+                    localStorage.setItem('asystem_theme', 'light');
+                    theme = 'light';
+                  }
                   if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
                   }
