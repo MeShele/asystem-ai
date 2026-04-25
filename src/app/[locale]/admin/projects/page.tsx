@@ -161,6 +161,7 @@ function CreateProjectModal({
   const [totalPrice, setTotalPrice] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [partnerId, setPartnerId] = useState("");
+  const [partnerPct, setPartnerPct] = useState("");
   const [status, setStatus] = useState("planning");
   const [submitting, setSubmitting] = useState(false);
 
@@ -177,6 +178,7 @@ function CreateProjectModal({
         total_price: Number(totalPrice) || 0,
         paid_amount: Number(paidAmount) || 0,
         partner_id: partnerId || null,
+        partner_commission_percent: Math.max(0, Math.min(100, Number(partnerPct) || 0)),
         status,
       }),
     });
@@ -244,21 +246,34 @@ function CreateProjectModal({
             </Field>
           </div>
 
-          <Field label="Партнёр">
-            <select
-              value={partnerId}
-              onChange={(e) => setPartnerId(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
-            >
-              <option value="">— Без партнёра —</option>
-              {partners.map((p) => (
-                <option key={p.partner_id} value={p.partner_id}>
-                  {p.name}
-                  {p.company ? ` · ${p.company}` : ""}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Партнёр">
+              <select
+                value={partnerId}
+                onChange={(e) => setPartnerId(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
+              >
+                <option value="">— Без партнёра —</option>
+                {partners.map((p) => (
+                  <option key={p.partner_id} value={p.partner_id}>
+                    {p.name}
+                    {p.company ? ` · ${p.company}` : ""}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="% партнёра">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={partnerPct}
+                onChange={(e) => setPartnerPct(e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary placeholder:text-text-muted focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
+              />
+            </Field>
+          </div>
 
           <Field label="Статус">
             <select

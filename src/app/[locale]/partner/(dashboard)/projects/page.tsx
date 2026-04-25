@@ -92,6 +92,7 @@ export default function PartnerProjectsPage() {
               project={p}
               index={i}
               showPartner={false}
+              showPartnerCommission
               onClick={() => router.push(`/partner/projects/${p.project_id}`)}
             />
           ))}

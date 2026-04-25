@@ -31,5 +31,13 @@ export async function GET(
     ORDER BY order_index ASC, id ASC
   `;
 
-  return NextResponse.json({ project, stages });
+  const developers = await db`
+    SELECT d.id, d.name, d.role, d.avatar_url
+    FROM developers d
+    JOIN project_developers pd ON pd.developer_id = d.id
+    WHERE pd.project_id = ${project.project_id as string}
+    ORDER BY pd.created_at ASC
+  `;
+
+  return NextResponse.json({ project, stages, developers });
 }

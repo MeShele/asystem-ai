@@ -32,7 +32,15 @@ export async function GET(
     ORDER BY order_index ASC, id ASC
   `;
 
-  return NextResponse.json({ project, stages });
+  const developers = await db`
+    SELECT d.*, pd.id AS link_id
+    FROM developers d
+    JOIN project_developers pd ON pd.developer_id = d.id
+    WHERE pd.project_id = ${project.project_id as string}
+    ORDER BY pd.created_at ASC
+  `;
+
+  return NextResponse.json({ project, stages, developers });
 }
 
 export async function PATCH(
@@ -73,6 +81,10 @@ export async function PATCH(
   }
   if ("developers" in data) {
     await db`UPDATE projects SET developers = ${JSON.stringify(data.developers)}::jsonb, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("partner_commission_percent" in data) {
+    const pct = Math.max(0, Math.min(100, Number(data.partner_commission_percent)));
+    await db`UPDATE projects SET partner_commission_percent = ${pct}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
 
   const updated = await db`SELECT * FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1`;

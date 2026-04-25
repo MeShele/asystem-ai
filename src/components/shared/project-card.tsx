@@ -15,6 +15,7 @@ export interface ProjectCardData {
   partner_id?: string | null;
   partner_name?: string | null;
   partner_company?: string | null;
+  partner_commission_percent?: number | null;
   progress_percent?: number | null;
   status?: string | null;
 }
@@ -37,13 +38,22 @@ interface Props {
   project: ProjectCardData;
   onClick?: () => void;
   showPartner?: boolean;
+  showPartnerCommission?: boolean;
   index?: number;
 }
 
-export function ProjectCard({ project, onClick, showPartner = true, index = 0 }: Props) {
+export function ProjectCard({
+  project,
+  onClick,
+  showPartner = true,
+  showPartnerCommission = false,
+  index = 0,
+}: Props) {
   const total = Number(project.total_price || 0);
   const paid = Number(project.paid_amount || 0);
   const progress = Math.max(0, Math.min(100, Number(project.progress_percent || 0)));
+  const commissionPct = Number(project.partner_commission_percent || 0);
+  const commissionAmount = Math.round((total * commissionPct) / 100);
   const status = statusMeta[project.status || "planning"] || statusMeta.planning;
 
   return (
@@ -105,6 +115,21 @@ export function ProjectCard({ project, onClick, showPartner = true, index = 0 }:
               ? `${project.partner_name}${project.partner_company ? ` · ${project.partner_company}` : ""}`
               : "Без партнёра"}
           </span>
+        </div>
+      )}
+
+      {/* Partner commission (для партнёрской панели) */}
+      {showPartnerCommission && (
+        <div className="px-5 py-3 border-b border-border-faint/60 bg-green-500/5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[10px] uppercase tracking-wider text-text-muted">
+              Ваше вознаграждение
+            </div>
+            <span className="text-[10px] font-mono text-green-500/80">{commissionPct}%</span>
+          </div>
+          <div className="text-base font-semibold text-green-500 mt-0.5">
+            ${commissionAmount.toLocaleString("ru-RU")}
+          </div>
         </div>
       )}
 

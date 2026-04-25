@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use, useCallback, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import {
   ArrowLeft,
@@ -11,15 +11,19 @@ import {
   Plus,
   X,
   Check,
-  GripVertical,
   Save,
+  CircleCheck,
+  Circle,
+  Percent,
 } from "lucide-react";
 import Image from "next/image";
 
 interface Developer {
+  id: number;
   name: string;
-  role?: string;
-  avatar_url?: string;
+  role?: string | null;
+  avatar_url?: string | null;
+  email?: string | null;
 }
 
 interface ProjectDetail {
@@ -35,7 +39,7 @@ interface ProjectDetail {
   partner_company?: string | null;
   progress_percent: number;
   status: string;
-  developers?: Developer[] | null;
+  partner_commission_percent: number;
   created_at: string;
 }
 
@@ -74,20 +78,25 @@ export default function AdminProjectDetailPage({
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [linkedDevelopers, setLinkedDevelopers] = useState<Developer[]>([]);
+  const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [showAddDev, setShowAddDev] = useState(false);
 
-  // Local form state
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [totalPrice, setTotalPrice] = useState("0");
-  const [paidAmount, setPaidAmount] = useState("0");
-  const [partnerId, setPartnerId] = useState("");
-  const [progressPercent, setProgressPercent] = useState(0);
-  const [status, setStatus] = useState("planning");
-  const [developers, setDevelopers] = useState<Developer[]>([]);
+  // Editable form state
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    logoUrl: "",
+    totalPrice: "0",
+    paidAmount: "0",
+    partnerId: "",
+    progressPercent: 0,
+    status: "planning",
+    partnerCommissionPercent: 0,
+  });
 
   const load = useCallback(() => {
     fetch(`/api/admin/projects/${id}`)
@@ -96,16 +105,19 @@ export default function AdminProjectDetailPage({
         const p: ProjectDetail | null = data.project || null;
         setProject(p);
         setStages(Array.isArray(data.stages) ? data.stages : []);
+        setLinkedDevelopers(Array.isArray(data.developers) ? data.developers : []);
         if (p) {
-          setName(p.name || "");
-          setDescription(p.description || "");
-          setLogoUrl(p.logo_url || "");
-          setTotalPrice(String(p.total_price ?? 0));
-          setPaidAmount(String(p.paid_amount ?? 0));
-          setPartnerId(p.partner_id || "");
-          setProgressPercent(Number(p.progress_percent || 0));
-          setStatus(p.status || "planning");
-          setDevelopers(Array.isArray(p.developers) ? p.developers : []);
+          setForm({
+            name: p.name || "",
+            description: p.description || "",
+            logoUrl: p.logo_url || "",
+            totalPrice: String(p.total_price ?? 0),
+            paidAmount: String(p.paid_amount ?? 0),
+            partnerId: p.partner_id || "",
+            progressPercent: Number(p.progress_percent || 0),
+            status: p.status || "planning",
+            partnerCommissionPercent: Number(p.partner_commission_percent || 0),
+          });
         }
         setLoading(false);
       })
@@ -118,22 +130,49 @@ export default function AdminProjectDetailPage({
       .then((r) => r.json())
       .then((data) => setPartners(Array.isArray(data) ? data : []))
       .catch(() => setPartners([]));
+    fetch("/api/admin/developers")
+      .then((r) => r.json())
+      .then((data) => setAllDevelopers(Array.isArray(data) ? data : []))
+      .catch(() => setAllDevelopers([]));
   }, [load]);
 
-  const patch = async (fields: Record<string, unknown>, label: string) => {
-    setSaving(label);
+  const dirty = useMemo(() => {
+    if (!project) return false;
+    return (
+      form.name !== (project.name || "") ||
+      form.description !== (project.description || "") ||
+      form.logoUrl !== (project.logo_url || "") ||
+      Number(form.totalPrice) !== Number(project.total_price) ||
+      Number(form.paidAmount) !== Number(project.paid_amount) ||
+      form.partnerId !== (project.partner_id || "") ||
+      form.progressPercent !== Number(project.progress_percent || 0) ||
+      form.status !== project.status ||
+      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0)
+    );
+  }, [form, project]);
+
+  const save = async () => {
+    if (!project || saving) return;
+    setSaving(true);
     try {
       const res = await fetch(`/api/admin/projects/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description || null,
+          logo_url: form.logoUrl || null,
+          total_price: Number(form.totalPrice),
+          paid_amount: Number(form.paidAmount),
+          partner_id: form.partnerId || null,
+          progress_percent: Number(form.progressPercent),
+          status: form.status,
+          partner_commission_percent: Number(form.partnerCommissionPercent),
+        }),
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setProject((prev) => (prev ? { ...prev, ...updated } : prev));
-      }
+      if (res.ok) load();
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
   };
 
@@ -143,7 +182,7 @@ export default function AdminProjectDetailPage({
     if (res.ok) router.push("/admin/projects");
   };
 
-  // Stages
+  // Stages — autosave (мелкий стейт, не часть проекта)
   const addStage = async () => {
     if (!project) return;
     const res = await fetch(`/api/admin/projects/${project.project_id}/stages`, {
@@ -156,7 +195,6 @@ export default function AdminProjectDetailPage({
       setStages((prev) => [...prev, stage]);
     }
   };
-
   const updateStage = async (stageId: number, fields: Partial<Stage>) => {
     if (!project) return;
     setStages((prev) => prev.map((s) => (s.id === stageId ? { ...s, ...fields } : s)));
@@ -166,32 +204,30 @@ export default function AdminProjectDetailPage({
       body: JSON.stringify(fields),
     });
   };
-
   const removeStage = async (stageId: number) => {
     if (!project) return;
     setStages((prev) => prev.filter((s) => s.id !== stageId));
-    await fetch(`/api/admin/projects/${project.project_id}/stages/${stageId}`, {
-      method: "DELETE",
-    });
+    await fetch(`/api/admin/projects/${project.project_id}/stages/${stageId}`, { method: "DELETE" });
   };
 
   // Developers
-  const addDeveloper = () => {
-    const next = [...developers, { name: "Новый разработчик", role: "" }];
-    setDevelopers(next);
-    patch({ developers: next }, "devs");
+  const linkDeveloper = async (devId: number) => {
+    if (!project) return;
+    await fetch(`/api/admin/projects/${project.project_id}/developers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ developer_id: devId }),
+    });
+    const dev = allDevelopers.find((d) => d.id === devId);
+    if (dev) setLinkedDevelopers((prev) => [...prev, dev]);
+    setShowAddDev(false);
   };
-  const updateDeveloper = (i: number, fields: Partial<Developer>) => {
-    const next = developers.map((d, idx) => (idx === i ? { ...d, ...fields } : d));
-    setDevelopers(next);
-  };
-  const saveDevelopers = () => {
-    patch({ developers }, "devs");
-  };
-  const removeDeveloper = (i: number) => {
-    const next = developers.filter((_, idx) => idx !== i);
-    setDevelopers(next);
-    patch({ developers: next }, "devs");
+  const unlinkDeveloper = async (devId: number) => {
+    if (!project) return;
+    setLinkedDevelopers((prev) => prev.filter((d) => d.id !== devId));
+    await fetch(`/api/admin/projects/${project.project_id}/developers?developer_id=${devId}`, {
+      method: "DELETE",
+    });
   };
 
   if (loading) {
@@ -202,7 +238,6 @@ export default function AdminProjectDetailPage({
       </div>
     );
   }
-
   if (!project) {
     return (
       <div className="p-8">
@@ -217,6 +252,11 @@ export default function AdminProjectDetailPage({
     );
   }
 
+  const total = Number(form.totalPrice || 0);
+  const partnerCommissionAmount = Math.round((total * form.partnerCommissionPercent) / 100);
+  const linkedIds = new Set(linkedDevelopers.map((d) => d.id));
+  const availableDevs = allDevelopers.filter((d) => !linkedIds.has(d.id));
+
   return (
     <div className="p-6 lg:p-8 max-w-5xl">
       {/* Top bar */}
@@ -228,11 +268,19 @@ export default function AdminProjectDetailPage({
           <ArrowLeft className="w-4 h-4" /> К списку проектов
         </button>
         <div className="flex items-center gap-2">
-          {saving && (
-            <span className="text-xs text-text-muted flex items-center gap-1">
-              <Clock className="w-3 h-3 animate-spin" /> Сохраняем...
+          {dirty && !saving && (
+            <span className="text-xs text-orange-400 flex items-center gap-1">
+              ● Несохранённые изменения
             </span>
           )}
+          <button
+            onClick={save}
+            disabled={!dirty || saving}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+          >
+            {saving ? <Clock className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? "Сохраняем..." : "Сохранить"}
+          </button>
           <button
             onClick={handleDelete}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-sm transition-colors"
@@ -245,49 +293,38 @@ export default function AdminProjectDetailPage({
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <div className="w-16 h-16 rounded-xl bg-bg-secondary flex items-center justify-center overflow-hidden flex-shrink-0">
-          {logoUrl ? (
-            <Image
-              src={logoUrl}
-              alt={name}
-              width={64}
-              height={64}
-              className="object-cover w-full h-full"
-              unoptimized
-            />
+          {form.logoUrl ? (
+            <Image src={form.logoUrl} alt={form.name} width={64} height={64} className="object-cover w-full h-full" unoptimized />
           ) : (
             <FolderKanban className="w-7 h-7 text-text-muted" />
           )}
         </div>
         <div className="flex-1">
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => name !== project.name && patch({ name }, "name")}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Название проекта"
             className="text-2xl font-bold bg-transparent border-0 outline-none w-full focus:bg-surface focus:px-2 focus:rounded-lg transition-all"
           />
           <div className="font-mono text-xs text-text-muted">{project.project_id}</div>
         </div>
       </div>
 
-      {/* Main fields */}
+      {/* Main */}
       <Section title="Основное">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Логотип (URL)">
             <input
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              onBlur={() => logoUrl !== (project.logo_url || "") && patch({ logo_url: logoUrl || null }, "logo")}
+              value={form.logoUrl}
+              onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
               placeholder="https://..."
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             />
           </Field>
           <Field label="Статус">
             <select
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                patch({ status: e.target.value }, "status");
-              }}
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             >
               {statusOptions.map((s) => (
@@ -301,9 +338,8 @@ export default function AdminProjectDetailPage({
 
         <Field label="Описание">
           <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={() => description !== (project.description || "") && patch({ description: description || null }, "desc")}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={4}
             placeholder="Подробное описание проекта"
             className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none resize-none"
@@ -314,28 +350,23 @@ export default function AdminProjectDetailPage({
           <Field label="Стоимость, $">
             <input
               type="number"
-              value={totalPrice}
-              onChange={(e) => setTotalPrice(e.target.value)}
-              onBlur={() => Number(totalPrice) !== Number(project.total_price) && patch({ total_price: Number(totalPrice) }, "total")}
+              value={form.totalPrice}
+              onChange={(e) => setForm({ ...form, totalPrice: e.target.value })}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             />
           </Field>
           <Field label="Оплачено, $">
             <input
               type="number"
-              value={paidAmount}
-              onChange={(e) => setPaidAmount(e.target.value)}
-              onBlur={() => Number(paidAmount) !== Number(project.paid_amount) && patch({ paid_amount: Number(paidAmount) }, "paid")}
+              value={form.paidAmount}
+              onChange={(e) => setForm({ ...form, paidAmount: e.target.value })}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             />
           </Field>
           <Field label="Партнёр">
             <select
-              value={partnerId}
-              onChange={(e) => {
-                setPartnerId(e.target.value);
-                patch({ partner_id: e.target.value || null }, "partner");
-              }}
+              value={form.partnerId}
+              onChange={(e) => setForm({ ...form, partnerId: e.target.value })}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             >
               <option value="">— Без партнёра —</option>
@@ -360,17 +391,50 @@ export default function AdminProjectDetailPage({
         )}
       </Section>
 
+      {/* Partner commission */}
+      <Section title="Вознаграждение партнёра">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <Field label="Процент партнёра">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={form.partnerCommissionPercent}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    partnerCommissionPercent: Math.max(0, Math.min(100, Number(e.target.value))),
+                  })
+                }
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              />
+              <Percent className="w-4 h-4 text-text-muted flex-shrink-0" />
+            </div>
+          </Field>
+          <div className="md:col-span-2 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+            <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">
+              Партнёр получит со всего проекта
+            </div>
+            <div className="text-xl font-semibold text-green-500">
+              ${partnerCommissionAmount.toLocaleString("ru-RU")}
+              <span className="text-sm text-text-muted font-normal ml-2">
+                = ${total.toLocaleString("ru-RU")} × {form.partnerCommissionPercent}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* Progress */}
-      <Section title="Общий прогресс">
+      <Section title="Общий прогресс проекта">
         <div className="flex items-center gap-4">
           <input
             type="range"
             min={0}
             max={100}
-            value={progressPercent}
-            onChange={(e) => setProgressPercent(Number(e.target.value))}
-            onMouseUp={() => progressPercent !== project.progress_percent && patch({ progress_percent: progressPercent }, "progress")}
-            onTouchEnd={() => progressPercent !== project.progress_percent && patch({ progress_percent: progressPercent }, "progress")}
+            value={form.progressPercent}
+            onChange={(e) => setForm({ ...form, progressPercent: Number(e.target.value) })}
             className="flex-1 accent-brand-500"
           />
           <div className="flex items-center gap-2">
@@ -378,9 +442,13 @@ export default function AdminProjectDetailPage({
               type="number"
               min={0}
               max={100}
-              value={progressPercent}
-              onChange={(e) => setProgressPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
-              onBlur={() => progressPercent !== project.progress_percent && patch({ progress_percent: progressPercent }, "progress")}
+              value={form.progressPercent}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  progressPercent: Math.max(0, Math.min(100, Number(e.target.value))),
+                })
+              }
               className="w-20 px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none text-center"
             />
             <span className="text-sm text-text-muted">%</span>
@@ -389,7 +457,7 @@ export default function AdminProjectDetailPage({
         <div className="mt-3 h-3 bg-bg-secondary rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
+            style={{ width: `${form.progressPercent}%` }}
           />
         </div>
       </Section>
@@ -397,6 +465,7 @@ export default function AdminProjectDetailPage({
       {/* Stages */}
       <Section
         title="Этапы проекта"
+        subtitle="Этапы видит партнёр в своей панели. Завершённые отображаются зелёным."
         action={
           <button
             onClick={addStage}
@@ -427,65 +496,82 @@ export default function AdminProjectDetailPage({
 
       {/* Developers */}
       <Section
-        title="Разработчики"
+        title="Команда проекта"
+        subtitle="Привязка из справочника разработчиков. Создавать новых — в разделе «Разработчики»."
         action={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={saveDevelopers}
-              className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary transition-colors"
-            >
-              <Save className="w-3.5 h-3.5" /> Сохранить
-            </button>
-            <button
-              onClick={addDeveloper}
-              className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" /> Добавить
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddDev(!showAddDev)}
+            className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" /> Добавить
+          </button>
         }
       >
-        {developers.length === 0 ? (
+        {showAddDev && (
+          <div className="mb-3 p-3 rounded-lg border border-border-faint bg-bg-secondary/40">
+            {availableDevs.length === 0 ? (
+              <p className="text-xs text-text-muted text-center py-2">
+                Все разработчики уже привязаны или справочник пуст.{" "}
+                <a href="/ru/admin/developers" className="text-brand-500 hover:underline">
+                  Создать разработчика
+                </a>
+              </p>
+            ) : (
+              <div className="space-y-1 max-h-60 overflow-y-auto">
+                {availableDevs.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => linkDeveloper(d.id)}
+                    className="w-full flex items-center gap-2 p-2 rounded hover:bg-surface text-left transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {d.avatar_url ? (
+                        <Image src={d.avatar_url} alt={d.name} width={32} height={32} unoptimized className="object-cover w-full h-full" />
+                      ) : (
+                        <span className="text-xs font-bold text-purple-400">
+                          {d.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{d.name}</div>
+                      {d.role && <div className="text-xs text-text-muted truncate">{d.role}</div>}
+                    </div>
+                    <Plus className="w-4 h-4 text-text-muted" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {linkedDevelopers.length === 0 ? (
           <p className="text-text-muted text-sm py-4 text-center">
-            Привяжи разработчиков — увидит партнёр.
+            Разработчики не привязаны
           </p>
         ) : (
-          <div className="space-y-2">
-            {developers.map((d, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 rounded-lg border border-border-faint">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {linkedDevelopers.map((d) => (
+              <div
+                key={d.id}
+                className="flex items-center gap-2 p-2 rounded-lg border border-border-faint"
+              >
                 <div className="w-9 h-9 rounded-full bg-purple-500/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {d.avatar_url ? (
                     <Image src={d.avatar_url} alt={d.name} width={36} height={36} unoptimized className="object-cover w-full h-full" />
                   ) : (
                     <span className="text-xs font-bold text-purple-400">
-                      {(d.name || "?").charAt(0).toUpperCase()}
+                      {d.name.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
-                <input
-                  value={d.name}
-                  onChange={(e) => updateDeveloper(i, { name: e.target.value })}
-                  onBlur={saveDevelopers}
-                  placeholder="Имя"
-                  className="flex-1 px-2 py-1 text-sm bg-transparent border-0 focus:bg-bg-secondary rounded outline-none"
-                />
-                <input
-                  value={d.role || ""}
-                  onChange={(e) => updateDeveloper(i, { role: e.target.value })}
-                  onBlur={saveDevelopers}
-                  placeholder="Роль"
-                  className="w-32 px-2 py-1 text-sm bg-transparent border-0 focus:bg-bg-secondary rounded outline-none text-text-secondary"
-                />
-                <input
-                  value={d.avatar_url || ""}
-                  onChange={(e) => updateDeveloper(i, { avatar_url: e.target.value })}
-                  onBlur={saveDevelopers}
-                  placeholder="Avatar URL"
-                  className="w-40 px-2 py-1 text-xs bg-transparent border-0 focus:bg-bg-secondary rounded outline-none text-text-muted"
-                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{d.name}</div>
+                  {d.role && <div className="text-xs text-text-muted truncate">{d.role}</div>}
+                </div>
                 <button
-                  onClick={() => removeDeveloper(i)}
+                  onClick={() => unlinkDeveloper(d.id)}
                   className="w-7 h-7 rounded hover:bg-red-500/10 flex items-center justify-center text-text-muted hover:text-red-400 transition-colors"
+                  title="Отвязать от проекта"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -500,17 +586,22 @@ export default function AdminProjectDetailPage({
 
 function Section({
   title,
+  subtitle,
   action,
   children,
 }: {
   title: string;
+  subtitle?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-border-faint bg-surface p-5 mb-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">{title}</h3>
+          {subtitle && <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>}
+        </div>
         {action}
       </div>
       <div className="space-y-3">{children}</div>
@@ -541,34 +632,35 @@ function StageRow({
   const [title, setTitle] = useState(stage.title);
   const [percent, setPercent] = useState(stage.percent);
   const [comment, setComment] = useState(stage.comment || "");
-  const [completed, setCompleted] = useState(stage.completed);
+
+  const toggleCompleted = () => {
+    const next = !stage.completed;
+    if (next) {
+      // mark as 100% when completing
+      setPercent(100);
+      onUpdate({ completed: true, percent: 100 });
+    } else {
+      onUpdate({ completed: false });
+    }
+  };
 
   return (
-    <div className="rounded-lg border border-border-faint p-3 bg-bg-secondary/40">
-      <div className="flex items-center gap-2 mb-2">
-        <GripVertical className="w-4 h-4 text-text-muted flex-shrink-0" />
+    <div
+      className={`rounded-lg border p-3 transition-colors ${
+        stage.completed
+          ? "border-green-500/30 bg-green-500/5"
+          : "border-border-faint bg-bg-secondary/40"
+      }`}
+    >
+      <div className="flex items-center gap-3 mb-2">
         <div className="font-mono text-xs text-text-muted w-6">{index + 1}.</div>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => title !== stage.title && onUpdate({ title })}
+          placeholder="Название этапа"
           className="flex-1 px-2 py-1 text-sm font-medium bg-transparent border-0 focus:bg-surface rounded outline-none"
         />
-        <button
-          onClick={() => {
-            const next = !completed;
-            setCompleted(next);
-            onUpdate({ completed: next });
-          }}
-          className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
-            completed
-              ? "bg-green-500/20 text-green-500"
-              : "hover:bg-surface text-text-muted hover:text-text-secondary"
-          }`}
-          title={completed ? "Отметить незавершённым" : "Отметить завершённым"}
-        >
-          <Check className="w-4 h-4" />
-        </button>
         <div className="flex items-center gap-1">
           <input
             type="number"
@@ -577,16 +669,47 @@ function StageRow({
             value={percent}
             onChange={(e) => setPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
             onBlur={() => percent !== stage.percent && onUpdate({ percent })}
-            className="w-16 px-2 py-1 text-sm bg-transparent border border-border-faint rounded focus:border-brand-500 outline-none text-center"
+            disabled={stage.completed}
+            className="w-16 px-2 py-1 text-sm bg-transparent border border-border-faint rounded focus:border-brand-500 outline-none text-center disabled:opacity-50"
           />
           <span className="text-xs text-text-muted">%</span>
         </div>
         <button
+          onClick={toggleCompleted}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            stage.completed
+              ? "bg-green-500 text-white hover:bg-green-600"
+              : "bg-bg-secondary text-text-muted hover:bg-surface hover:text-text-primary border border-border-faint"
+          }`}
+          title={stage.completed ? "Снять отметку «Завершён»" : "Отметить как завершённый"}
+        >
+          {stage.completed ? (
+            <>
+              <CircleCheck className="w-3.5 h-3.5" />
+              Завершён
+            </>
+          ) : (
+            <>
+              <Circle className="w-3.5 h-3.5" />
+              В работе
+            </>
+          )}
+        </button>
+        <button
           onClick={onDelete}
           className="w-7 h-7 rounded hover:bg-red-500/10 flex items-center justify-center text-text-muted hover:text-red-400 transition-colors"
+          title="Удалить этап"
         >
           <X className="w-3.5 h-3.5" />
         </button>
+      </div>
+      <div className="h-1 bg-bg-secondary rounded-full overflow-hidden mb-2">
+        <div
+          className={`h-full rounded-full transition-all ${
+            stage.completed ? "bg-green-500" : "bg-brand-500"
+          }`}
+          style={{ width: `${percent}%` }}
+        />
       </div>
       <textarea
         value={comment}

@@ -8,18 +8,21 @@ import {
   Inbox,
   Handshake,
   FolderKanban,
+  Users,
   Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Bell,
 } from "lucide-react";
+import { ThemeToggleButton } from "@/components/shared/theme-toggle-button";
 
 const navItems = [
   { href: "/admin" as const, label: "Дашборд", icon: LayoutDashboard, badge: null },
   { href: "/admin/requests" as const, label: "Заявки", icon: Inbox, badge: "new" as const },
   { href: "/admin/projects" as const, label: "Проекты", icon: FolderKanban, badge: null },
   { href: "/admin/partners" as const, label: "Партнёры", icon: Handshake, badge: null },
+  { href: "/admin/developers" as const, label: "Разработчики", icon: Users, badge: null },
   { href: "/admin/settings" as const, label: "Настройки", icon: Settings, badge: null },
 ];
 
@@ -110,6 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Bottom section */}
         <div className="border-t border-border-faint p-2 space-y-1">
+          <ThemeToggleButton collapsed={collapsed} />
           <button className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all w-full ${collapsed ? "justify-center" : ""}`}>
             <Bell className="w-[18px] h-[18px] flex-shrink-0" />
             {!collapsed && <span>Уведомления</span>}

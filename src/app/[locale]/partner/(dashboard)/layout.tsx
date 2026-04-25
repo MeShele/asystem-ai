@@ -10,6 +10,7 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
+import { ThemeToggleButton } from "@/components/shared/theme-toggle-button";
 
 const navItems = [
   { href: "/partner/dashboard" as const, label: "Дашборд", icon: LayoutDashboard },
@@ -98,7 +99,8 @@ export default function PartnerDashboardLayout({ children }: { children: React.R
         </nav>
 
         {/* Bottom */}
-        <div className="border-t border-border-faint p-2">
+        <div className="border-t border-border-faint p-2 space-y-1">
+          <ThemeToggleButton collapsed={collapsed} />
           <button
             onClick={async () => {
               await fetch("/api/partner/login", { method: "DELETE" });

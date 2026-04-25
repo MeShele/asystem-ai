@@ -37,10 +37,11 @@ export async function POST(req: NextRequest) {
   const paidAmount = Number(data.paid_amount || 0);
   const partnerId = data.partner_id || null;
   const status = data.status || "planning";
+  const partnerCommissionPercent = Math.max(0, Math.min(100, Number(data.partner_commission_percent || 0)));
 
   const inserted = await db`
-    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status)
-    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status})
+    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status, partner_commission_percent)
+    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status}, ${partnerCommissionPercent})
     RETURNING *
   `;
 

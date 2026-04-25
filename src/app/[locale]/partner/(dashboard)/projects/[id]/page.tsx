@@ -11,12 +11,14 @@ import {
   Check,
   Lock,
   Users,
+  TrendingUp,
 } from "lucide-react";
 
 interface Developer {
+  id?: number;
   name: string;
-  role?: string;
-  avatar_url?: string;
+  role?: string | null;
+  avatar_url?: string | null;
 }
 
 interface ProjectDetail {
@@ -29,7 +31,7 @@ interface ProjectDetail {
   paid_amount: number | string;
   progress_percent: number;
   status: string;
-  developers?: Developer[] | null;
+  partner_commission_percent: number;
   created_at: string;
 }
 
@@ -60,6 +62,7 @@ export default function PartnerProjectDetailPage({
   const router = useRouter();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [developers, setDevelopers] = useState<Developer[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<number | null>(null);
 
@@ -69,6 +72,7 @@ export default function PartnerProjectDetailPage({
       .then((data) => {
         setProject(data.project || null);
         setStages(Array.isArray(data.stages) ? data.stages : []);
+        setDevelopers(Array.isArray(data.developers) ? data.developers : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -101,8 +105,10 @@ export default function PartnerProjectDetailPage({
   const paid = Number(project.paid_amount || 0);
   const remaining = Math.max(0, total - paid);
   const paidPct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
+  const commissionPct = Number(project.partner_commission_percent || 0);
+  const commissionAmount = Math.round((total * commissionPct) / 100);
+  const commissionEarned = Math.round((paid * commissionPct) / 100);
   const status = statusMeta[project.status] || statusMeta.planning;
-  const developers: Developer[] = Array.isArray(project.developers) ? project.developers : [];
   const activeStageData = activeStage != null ? stages.find((s) => s.id === activeStage) : null;
 
   return (
@@ -149,7 +155,7 @@ export default function PartnerProjectDetailPage({
       </div>
 
       {/* Money */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="p-4 rounded-xl border border-border-faint bg-surface">
           <div className="text-xs text-text-muted mb-1">Стоимость</div>
           <div className="text-xl font-semibold">${total.toLocaleString("ru-RU")}</div>
@@ -166,6 +172,37 @@ export default function PartnerProjectDetailPage({
           <div className="text-xl font-semibold text-orange-500">${remaining.toLocaleString("ru-RU")}</div>
         </div>
       </div>
+
+      {/* Partner commission */}
+      {commissionPct > 0 && (
+        <div className="p-5 rounded-xl border border-green-500/30 bg-green-500/5 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-green-500" />
+              <h3 className="text-sm font-semibold">Ваше вознаграждение по проекту</h3>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-green-500/15 text-green-500 text-xs font-mono font-semibold">
+              {commissionPct}%
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Полная сумма</div>
+              <div className="text-2xl font-bold text-green-500">
+                ${commissionAmount.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">с полной стоимости проекта</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Уже заработано</div>
+              <div className="text-2xl font-bold text-green-500/80">
+                ${commissionEarned.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">с оплаченной части</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overall progress */}
       <div className="p-5 rounded-xl border border-border-faint bg-surface mb-6">

@@ -139,6 +139,7 @@ export async function initProjectTables() {
     progress_percent INT DEFAULT 0,
     status TEXT DEFAULT 'planning',
     developers JSONB DEFAULT '[]'::jsonb,
+    partner_commission_percent INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
@@ -155,6 +156,35 @@ export async function initProjectTables() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await db`CREATE TABLE IF NOT EXISTS developers (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT,
+    avatar_url TEXT,
+    email TEXT,
+    telegram TEXT,
+    status TEXT DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE TABLE IF NOT EXISTS project_developers (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    developer_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(project_id, developer_id)
+  )`;
+
   await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
   await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_project_developers_project ON project_developers(project_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_project_developers_developer ON project_developers(developer_id)`;
+
+  // Lazy migration: ensure partner_commission_percent column exists on legacy DBs
+  await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'partner_commission_percent'`.then(async (rows) => {
+    if (rows.length === 0) {
+      await getPool().query(`ALTER TABLE projects ADD COLUMN partner_commission_percent INT DEFAULT 0`);
+    }
+  });
 }
