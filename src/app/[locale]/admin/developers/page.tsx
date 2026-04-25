@@ -13,6 +13,7 @@ import {
   Send,
   Trash2,
 } from "lucide-react";
+import { ImageUpload } from "@/components/shared/image-upload";
 
 interface Developer {
   id: number;
@@ -301,14 +302,12 @@ function CreateDeveloperModal({
             />
           </Field>
 
-          <Field label="Аватар (URL)">
-            <input
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-            />
-          </Field>
+          <ImageUpload
+            label="Аватар"
+            value={avatarUrl || null}
+            onChange={(v) => setAvatarUrl(v || "")}
+            shape="circle"
+          />
         </div>
 
         <div className="flex items-center justify-end gap-2 p-5 border-t border-border-faint">

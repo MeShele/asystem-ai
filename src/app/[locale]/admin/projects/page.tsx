@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Search, FolderKanban, Plus, Clock, X } from "lucide-react";
 import { ProjectCard, type ProjectCardData } from "@/components/shared/project-card";
+import { ImageUpload } from "@/components/shared/image-upload";
 
 interface Partner {
   partner_id: string;
@@ -216,14 +217,11 @@ function CreateProjectModal({
             />
           </Field>
 
-          <Field label="Логотип (URL)">
-            <input
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary placeholder:text-text-muted focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
-            />
-          </Field>
+          <ImageUpload
+            label="Логотип"
+            value={logoUrl || null}
+            onChange={(v) => setLogoUrl(v || "")}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Стоимость, $">

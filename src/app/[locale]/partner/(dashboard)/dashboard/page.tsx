@@ -2,10 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, DollarSign, Plus, Trophy, Lock, CheckCircle2, TrendingUp } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "@/i18n/navigation";
+import { Users, DollarSign, Plus, Trophy, Lock, CheckCircle2, TrendingUp, FolderKanban, Wallet, ArrowRight } from "lucide-react";
 import type { DashboardData } from "@/types/partner";
 import { CreateProjectModal } from "@/components/partner/create-project-modal";
 import dynamic from "next/dynamic";
+
+interface ProjectLite {
+  id: number;
+  project_id: string;
+  name: string;
+  status: string;
+  total_price: number | string;
+  paid_amount: number | string;
+  partner_commission_percent: number;
+  progress_percent: number;
+}
+
+interface TeamMember {
+  id: number;
+  name: string;
+  role: string | null;
+  avatar_url: string | null;
+  projects_count: number;
+}
 
 const EarningsChart = dynamic(() => import("@/components/partner/earnings-chart").then((m) => m.EarningsChart), { ssr: false });
 
@@ -35,7 +56,10 @@ interface ExtendedDashboardData extends DashboardData {
 }
 
 export default function PartnerDashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<ExtendedDashboardData | null>(null);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -52,6 +76,14 @@ export default function PartnerDashboardPage() {
         window.location.href = `/${locale}/partner/login`;
       })
       .finally(() => setLoading(false));
+    fetch("/api/partner/projects")
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setProjects(Array.isArray(d) ? d : []))
+      .catch(() => setProjects([]));
+    fetch("/api/partner/team")
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setTeam(Array.isArray(d) ? d : []))
+      .catch(() => setTeam([]));
   }, []);
 
   if (loading || !data) {
@@ -197,6 +229,126 @@ export default function PartnerDashboardPage() {
         </motion.div>
       )}
 
+      {/* ─── Financial overview ─── */}
+      {projects.length > 0 && (
+        <motion.div
+          className="rounded-xl border border-green-500/20 bg-gradient-to-r from-green-500/[0.03] to-brand-500/[0.03] p-5 mb-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="w-4 h-4 text-green-500" />
+            <h3 className="text-sm font-semibold">Финансы по проектам</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {(() => {
+              const totalValue = projects.reduce((s, p) => s + Number(p.total_price || 0), 0);
+              const totalPaid = projects.reduce((s, p) => s + Number(p.paid_amount || 0), 0);
+              const totalCommission = projects.reduce(
+                (s, p) => s + Math.round((Number(p.total_price || 0) * Number(p.partner_commission_percent || 0)) / 100),
+                0
+              );
+              const earned = projects.reduce(
+                (s, p) => s + Math.round((Number(p.paid_amount || 0) * Number(p.partner_commission_percent || 0)) / 100),
+                0
+              );
+              return (
+                <>
+                  <FinanceCell label="Объём проектов" value={`$${totalValue.toLocaleString("ru-RU")}`} color="text-text-primary" />
+                  <FinanceCell label="Оплачено" value={`$${totalPaid.toLocaleString("ru-RU")}`} color="text-green-500" />
+                  <FinanceCell label="Ваша комиссия" value={`$${totalCommission.toLocaleString("ru-RU")}`} color="text-purple-500" sub="по полным суммам" />
+                  <FinanceCell label="Уже заработано" value={`$${earned.toLocaleString("ru-RU")}`} color="text-green-500" sub="по оплаченному" />
+                </>
+              );
+            })()}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── Active projects ─── */}
+      {projects.length > 0 && (
+        <motion.div
+          className="rounded-xl border border-border-faint bg-surface p-5 mb-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FolderKanban className="w-4 h-4 text-brand-500" />
+              <h3 className="text-sm font-semibold">Ваши проекты</h3>
+            </div>
+            <button
+              onClick={() => router.push("/partner/projects")}
+              className="text-xs text-brand-500 hover:text-brand-400 flex items-center gap-1"
+            >
+              Все <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {projects.slice(0, 4).map((p) => {
+              const earned = Math.round((Number(p.paid_amount || 0) * Number(p.partner_commission_percent || 0)) / 100);
+              return (
+                <button
+                  key={p.project_id}
+                  onClick={() => router.push(`/partner/projects/${p.project_id}`)}
+                  className="w-full text-left p-3 rounded-lg border border-border-faint hover:bg-surface-raised transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium truncate">{p.name}</span>
+                    <span className="text-xs font-mono text-green-500 flex-shrink-0">
+                      +${earned.toLocaleString("ru-RU")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full" style={{ width: `${p.progress_percent}%` }} />
+                    </div>
+                    <span className="text-[11px] font-mono text-text-muted w-10 text-right">{p.progress_percent}%</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── Team ─── */}
+      {team.length > 0 && (
+        <motion.div
+          className="rounded-xl border border-border-faint bg-surface p-5 mb-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26 }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-4 h-4 text-purple-500" />
+            <h3 className="text-sm font-semibold">Команда, с которой вы работаете</h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {team.map((m) => (
+              <div key={m.id} className="flex items-center gap-3 p-3 rounded-lg border border-border-faint">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {m.avatar_url ? (
+                    <Image src={m.avatar_url} alt={m.name} width={40} height={40} unoptimized className="object-cover w-full h-full" />
+                  ) : (
+                    <span className="text-sm font-bold text-purple-400">{m.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{m.name}</div>
+                  {m.role && <div className="text-[11px] text-text-muted truncate">{m.role}</div>}
+                  <div className="text-[10px] text-brand-500 font-mono">
+                    {m.projects_count} {Number(m.projects_count) === 1 ? "проект" : "проектов"}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* ─── Earnings Chart ─── */}
       <motion.div
         className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
@@ -323,6 +475,26 @@ export default function PartnerDashboardPage() {
           onCreated={() => { setShowCreateForm(false); window.location.reload(); }}
         />
       )}
+    </div>
+  );
+}
+
+function FinanceCell({
+  label,
+  value,
+  color,
+  sub,
+}: {
+  label: string;
+  value: string;
+  color: string;
+  sub?: string;
+}) {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">{label}</div>
+      <div className={`text-xl font-bold ${color}`}>{value}</div>
+      {sub && <div className="text-[10px] text-text-muted mt-0.5">{sub}</div>}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "@/i18n/navigation";
 import { Search, UserPlus, Mail, Phone, RefreshCcw } from "lucide-react";
 
 interface Partner {
@@ -20,6 +21,7 @@ interface Partner {
 }
 
 export default function PartnersPage() {
+  const router = useRouter();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [search, setSearch] = useState("");
   const [resetting, setResetting] = useState<string | null>(null);
@@ -115,7 +117,8 @@ export default function PartnersPage() {
               return (
                 <motion.div
                   key={partner.partner_id}
-                  className="flex items-center gap-4 p-4 hover:bg-surface-raised transition-colors"
+                  onClick={() => router.push(`/admin/partners/${partner.partner_id}`)}
+                  className="flex items-center gap-4 p-4 hover:bg-surface-raised transition-colors cursor-pointer"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.03 }}
@@ -168,7 +171,7 @@ export default function PartnersPage() {
                   </div>
 
                   {/* Contact */}
-                  <div className="hidden sm:flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {partner.phone && (
                       <a href={`tel:${partner.phone}`} className="w-8 h-8 rounded-lg border border-border-faint flex items-center justify-center hover:bg-brand-500/10 hover:border-brand-500/30 transition-all">
                         <Phone className="w-3.5 h-3.5 text-text-muted" />

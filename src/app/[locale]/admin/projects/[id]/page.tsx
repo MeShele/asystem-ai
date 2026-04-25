@@ -10,13 +10,13 @@ import {
   FolderKanban,
   Plus,
   X,
-  Check,
   Save,
   CircleCheck,
   Circle,
   Percent,
 } from "lucide-react";
 import Image from "next/image";
+import { ImageUpload } from "@/components/shared/image-upload";
 
 interface Developer {
   id: number;
@@ -312,15 +312,12 @@ export default function AdminProjectDetailPage({
 
       {/* Main */}
       <Section title="Основное">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Логотип (URL)">
-            <input
-              value={form.logoUrl}
-              onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-              placeholder="https://..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-            />
-          </Field>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <ImageUpload
+            label="Логотип проекта"
+            value={form.logoUrl || null}
+            onChange={(v) => setForm({ ...form, logoUrl: v || "" })}
+          />
           <Field label="Статус">
             <select
               value={form.status}

@@ -4,6 +4,7 @@ import { useEffect, useState, use, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import Image from "next/image";
 import { ArrowLeft, Save, Trash2, Clock, FolderKanban } from "lucide-react";
+import { ImageUpload } from "@/components/shared/image-upload";
 
 interface Developer {
   id: number;
@@ -204,14 +205,12 @@ export default function DeveloperDetailPage({
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
             />
           </Field>
-          <Field label="Аватар (URL)">
-            <input
-              value={form.avatarUrl}
-              onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-              placeholder="https://..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-            />
-          </Field>
+          <ImageUpload
+            label="Аватар"
+            value={form.avatarUrl || null}
+            onChange={(v) => setForm({ ...form, avatarUrl: v || "" })}
+            shape="circle"
+          />
           <Field label="Статус">
             <select
               value={form.status}
