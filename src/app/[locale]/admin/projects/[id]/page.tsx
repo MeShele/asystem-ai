@@ -87,6 +87,7 @@ export default function AdminProjectDetailPage({
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [originalStages, setOriginalStages] = useState<Stage[]>([]);
   const [linkedDevelopers, setLinkedDevelopers] = useState<Developer[]>([]);
   const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -115,7 +116,9 @@ export default function AdminProjectDetailPage({
       .then((data) => {
         const p: ProjectDetail | null = data.project || null;
         setProject(p);
-        setStages(Array.isArray(data.stages) ? data.stages : []);
+        const ss = Array.isArray(data.stages) ? data.stages : [];
+        setStages(ss);
+        setOriginalStages(ss);
         setLinkedDevelopers(Array.isArray(data.developers) ? data.developers : []);
         if (p) {
           setForm({
@@ -155,9 +158,26 @@ export default function AdminProjectDetailPage({
       .catch(() => setAllDevelopers([]));
   }, [load, loadPayouts]);
 
+  const stagesDirty = useMemo(() => {
+    if (stages.length !== originalStages.length) return false;
+    for (const cur of stages) {
+      const orig = originalStages.find((s) => s.id === cur.id);
+      if (!orig) return true;
+      if (
+        cur.title !== orig.title ||
+        cur.percent !== orig.percent ||
+        (cur.comment || "") !== (orig.comment || "") ||
+        cur.completed !== orig.completed
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [stages, originalStages]);
+
   const dirty = useMemo(() => {
     if (!project) return false;
-    return (
+    const fieldsDirty =
       form.name !== (project.name || "") ||
       form.description !== (project.description || "") ||
       form.logoUrl !== (project.logo_url || "") ||
@@ -166,15 +186,16 @@ export default function AdminProjectDetailPage({
       form.partnerId !== (project.partner_id || "") ||
       form.progressPercent !== Number(project.progress_percent || 0) ||
       form.status !== project.status ||
-      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0)
-    );
-  }, [form, project]);
+      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0);
+    return fieldsDirty || stagesDirty;
+  }, [form, project, stagesDirty]);
 
   const save = async () => {
     if (!project || saving) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/projects/${id}`, {
+      // 1. Project fields
+      await fetch(`/api/admin/projects/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,7 +210,29 @@ export default function AdminProjectDetailPage({
           partner_commission_percent: Number(form.partnerCommissionPercent),
         }),
       });
-      if (res.ok) load();
+
+      // 2. Changed stages (diff vs originalStages)
+      const stageUpdates: Promise<unknown>[] = [];
+      for (const cur of stages) {
+        const orig = originalStages.find((s) => s.id === cur.id);
+        if (!orig) continue;
+        const changed: Record<string, unknown> = {};
+        if (cur.title !== orig.title) changed.title = cur.title;
+        if (cur.percent !== orig.percent) changed.percent = cur.percent;
+        if ((cur.comment || "") !== (orig.comment || "")) changed.comment = cur.comment || null;
+        if (cur.completed !== orig.completed) changed.completed = cur.completed;
+        if (Object.keys(changed).length > 0) {
+          stageUpdates.push(
+            fetch(`/api/admin/projects/${project.project_id}/stages/${cur.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(changed),
+            })
+          );
+        }
+      }
+      await Promise.all(stageUpdates);
+      load();
     } finally {
       setSaving(false);
     }
@@ -201,7 +244,7 @@ export default function AdminProjectDetailPage({
     if (res.ok) router.push("/admin/projects");
   };
 
-  // Stages — autosave (мелкий стейт, не часть проекта)
+  // Stages — добавление/удаление instant (явные действия), редактирование полей — через "Сохранить"
   const addStage = async () => {
     if (!project) return;
     const res = await fetch(`/api/admin/projects/${project.project_id}/stages`, {
@@ -212,20 +255,17 @@ export default function AdminProjectDetailPage({
     if (res.ok) {
       const stage = await res.json();
       setStages((prev) => [...prev, stage]);
+      setOriginalStages((prev) => [...prev, stage]);
     }
   };
-  const updateStage = async (stageId: number, fields: Partial<Stage>) => {
-    if (!project) return;
+  const updateStageLocal = (stageId: number, fields: Partial<Stage>) => {
     setStages((prev) => prev.map((s) => (s.id === stageId ? { ...s, ...fields } : s)));
-    await fetch(`/api/admin/projects/${project.project_id}/stages/${stageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fields),
-    });
   };
   const removeStage = async (stageId: number) => {
     if (!project) return;
+    if (!confirm("Удалить этап?")) return;
     setStages((prev) => prev.filter((s) => s.id !== stageId));
+    setOriginalStages((prev) => prev.filter((s) => s.id !== stageId));
     await fetch(`/api/admin/projects/${project.project_id}/stages/${stageId}`, { method: "DELETE" });
   };
 
@@ -620,7 +660,7 @@ export default function AdminProjectDetailPage({
                 key={s.id}
                 stage={s}
                 index={i}
-                onUpdate={(fields) => updateStage(s.id, fields)}
+                onUpdate={(fields) => updateStageLocal(s.id, fields)}
                 onDelete={() => removeStage(s.id)}
               />
             ))}
@@ -854,15 +894,9 @@ function StageRow({
   onUpdate: (fields: Partial<Stage>) => void;
   onDelete: () => void;
 }) {
-  const [title, setTitle] = useState(stage.title);
-  const [percent, setPercent] = useState(stage.percent);
-  const [comment, setComment] = useState(stage.comment || "");
-
   const toggleCompleted = () => {
     const next = !stage.completed;
     if (next) {
-      // mark as 100% when completing
-      setPercent(100);
       onUpdate({ completed: true, percent: 100 });
     } else {
       onUpdate({ completed: false });
@@ -880,9 +914,8 @@ function StageRow({
       <div className="flex items-center gap-3 mb-2">
         <div className="font-mono text-xs text-text-muted w-6">{index + 1}.</div>
         <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => title !== stage.title && onUpdate({ title })}
+          value={stage.title}
+          onChange={(e) => onUpdate({ title: e.target.value })}
           placeholder="Название этапа"
           className="flex-1 px-2 py-1 text-sm font-medium bg-transparent border-0 focus:bg-surface rounded outline-none"
         />
@@ -891,9 +924,8 @@ function StageRow({
             type="number"
             min={0}
             max={100}
-            value={percent}
-            onChange={(e) => setPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
-            onBlur={() => percent !== stage.percent && onUpdate({ percent })}
+            value={stage.percent}
+            onChange={(e) => onUpdate({ percent: Math.max(0, Math.min(100, Number(e.target.value))) })}
             disabled={stage.completed}
             className="w-16 px-2 py-1 text-sm bg-transparent border border-border-faint rounded focus:border-brand-500 outline-none text-center disabled:opacity-50"
           />
@@ -933,13 +965,12 @@ function StageRow({
           className={`h-full rounded-full transition-all ${
             stage.completed ? "bg-green-500" : "bg-brand-500"
           }`}
-          style={{ width: `${percent}%` }}
+          style={{ width: `${stage.percent}%` }}
         />
       </div>
       <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        onBlur={() => comment !== (stage.comment || "") && onUpdate({ comment: comment || null })}
+        value={stage.comment || ""}
+        onChange={(e) => onUpdate({ comment: e.target.value || null })}
         placeholder="Комментарий к этапу (увидит партнёр)"
         rows={2}
         className="w-full px-2 py-1.5 text-xs bg-transparent border border-border-faint rounded focus:border-brand-500 outline-none resize-none text-text-secondary"
