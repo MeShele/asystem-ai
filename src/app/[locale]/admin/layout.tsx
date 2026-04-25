@@ -18,8 +18,8 @@ import {
 const navItems = [
   { href: "/admin" as const, label: "Дашборд", icon: LayoutDashboard, badge: null },
   { href: "/admin/requests" as const, label: "Заявки", icon: Inbox, badge: "new" as const },
-  { href: "/admin/partners" as const, label: "Партнёры", icon: Handshake, badge: null },
   { href: "/admin/projects" as const, label: "Проекты", icon: FolderKanban, badge: null },
+  { href: "/admin/partners" as const, label: "Партнёры", icon: Handshake, badge: null },
   { href: "/admin/settings" as const, label: "Настройки", icon: Settings, badge: null },
 ];
 

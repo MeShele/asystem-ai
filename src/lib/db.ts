@@ -123,3 +123,38 @@ export async function initPartnerTables() {
     UNIQUE(partner_id, milestone_key)
   )`;
 }
+
+export async function initProjectTables() {
+  const db = getDb();
+
+  await db`CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    logo_url TEXT,
+    total_price NUMERIC DEFAULT 0,
+    paid_amount NUMERIC DEFAULT 0,
+    partner_id TEXT,
+    progress_percent INT DEFAULT 0,
+    status TEXT DEFAULT 'planning',
+    developers JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE TABLE IF NOT EXISTS project_stages (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    order_index INT DEFAULT 0,
+    title TEXT NOT NULL,
+    percent INT DEFAULT 0,
+    comment TEXT,
+    completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;
+}
