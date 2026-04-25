@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import {
   LayoutDashboard,
-  Users,
+  FolderKanban,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -13,7 +13,7 @@ import {
 
 const navItems = [
   { href: "/partner/dashboard" as const, label: "Дашборд", icon: LayoutDashboard },
-  { href: "/partner/clients" as const, label: "Мои клиенты", icon: Users },
+  { href: "/partner/projects" as const, label: "Проекты", icon: FolderKanban },
   { href: "/partner/settings" as const, label: "Настройки", icon: Settings },
 ];
 
