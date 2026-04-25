@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, UserPlus, Mail, Phone, MessageCircle } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, RefreshCcw } from "lucide-react";
 
 interface Partner {
   partner_id: string;
@@ -22,15 +22,33 @@ interface Partner {
 export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [search, setSearch] = useState("");
+  const [resetting, setResetting] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     fetch("/api/partners")
       .then((r) => r.json())
       .then((data) =>
         setPartners(Array.isArray(data) ? data : [])
       )
       .catch(() => setPartners([]));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  const handleReset = async (partnerId: string, name: string) => {
+    if (!confirm(`Сбросить legacy-данные партнёра «${name}»?\n\nБудут удалены: старые заявки (partner_clients), сообщения и достижения.\nНовые проекты НЕ затрагиваются.`)) return;
+    setResetting(partnerId);
+    const res = await fetch(`/api/admin/partners/${partnerId}/reset`, { method: "POST" });
+    setResetting(null);
+    if (res.ok) {
+      load();
+      alert("Готово. Старые данные удалены.");
+    } else {
+      alert("Ошибка при сбросе");
+    }
+  };
 
   const filtered = partners.filter(
     (p) =>
@@ -161,6 +179,14 @@ export default function PartnersPage() {
                         <Mail className="w-3.5 h-3.5 text-text-muted" />
                       </a>
                     )}
+                    <button
+                      onClick={() => handleReset(partner.partner_id, partner.name)}
+                      disabled={resetting === partner.partner_id}
+                      title="Сбросить legacy-данные (старые заявки и достижения)"
+                      className="w-8 h-8 rounded-lg border border-border-faint flex items-center justify-center hover:bg-orange-500/10 hover:border-orange-500/30 transition-all disabled:opacity-50"
+                    >
+                      <RefreshCcw className={`w-3.5 h-3.5 text-text-muted ${resetting === partner.partner_id ? "animate-spin" : ""}`} />
+                    </button>
                   </div>
 
                   {/* Date */}
