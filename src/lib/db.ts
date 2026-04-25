@@ -176,10 +176,22 @@ export async function initProjectTables() {
     UNIQUE(project_id, developer_id)
   )`;
 
+  await db`CREATE TABLE IF NOT EXISTS partner_payouts (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    partner_id TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
+    paid_at DATE NOT NULL DEFAULT CURRENT_DATE,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
   await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_developers_project ON project_developers(project_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_developers_developer ON project_developers(developer_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_partner_payouts_project ON partner_payouts(project_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_partner_payouts_partner ON partner_payouts(partner_id, paid_at DESC)`;
 
   // Lazy migration: ensure partner_commission_percent column exists on legacy DBs
   await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'partner_commission_percent'`.then(async (rows) => {

@@ -39,5 +39,12 @@ export async function GET(
     ORDER BY pd.created_at ASC
   `;
 
-  return NextResponse.json({ project, stages, developers });
+  const payouts = await db`
+    SELECT id, amount, paid_at, comment, created_at
+    FROM partner_payouts
+    WHERE project_id = ${project.project_id as string} AND partner_id = ${partnerId}
+    ORDER BY paid_at DESC, id DESC
+  `;
+
+  return NextResponse.json({ project, stages, developers, payouts });
 }

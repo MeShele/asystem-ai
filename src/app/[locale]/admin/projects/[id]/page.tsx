@@ -14,6 +14,8 @@ import {
   CircleCheck,
   Circle,
   Percent,
+  Wallet,
+  Calendar,
 } from "lucide-react";
 import Image from "next/image";
 import { ImageUpload } from "@/components/shared/image-upload";
@@ -53,6 +55,13 @@ interface Stage {
   completed: boolean;
 }
 
+interface Payout {
+  id: number;
+  amount: number | string;
+  paid_at: string;
+  comment: string | null;
+}
+
 interface Partner {
   partner_id: string;
   name: string;
@@ -81,9 +90,11 @@ export default function AdminProjectDetailPage({
   const [linkedDevelopers, setLinkedDevelopers] = useState<Developer[]>([]);
   const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddDev, setShowAddDev] = useState(false);
+  const [showAddPayout, setShowAddPayout] = useState(false);
 
   // Editable form state
   const [form, setForm] = useState({
@@ -124,8 +135,16 @@ export default function AdminProjectDetailPage({
       .catch(() => setLoading(false));
   }, [id]);
 
+  const loadPayouts = useCallback(() => {
+    fetch(`/api/admin/projects/${id}/payouts`)
+      .then((r) => r.json())
+      .then((data) => setPayouts(Array.isArray(data) ? data : []))
+      .catch(() => setPayouts([]));
+  }, [id]);
+
   useEffect(() => {
     load();
+    loadPayouts();
     fetch("/api/partners")
       .then((r) => r.json())
       .then((data) => setPartners(Array.isArray(data) ? data : []))
@@ -134,7 +153,7 @@ export default function AdminProjectDetailPage({
       .then((r) => r.json())
       .then((data) => setAllDevelopers(Array.isArray(data) ? data : []))
       .catch(() => setAllDevelopers([]));
-  }, [load]);
+  }, [load, loadPayouts]);
 
   const dirty = useMemo(() => {
     if (!project) return false;
@@ -210,6 +229,29 @@ export default function AdminProjectDetailPage({
     await fetch(`/api/admin/projects/${project.project_id}/stages/${stageId}`, { method: "DELETE" });
   };
 
+  // Payouts
+  const addPayout = async (amount: number, paidAt: string, comment: string) => {
+    if (!project) return;
+    const res = await fetch(`/api/admin/projects/${project.project_id}/payouts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount, paid_at: paidAt, comment: comment || null }),
+    });
+    if (res.ok) {
+      loadPayouts();
+      setShowAddPayout(false);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Не удалось добавить выплату");
+    }
+  };
+  const removePayout = async (payoutId: number) => {
+    if (!project) return;
+    if (!confirm("Удалить эту выплату?")) return;
+    setPayouts((prev) => prev.filter((p) => p.id !== payoutId));
+    await fetch(`/api/admin/projects/${project.project_id}/payouts/${payoutId}`, { method: "DELETE" });
+  };
+
   // Developers
   const linkDeveloper = async (devId: number) => {
     if (!project) return;
@@ -254,6 +296,8 @@ export default function AdminProjectDetailPage({
 
   const total = Number(form.totalPrice || 0);
   const partnerCommissionAmount = Math.round((total * form.partnerCommissionPercent) / 100);
+  const totalPayouts = payouts.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const remaining = Math.max(0, partnerCommissionAmount - totalPayouts);
   const linkedIds = new Set(linkedDevelopers.map((d) => d.id));
   const availableDevs = allDevelopers.filter((d) => !linkedIds.has(d.id));
 
@@ -421,6 +465,99 @@ export default function AdminProjectDetailPage({
             </div>
           </div>
         </div>
+      </Section>
+
+      {/* Payouts */}
+      <Section
+        title="Выплаты партнёру"
+        subtitle={
+          form.partnerId
+            ? "Фиксируйте каждую выплату с датой. Можно платить до начала проекта (предоплата по договору) или частями."
+            : "Привяжите проект к партнёру, чтобы фиксировать выплаты."
+        }
+        action={
+          form.partnerId ? (
+            <button
+              onClick={() => setShowAddPayout(true)}
+              disabled={!project?.partner_id}
+              title={!project?.partner_id ? "Сохраните партнёра в проекте перед добавлением выплат" : ""}
+              className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400 transition-colors disabled:opacity-40"
+            >
+              <Plus className="w-3.5 h-3.5" /> Добавить выплату
+            </button>
+          ) : null
+        }
+      >
+        {form.partnerId && (
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="p-3 rounded-lg border border-border-faint bg-bg-secondary/40">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">К получению (всего)</div>
+              <div className="text-lg font-bold text-text-primary">
+                ${partnerCommissionAmount.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">{form.partnerCommissionPercent}% от ${total.toLocaleString("ru-RU")}</div>
+            </div>
+            <div className="p-3 rounded-lg border border-green-500/30 bg-green-500/5">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Выплачено</div>
+              <div className="text-lg font-bold text-green-500">
+                ${totalPayouts.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">{payouts.length} {payouts.length === 1 ? "выплата" : "выплат"}</div>
+            </div>
+            <div className="p-3 rounded-lg border border-orange-500/30 bg-orange-500/5">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Остаток к выплате</div>
+              <div className="text-lg font-bold text-orange-500">
+                ${remaining.toLocaleString("ru-RU")}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {form.partnerId && payouts.length === 0 && (
+          <p className="text-text-muted text-sm py-4 text-center">
+            Выплат пока не было. Добавьте первую — партнёр увидит её в своей панели.
+          </p>
+        )}
+
+        {payouts.length > 0 && (
+          <div className="space-y-2">
+            {payouts.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-3 p-3 rounded-lg border border-border-faint hover:bg-surface-raised transition-colors"
+              >
+                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                  <Wallet className="w-4 h-4 text-green-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-green-500">
+                    ${Number(p.amount).toLocaleString("ru-RU")}
+                  </div>
+                  {p.comment && <div className="text-xs text-text-muted truncate">{p.comment}</div>}
+                </div>
+                <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
+                </div>
+                <button
+                  onClick={() => removePayout(p.id)}
+                  className="w-7 h-7 rounded hover:bg-red-500/10 flex items-center justify-center text-text-muted hover:text-red-400 transition-colors"
+                  title="Удалить выплату"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showAddPayout && (
+          <AddPayoutForm
+            maxSuggestion={remaining}
+            onCancel={() => setShowAddPayout(false)}
+            onSubmit={addPayout}
+          />
+        )}
       </Section>
 
       {/* Progress */}
@@ -611,6 +748,97 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="block text-xs font-medium text-text-secondary mb-1.5">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function AddPayoutForm({
+  maxSuggestion,
+  onCancel,
+  onSubmit,
+}: {
+  maxSuggestion: number;
+  onCancel: () => void;
+  onSubmit: (amount: number, paidAt: string, comment: string) => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [amount, setAmount] = useState("");
+  const [paidAt, setPaidAt] = useState(today);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    const num = Number(amount);
+    if (!Number.isFinite(num) || num <= 0) {
+      alert("Введите положительную сумму");
+      return;
+    }
+    setSubmitting(true);
+    onSubmit(num, paidAt, comment);
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="mt-4 p-4 rounded-lg border-2 border-brand-500/30 bg-brand-500/5">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-semibold">Новая выплата</h4>
+        <button onClick={onCancel} className="w-6 h-6 rounded hover:bg-surface flex items-center justify-center text-text-muted">
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">Сумма, $</label>
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder={maxSuggestion > 0 ? `до ${maxSuggestion}` : "0"}
+            className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+          />
+          {maxSuggestion > 0 && (
+            <button
+              type="button"
+              onClick={() => setAmount(String(maxSuggestion))}
+              className="mt-1 text-[11px] text-brand-500 hover:underline"
+            >
+              Подставить остаток ${maxSuggestion.toLocaleString("ru-RU")}
+            </button>
+          )}
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">Дата выплаты</label>
+          <input
+            type="date"
+            value={paidAt}
+            onChange={(e) => setPaidAt(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+          />
+        </div>
+      </div>
+      <div className="mb-3">
+        <label className="block text-xs font-medium text-text-secondary mb-1.5">Комментарий (необязательно)</label>
+        <input
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Например: предоплата по договору, 1-й транш и т.п."
+          className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+        />
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary">
+          Отмена
+        </button>
+        <button
+          onClick={submit}
+          disabled={submitting || !amount}
+          className="px-4 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-40 text-white text-sm font-medium"
+        >
+          Добавить выплату
+        </button>
+      </div>
     </div>
   );
 }

@@ -38,7 +38,8 @@ interface Stats {
   totalValue: number;
   totalPaid: number;
   totalCommission: number;
-  earnedCommission: number;
+  totalPayouts: number;
+  remainingCommission: number;
 }
 
 const statusOptions = [
@@ -225,9 +226,9 @@ export default function AdminPartnerDetailPage({
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard icon={FolderKanban} label="Проектов" value={stats.totalProjects} sub={`${stats.activeProjects} активных`} color="text-brand-500" bg="bg-brand-500/10" />
-          <StatCard icon={Wallet} label="Объём" value={`$${stats.totalValue.toLocaleString("ru-RU")}`} sub={`оплачено $${stats.totalPaid.toLocaleString("ru-RU")}`} color="text-purple-500" bg="bg-purple-500/10" />
-          <StatCard icon={TrendingUp} label="Комиссия (всего)" value={`$${stats.totalCommission.toLocaleString("ru-RU")}`} sub="по полным суммам" color="text-amber-500" bg="bg-amber-500/10" />
-          <StatCard icon={TrendingUp} label="Заработано" value={`$${stats.earnedCommission.toLocaleString("ru-RU")}`} sub="по оплаченному" color="text-green-500" bg="bg-green-500/10" />
+          <StatCard icon={Wallet} label="Комиссия (всего)" value={`$${stats.totalCommission.toLocaleString("ru-RU")}`} sub="по полным суммам" color="text-amber-500" bg="bg-amber-500/10" />
+          <StatCard icon={TrendingUp} label="Выплачено" value={`$${stats.totalPayouts.toLocaleString("ru-RU")}`} sub="фактические выплаты" color="text-green-500" bg="bg-green-500/10" />
+          <StatCard icon={TrendingUp} label="Остаток" value={`$${stats.remainingCommission.toLocaleString("ru-RU")}`} sub="к выплате" color="text-orange-500" bg="bg-orange-500/10" />
         </div>
       )}
 

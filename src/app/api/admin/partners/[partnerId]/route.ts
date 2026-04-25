@@ -35,7 +35,6 @@ export async function GET(
   let totalValue = 0;
   let totalPaid = 0;
   let totalCommission = 0;
-  let earnedCommission = 0;
   let active = 0;
   let completed = 0;
   for (const p of projects) {
@@ -45,10 +44,17 @@ export async function GET(
     totalValue += total;
     totalPaid += paid;
     totalCommission += Math.round((total * pct) / 100);
-    earnedCommission += Math.round((paid * pct) / 100);
     if (p.status === "completed") completed++;
     else if (p.status !== "cancelled") active++;
   }
+
+  // Actual payouts
+  const payoutsRow = (await db`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM partner_payouts
+    WHERE partner_id = ${partnerId}
+  `) as Record<string, unknown>[];
+  const totalPayouts = Number(payoutsRow[0]?.total || 0);
 
   return NextResponse.json({
     partner,
@@ -60,7 +66,8 @@ export async function GET(
       totalValue,
       totalPaid,
       totalCommission,
-      earnedCommission,
+      totalPayouts,
+      remainingCommission: Math.max(0, totalCommission - totalPayouts),
     },
   });
 }

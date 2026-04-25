@@ -12,6 +12,8 @@ import {
   Lock,
   Users,
   TrendingUp,
+  Wallet,
+  Calendar,
 } from "lucide-react";
 
 interface Developer {
@@ -44,6 +46,13 @@ interface Stage {
   completed: boolean;
 }
 
+interface Payout {
+  id: number;
+  amount: number | string;
+  paid_at: string;
+  comment: string | null;
+}
+
 const statusMeta: Record<string, { label: string; color: string }> = {
   planning: { label: "Планирование", color: "bg-blue-500/10 text-blue-400" },
   active: { label: "В работе", color: "bg-brand-500/10 text-brand-500" },
@@ -63,6 +72,7 @@ export default function PartnerProjectDetailPage({
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [developers, setDevelopers] = useState<Developer[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<number | null>(null);
 
@@ -73,6 +83,7 @@ export default function PartnerProjectDetailPage({
         setProject(data.project || null);
         setStages(Array.isArray(data.stages) ? data.stages : []);
         setDevelopers(Array.isArray(data.developers) ? data.developers : []);
+        setPayouts(Array.isArray(data.payouts) ? data.payouts : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -107,7 +118,8 @@ export default function PartnerProjectDetailPage({
   const paidPct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
   const commissionPct = Number(project.partner_commission_percent || 0);
   const commissionAmount = Math.round((total * commissionPct) / 100);
-  const commissionEarned = Math.round((paid * commissionPct) / 100);
+  const totalPaidOut = payouts.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const commissionRemaining = Math.max(0, commissionAmount - totalPaidOut);
   const status = statusMeta[project.status] || statusMeta.planning;
   const activeStageData = activeStage != null ? stages.find((s) => s.id === activeStage) : null;
 
@@ -176,7 +188,7 @@ export default function PartnerProjectDetailPage({
       {/* Partner commission */}
       {commissionPct > 0 && (
         <div className="p-5 rounded-xl border border-green-500/30 bg-green-500/5 mb-6">
-          <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-500" />
               <h3 className="text-sm font-semibold">Ваше вознаграждение по проекту</h3>
@@ -185,21 +197,57 @@ export default function PartnerProjectDetailPage({
               {commissionPct}%
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Полная сумма</div>
-              <div className="text-2xl font-bold text-green-500">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">К получению (всего)</div>
+              <div className="text-2xl font-bold text-text-primary">
                 ${commissionAmount.toLocaleString("ru-RU")}
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">с полной стоимости проекта</div>
+              <div className="text-[10px] text-text-muted mt-0.5">от полной стоимости</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Уже заработано</div>
-              <div className="text-2xl font-bold text-green-500/80">
-                ${commissionEarned.toLocaleString("ru-RU")}
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Выплачено вам</div>
+              <div className="text-2xl font-bold text-green-500">
+                ${totalPaidOut.toLocaleString("ru-RU")}
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">с оплаченной части</div>
+              <div className="text-[10px] text-text-muted mt-0.5">{payouts.length} {payouts.length === 1 ? "выплата" : "выплат"}</div>
             </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Ожидается</div>
+              <div className="text-2xl font-bold text-orange-500">
+                ${commissionRemaining.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">остаток к выплате</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payouts history */}
+      {payouts.length > 0 && (
+        <div className="p-5 rounded-xl border border-border-faint bg-surface mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="w-4 h-4 text-green-500" />
+            <h3 className="text-sm font-semibold">История выплат</h3>
+          </div>
+          <div className="space-y-2">
+            {payouts.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border-faint">
+                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                  <Wallet className="w-4 h-4 text-green-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-green-500">
+                    +${Number(p.amount).toLocaleString("ru-RU")}
+                  </div>
+                  {p.comment && <div className="text-xs text-text-muted truncate">{p.comment}</div>}
+                </div>
+                <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

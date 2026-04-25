@@ -33,22 +33,24 @@ export async function GET(req: NextRequest) {
   const totalClients = projectsRows.length;
   const activeClients = projectsRows.filter((p) => p.status !== "completed" && p.status !== "cancelled").length;
   const completedClients = projectsRows.filter((p) => p.status === "completed").length;
-  // Earned = commission from PAID amount of each project
-  const totalEarned = projectsRows.reduce((sum: number, p) => {
-    const paid = Number(p.paid_amount || 0);
-    const pct = Number(p.partner_commission_percent || 0);
-    return sum + Math.round((paid * pct) / 100);
-  }, 0);
 
-  // Monthly earnings (last 12 months) — based on project paid amounts
+  // Earned = ACTUAL payouts to partner
+  const earnedRow = await db`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM partner_payouts
+    WHERE partner_id = ${partnerId}
+  ` as Record<string, unknown>[];
+  const totalEarned = Number(earnedRow[0]?.total || 0);
+
+  // Monthly earnings (last 12 months) — based on actual payout dates
   const monthlyEarnings = await db`
     SELECT
-      TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') as month,
-      COALESCE(SUM((paid_amount * partner_commission_percent / 100.0)), 0) as earned
-    FROM projects
+      TO_CHAR(DATE_TRUNC('month', paid_at), 'YYYY-MM') as month,
+      COALESCE(SUM(amount), 0) as earned
+    FROM partner_payouts
     WHERE partner_id = ${partnerId}
-      AND created_at >= NOW() - INTERVAL '12 months'
-    GROUP BY DATE_TRUNC('month', created_at)
+      AND paid_at >= (NOW() - INTERVAL '12 months')::date
+    GROUP BY DATE_TRUNC('month', paid_at)
     ORDER BY month ASC
   ` as Record<string, unknown>[];
 

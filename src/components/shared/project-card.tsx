@@ -123,7 +123,7 @@ export function ProjectCard({
         <div className="px-5 py-3 border-b border-border-faint/60 bg-green-500/5">
           <div className="flex items-center justify-between gap-2">
             <div className="text-[10px] uppercase tracking-wider text-text-muted">
-              Ваше вознаграждение
+              К получению по проекту
             </div>
             <span className="text-[10px] font-mono text-green-500/80">{commissionPct}%</span>
           </div>

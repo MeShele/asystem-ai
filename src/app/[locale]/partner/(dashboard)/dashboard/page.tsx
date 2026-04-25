@@ -244,21 +244,18 @@ export default function PartnerDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {(() => {
               const totalValue = projects.reduce((s, p) => s + Number(p.total_price || 0), 0);
-              const totalPaid = projects.reduce((s, p) => s + Number(p.paid_amount || 0), 0);
               const totalCommission = projects.reduce(
                 (s, p) => s + Math.round((Number(p.total_price || 0) * Number(p.partner_commission_percent || 0)) / 100),
                 0
               );
-              const earned = projects.reduce(
-                (s, p) => s + Math.round((Number(p.paid_amount || 0) * Number(p.partner_commission_percent || 0)) / 100),
-                0
-              );
+              const earned = data.stats.totalEarned; // actual payouts (from /api/partner/me)
+              const remaining = Math.max(0, totalCommission - earned);
               return (
                 <>
                   <FinanceCell label="Объём проектов" value={`$${totalValue.toLocaleString("ru-RU")}`} color="text-text-primary" />
-                  <FinanceCell label="Оплачено" value={`$${totalPaid.toLocaleString("ru-RU")}`} color="text-green-500" />
-                  <FinanceCell label="Ваша комиссия" value={`$${totalCommission.toLocaleString("ru-RU")}`} color="text-purple-500" sub="по полным суммам" />
-                  <FinanceCell label="Уже заработано" value={`$${earned.toLocaleString("ru-RU")}`} color="text-green-500" sub="по оплаченному" />
+                  <FinanceCell label="Ваша комиссия (всего)" value={`$${totalCommission.toLocaleString("ru-RU")}`} color="text-purple-500" sub="по полным суммам" />
+                  <FinanceCell label="Выплачено вам" value={`$${earned.toLocaleString("ru-RU")}`} color="text-green-500" sub="фактически" />
+                  <FinanceCell label="Ожидается" value={`$${remaining.toLocaleString("ru-RU")}`} color="text-orange-500" sub="остаток к выплате" />
                 </>
               );
             })()}
@@ -288,7 +285,7 @@ export default function PartnerDashboardPage() {
           </div>
           <div className="space-y-3">
             {projects.slice(0, 4).map((p) => {
-              const earned = Math.round((Number(p.paid_amount || 0) * Number(p.partner_commission_percent || 0)) / 100);
+              const potential = Math.round((Number(p.total_price || 0) * Number(p.partner_commission_percent || 0)) / 100);
               return (
                 <button
                   key={p.project_id}
@@ -297,8 +294,8 @@ export default function PartnerDashboardPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium truncate">{p.name}</span>
-                    <span className="text-xs font-mono text-green-500 flex-shrink-0">
-                      +${earned.toLocaleString("ru-RU")}
+                    <span className="text-xs font-mono text-green-500/80 flex-shrink-0">
+                      ~${potential.toLocaleString("ru-RU")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

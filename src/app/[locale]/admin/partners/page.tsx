@@ -94,7 +94,7 @@ export default function PartnersPage() {
           { label: "Всего", value: partners.length, color: "text-brand-500" },
           { label: "Активных", value: partners.filter((p) => p.status === "active").length, color: "text-green-500" },
           { label: "Клиентов", value: partners.reduce((sum, p) => sum + Number(p.total_clients || 0), 0), color: "text-blue-500" },
-          { label: "Заработок", value: `${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString()} сом`, color: "text-purple-500" },
+          { label: "Выплачено партнёрам", value: `$${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString("ru-RU")}`, color: "text-green-500" },
         ].map((s) => (
           <div key={s.label} className="p-4 rounded-xl border border-border-faint bg-surface">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -161,8 +161,8 @@ export default function PartnersPage() {
                       <div className="text-text-muted">клиентов</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-bold text-sm text-green-500">{Number(partner.total_earned).toLocaleString()}</div>
-                      <div className="text-text-muted">заработок</div>
+                      <div className="font-bold text-sm text-green-500">${Number(partner.total_earned).toLocaleString("ru-RU")}</div>
+                      <div className="text-text-muted">выплачено</div>
                     </div>
                     <div className="text-center">
                       <div className="font-bold text-sm">{Math.round(Number(partner.commission_rate) * 100)}%</div>

@@ -112,19 +112,21 @@ export default function AdminDashboard() {
     count: projects.filter((p) => p.status === k).length,
   }));
 
-  // Top partners by paid×commission
-  const partnerEarnings = projects.reduce<Record<string, { partner_id: string; partner_name: string; earned: number; projects: number }>>((acc, p) => {
-    if (!p.partner_id) return acc;
-    const earned = Math.round((Number(p.paid_amount || 0) * Number(p.partner_commission_percent || 0)) / 100);
-    if (!acc[p.partner_id]) {
-      const name = partners.find((pt) => pt.partner_id === p.partner_id)?.name || p.partner_name || p.partner_id;
-      acc[p.partner_id] = { partner_id: p.partner_id, partner_name: name, earned: 0, projects: 0 };
-    }
-    acc[p.partner_id].earned += earned;
-    acc[p.partner_id].projects += 1;
+  // Top partners by actual payouts
+  const partnerProjectCounts = projects.reduce<Record<string, number>>((acc, p) => {
+    if (p.partner_id) acc[p.partner_id] = (acc[p.partner_id] || 0) + 1;
     return acc;
   }, {});
-  const topPartners = Object.values(partnerEarnings).sort((a, b) => b.earned - a.earned).slice(0, 5);
+  const topPartners = [...partners]
+    .filter((p) => Number(p.total_earned || 0) > 0 || (partnerProjectCounts[p.partner_id] || 0) > 0)
+    .sort((a, b) => Number(b.total_earned || 0) - Number(a.total_earned || 0))
+    .slice(0, 5)
+    .map((p) => ({
+      partner_id: p.partner_id,
+      partner_name: p.name,
+      earned: Number(p.total_earned || 0),
+      projects: partnerProjectCounts[p.partner_id] || 0,
+    }));
 
   // Top developers by project count
   const topDevs = [...developers]
