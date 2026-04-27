@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
         p.ref_code, p.commission_rate, p.status, p.telegram_username,
         p.created_at, p.level, p.is_founding, p.last_activity_at,
         (SELECT COUNT(*) FROM projects pr WHERE pr.partner_id = p.partner_id) AS total_clients,
-        (SELECT COALESCE(SUM(amount), 0) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id) AS total_earned
+        (SELECT COALESCE(SUM(amount), 0) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id AND pp.status = 'paid') AS total_earned,
+        (SELECT COUNT(*) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id AND pp.status = 'requested')
+          + (SELECT COUNT(*) FROM partner_milestone_claims mc WHERE mc.partner_id = p.partner_id AND mc.status = 'requested') AS pending_count
       FROM partners p
       ORDER BY p.created_at DESC
     `;

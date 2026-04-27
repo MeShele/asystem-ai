@@ -51,6 +51,8 @@ interface Payout {
   amount: number | string;
   paid_at: string;
   comment: string | null;
+  status: "requested" | "paid";
+  requested_at: string | null;
 }
 
 const statusMeta: Record<string, { label: string; color: string }> = {
@@ -118,10 +120,25 @@ export default function PartnerProjectDetailPage({
   const paidPct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
   const commissionPct = Number(project.partner_commission_percent || 0);
   const commissionAmount = Math.round((total * commissionPct) / 100);
-  const totalPaidOut = payouts.reduce((s, p) => s + Number(p.amount || 0), 0);
-  const commissionRemaining = Math.max(0, commissionAmount - totalPaidOut);
+  const totalPaidOut = payouts.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount || 0), 0);
+  const totalPending = payouts.filter((p) => p.status === "requested").reduce((s, p) => s + Number(p.amount || 0), 0);
+  const commissionRemaining = Math.max(0, commissionAmount - totalPaidOut - totalPending);
   const status = statusMeta[project.status] || statusMeta.planning;
   const activeStageData = activeStage != null ? stages.find((s) => s.id === activeStage) : null;
+
+  const requestPayout = async () => {
+    if (commissionRemaining <= 0) return;
+    if (!confirm(`Запросить выплату $${commissionRemaining.toLocaleString("ru-RU")}? Админ получит уведомление и оплатит.`)) return;
+    const res = await fetch("/api/partner/payouts/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: project.project_id, amount: commissionRemaining }),
+    });
+    if (res.ok) {
+      const updated = await fetch(`/api/partner/projects/${id}`).then((r) => r.json());
+      setPayouts(Array.isArray(updated.payouts) ? updated.payouts : []);
+    }
+  };
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl">
@@ -197,7 +214,7 @@ export default function PartnerProjectDetailPage({
               {commissionPct}%
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">К получению (всего)</div>
               <div className="text-2xl font-bold text-text-primary">
@@ -210,14 +227,28 @@ export default function PartnerProjectDetailPage({
               <div className="text-2xl font-bold text-green-500">
                 ${totalPaidOut.toLocaleString("ru-RU")}
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">{payouts.length} {payouts.length === 1 ? "выплата" : "выплат"}</div>
+              <div className="text-[10px] text-text-muted mt-0.5">{payouts.filter((p) => p.status === "paid").length} {payouts.filter((p) => p.status === "paid").length === 1 ? "выплата" : "выплат"}</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Ожидается</div>
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">В обработке</div>
               <div className="text-2xl font-bold text-orange-500">
+                ${totalPending.toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">запросов: {payouts.filter((p) => p.status === "requested").length}</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Можно запросить</div>
+              <div className="text-2xl font-bold text-brand-500">
                 ${commissionRemaining.toLocaleString("ru-RU")}
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">остаток к выплате</div>
+              {commissionRemaining > 0 && (
+                <button
+                  onClick={requestPayout}
+                  className="mt-1.5 px-3 py-1 rounded-md bg-brand-500 hover:bg-brand-400 text-white text-[11px] font-semibold transition-colors"
+                >
+                  💸 Запросить выплату
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -231,23 +262,33 @@ export default function PartnerProjectDetailPage({
             <h3 className="text-sm font-semibold">История выплат</h3>
           </div>
           <div className="space-y-2">
-            {payouts.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border-faint">
-                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <Wallet className="w-4 h-4 text-green-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-green-500">
-                    +${Number(p.amount).toLocaleString("ru-RU")}
+            {payouts.map((p) => {
+              const isPending = p.status === "requested";
+              return (
+                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${isPending ? "border-orange-500/30 bg-orange-500/5" : "border-border-faint"}`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPending ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"}`}>
+                    <Wallet className="w-4 h-4" />
                   </div>
-                  {p.comment && <div className="text-xs text-text-muted truncate">{p.comment}</div>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-semibold ${isPending ? "text-orange-500" : "text-green-500"}`}>
+                        {isPending ? "" : "+"}${Number(p.amount).toLocaleString("ru-RU")}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${isPending ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"}`}>
+                        {isPending ? "В обработке" : "Получено"}
+                      </span>
+                    </div>
+                    {p.comment && <div className="text-xs text-text-muted truncate mt-0.5">{p.comment}</div>}
+                  </div>
+                  <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
+                    <Calendar className="w-3 h-3" />
+                    {isPending && p.requested_at
+                      ? `запрошено ${new Date(p.requested_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}`
+                      : new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
+                  </div>
                 </div>
-                <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

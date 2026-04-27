@@ -40,10 +40,10 @@ export async function GET(
   `;
 
   const payouts = await db`
-    SELECT id, amount, paid_at, comment, created_at
+    SELECT id, amount, paid_at, comment, status, requested_at, created_at
     FROM partner_payouts
     WHERE project_id = ${project.project_id as string} AND partner_id = ${partnerId}
-    ORDER BY paid_at DESC, id DESC
+    ORDER BY (CASE WHEN status = 'requested' THEN 0 ELSE 1 END), paid_at DESC, id DESC
   `;
 
   return NextResponse.json({ project, stages, developers, payouts });

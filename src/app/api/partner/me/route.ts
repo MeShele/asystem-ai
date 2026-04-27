@@ -37,21 +37,37 @@ export async function GET(req: NextRequest) {
   const activeClients = projectsRows.filter((p) => p.status !== "completed" && p.status !== "cancelled").length;
   const completedClients = projectsRows.filter((p) => p.status === "completed").length;
 
-  // Earned = ACTUAL payouts to partner
+  // Earned = ACTUAL paid payouts (status='paid')
   const earnedRow = await db`
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM partner_payouts
-    WHERE partner_id = ${partnerId}
+    WHERE partner_id = ${partnerId} AND status = 'paid'
   ` as Record<string, unknown>[];
   const totalEarned = Number(earnedRow[0]?.total || 0);
 
-  // Monthly earnings (last 12 months) — based on actual payout dates
+  // Pending payouts (requested, not yet approved)
+  const pendingRow = await db`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM partner_payouts
+    WHERE partner_id = ${partnerId} AND status = 'requested'
+  ` as Record<string, unknown>[];
+  const pendingPayouts = Number(pendingRow[0]?.total || 0);
+
+  // Milestone claims status
+  const milestoneClaims = await db`
+    SELECT milestone_key, status, amount, paid_at, requested_at
+    FROM partner_milestone_claims
+    WHERE partner_id = ${partnerId}
+  ` as Record<string, unknown>[];
+
+  // Monthly earnings (last 12 months) — based on actual payout dates (paid only)
   const monthlyEarnings = await db`
     SELECT
       TO_CHAR(DATE_TRUNC('month', paid_at), 'YYYY-MM') as month,
       COALESCE(SUM(amount), 0) as earned
     FROM partner_payouts
     WHERE partner_id = ${partnerId}
+      AND status = 'paid'
       AND paid_at >= (NOW() - INTERVAL '12 months')::date
     GROUP BY DATE_TRUNC('month', paid_at)
     ORDER BY month ASC
@@ -129,5 +145,8 @@ export async function GET(req: NextRequest) {
       baseCommission,
       acceptanceStats: partnerStats,
     },
+    // Phase 16: pending and milestones
+    pendingPayouts,
+    milestoneClaims,
   });
 }

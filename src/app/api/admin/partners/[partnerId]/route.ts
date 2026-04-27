@@ -48,11 +48,11 @@ export async function GET(
     else if (p.status !== "cancelled") active++;
   }
 
-  // Actual payouts
+  // Actual payouts (paid only)
   const payoutsRow = (await db`
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM partner_payouts
-    WHERE partner_id = ${partnerId}
+    WHERE partner_id = ${partnerId} AND status = 'paid'
   `) as Record<string, unknown>[];
   const totalPayouts = Number(payoutsRow[0]?.total || 0);
 

@@ -9,6 +9,7 @@ import {
   Handshake,
   FolderKanban,
   Users,
+  Wallet,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/projects" as const, label: "Проекты", icon: FolderKanban, badge: null },
   { href: "/admin/partners" as const, label: "Партнёры", icon: Handshake, badge: null },
   { href: "/admin/developers" as const, label: "Разработчики", icon: Users, badge: null },
+  { href: "/admin/payouts" as const, label: "Оплаты", icon: Wallet, badge: "payouts" as const },
   { href: "/admin/settings" as const, label: "Настройки", icon: Settings, badge: null },
 ];
 
@@ -31,12 +33,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const [requestCount, setRequestCount] = useState(0);
+  const [payoutCount, setPayoutCount] = useState(0);
   useEffect(() => {
     fetch("/api/requests")
       .then((res) => res.json())
       .then((data) => {
         const count = data.filter((r: { status?: string }) => !r.status || r.status === "new").length;
         setRequestCount(count);
+      })
+      .catch(() => {});
+    fetch("/api/admin/payouts")
+      .then((res) => res.ok ? res.json() : { payouts: [], milestones: [] })
+      .then((d) => {
+        type R = { status?: string };
+        const list1: R[] = Array.isArray(d.payouts) ? d.payouts : [];
+        const list2: R[] = Array.isArray(d.milestones) ? d.milestones : [];
+        const c = list1.filter((p) => p.status === "requested").length + list2.filter((m) => m.status === "requested").length;
+        setPayoutCount(c);
       })
       .catch(() => {});
   }, []);
@@ -101,10 +114,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         {requestCount}
                       </span>
                     )}
+                    {item.badge === "payouts" && payoutCount > 0 && (
+                      <span className="ml-auto px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-bold">
+                        {payoutCount}
+                      </span>
+                    )}
                   </>
                 )}
                 {collapsed && item.badge === "new" && requestCount > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+                )}
+                {collapsed && item.badge === "payouts" && payoutCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-orange-500" />
                 )}
               </Link>
             );

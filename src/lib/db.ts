@@ -195,6 +195,32 @@ export async function initProjectTables() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  // Phase 16: Milestone reward claims ($5K→$500, $10K→$1000, $20K→$2000)
+  await db`CREATE TABLE IF NOT EXISTS partner_milestone_claims (
+    id SERIAL PRIMARY KEY,
+    partner_id TEXT NOT NULL,
+    milestone_key TEXT NOT NULL,
+    threshold NUMERIC NOT NULL,
+    amount NUMERIC NOT NULL,
+    status TEXT NOT NULL DEFAULT 'requested',
+    requested_at TIMESTAMP DEFAULT NOW(),
+    paid_at DATE,
+    comment TEXT,
+    UNIQUE(partner_id, milestone_key)
+  )`;
+
+  // Phase 16: payout request workflow — add status + requested_at to partner_payouts
+  const payoutCols = [
+    { name: "status", def: "TEXT DEFAULT 'paid'" },
+    { name: "requested_at", def: "TIMESTAMP" },
+  ];
+  for (const col of payoutCols) {
+    const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partner_payouts' AND column_name = ${col.name}`;
+    if (exists.length === 0) {
+      await getPool().query(`ALTER TABLE partner_payouts ADD COLUMN ${col.name} ${col.def}`);
+    }
+  }
+
   // Lazy ALTERs for new columns
   const projectCols = [
     { name: "tier", def: "TEXT DEFAULT 'T1'" },

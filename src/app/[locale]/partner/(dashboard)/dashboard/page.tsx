@@ -72,6 +72,14 @@ interface TierSystem {
   };
 }
 
+interface MilestoneClaim {
+  milestone_key: string;
+  status: "requested" | "paid";
+  amount: number | string;
+  paid_at: string | null;
+  requested_at: string | null;
+}
+
 interface ExtendedDashboardData extends DashboardData {
   achievements: AchievementData[];
   milestones: MilestoneData[];
@@ -80,6 +88,8 @@ interface ExtendedDashboardData extends DashboardData {
   progressPercent: number;
   monthlyEarnings: { month: string; earned: number }[];
   tierSystem: TierSystem;
+  pendingPayouts: number;
+  milestoneClaims: MilestoneClaim[];
 }
 
 export default function PartnerDashboardPage() {
@@ -121,8 +131,30 @@ export default function PartnerDashboardPage() {
     );
   }
 
-  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings, tierSystem } = data;
+  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings, tierSystem, milestoneClaims = [] } = data;
   const { currentMeta, nextMeta, progress: tierProgress, baseCommission, acceptanceStats } = tierSystem;
+
+  // Mini-rewards (10% of earnings at $5K/$10K/$20K)
+  const MINI_REWARDS = [
+    { key: "5k", threshold: 5000, reward: 500, icon: "🎯", title: "Первая пятёрка" },
+    { key: "10k", threshold: 10000, reward: 1000, icon: "🔥", title: "Десятка" },
+    { key: "20k", threshold: 20000, reward: 2000, icon: "💎", title: "Двадцатка" },
+  ];
+
+  const claimMilestone = async (key: string) => {
+    if (!confirm("Запросить награду? Админ получит уведомление и оплатит.")) return;
+    const res = await fetch("/api/partner/milestones/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ milestone_key: key }),
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Не удалось запросить награду");
+    }
+  };
   const currentLocale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] || "ru" : "ru";
   const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${currentLocale}/client/request?ref=${partner.ref_code}`;
   const achievedKeys = new Set(achievements.map((a) => a.milestone_key));
@@ -456,75 +488,91 @@ export default function PartnerDashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── Achievements Grid ─── */}
+      {/* ─── Mini-rewards (10% bonus from earned thresholds) ─── */}
       <motion.div
         className="mb-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-1">
           <Trophy className="w-5 h-5 text-amber-500" />
-          <h2 className="text-lg font-bold">Достижения</h2>
+          <h2 className="text-lg font-bold">Мини-награды</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {milestones.map((milestone, i) => {
-            const achieved = achievedKeys.has(milestone.key);
-            const achievement = achievements.find((a) => a.milestone_key === milestone.key);
+        <p className="text-xs text-text-muted mb-4">
+          Когда ваш заработок достигает порога — можно запросить бонус (10% от суммы)
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {MINI_REWARDS.map((m, i) => {
+            const claim = milestoneClaims.find((c) => c.milestone_key === m.key);
+            const eligible = stats.totalEarned >= m.threshold;
+            const status = claim?.status; // 'requested' | 'paid' | undefined
+            const progressPct = Math.min(100, (stats.totalEarned / m.threshold) * 100);
+
             return (
               <motion.div
-                key={milestone.key}
-                className={`relative p-4 rounded-xl border transition-all duration-300 ${
-                  achieved
-                    ? "border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50"
-                    : "border-border-faint bg-surface opacity-60 hover:opacity-80"
+                key={m.key}
+                className={`relative p-4 rounded-xl border transition-all ${
+                  status === "paid"
+                    ? "border-green-500/40 bg-green-500/5"
+                    : status === "requested"
+                    ? "border-orange-500/40 bg-orange-500/5"
+                    : eligible
+                    ? "border-amber-500/40 bg-amber-500/5"
+                    : "border-border-faint bg-surface opacity-70"
                 }`}
                 initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: achieved ? 1 : 0.6, scale: 1 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.3 + i * 0.04 }}
               >
-                {/* Icon */}
-                <div className="text-2xl mb-2">
-                  {achieved ? milestone.icon : "🔒"}
-                </div>
-
-                {/* Title */}
-                <div className="text-sm font-semibold mb-0.5">{milestone.title}</div>
-
-                {/* Amount */}
-                <div className={`text-xs ${achieved ? "text-amber-600 dark:text-amber-400" : "text-text-muted"}`}>
-                  ${milestone.amount.toLocaleString()}
-                </div>
-
-                {/* Bonus badge */}
-                <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                  achieved
-                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                    : "bg-bg-secondary text-text-muted"
-                }`}>
-                  {achieved ? (
-                    <>
-                      <CheckCircle2 className="w-3 h-3" />
-                      +${milestone.bonus.toLocaleString()}
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-3 h-3" />
-                      Бонус +${milestone.bonus.toLocaleString()}
-                    </>
-                  )}
-                </div>
-
-                {/* Date achieved */}
-                {achieved && achievement?.achieved_at && (
-                  <div className="text-[10px] text-text-muted mt-1">
-                    {new Date(achievement.achieved_at).toLocaleDateString("ru-RU")}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-3xl">
+                    {status === "paid" ? "✅" : eligible || status === "requested" ? m.icon : "🔒"}
                   </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wider text-text-muted">Бонус</div>
+                    <div className="text-lg font-bold text-amber-500">+${m.reward}</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold mb-0.5">{m.title}</div>
+                <div className="text-xs text-text-muted mb-2">
+                  За заработок ${m.threshold.toLocaleString("ru-RU")}
+                </div>
+
+                {/* Progress */}
+                {!eligible && (
+                  <>
+                    <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden mb-2">
+                      <div
+                        className="h-full bg-amber-500 rounded-full transition-all"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-text-muted">
+                      ${stats.totalEarned.toLocaleString("ru-RU")} / ${m.threshold.toLocaleString("ru-RU")}
+                    </div>
+                  </>
                 )}
 
-                {/* Glow effect for achieved */}
-                {achieved && (
-                  <div className="absolute inset-0 rounded-xl border border-amber-500/20 pointer-events-none" />
+                {/* Action / status */}
+                {status === "paid" && claim?.paid_at && (
+                  <div className="mt-2 text-[11px] text-green-500 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Получено · {new Date(claim.paid_at).toLocaleDateString("ru-RU")}
+                  </div>
+                )}
+                {status === "requested" && (
+                  <div className="mt-2 text-[11px] text-orange-500 flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> В обработке у админа
+                  </div>
+                )}
+                {!status && eligible && (
+                  <button
+                    onClick={() => claimMilestone(m.key)}
+                    className="mt-2 w-full px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold transition-colors"
+                  >
+                    💰 Забрать награду
+                  </button>
                 )}
               </motion.div>
             );
