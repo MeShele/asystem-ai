@@ -4,8 +4,23 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion, useInView, useMotionValue, useScroll, useTransform, animate } from "framer-motion";
-import { Compass, PenTool, Rocket, Server, ShieldCheck, Zap, Clock, Infinity as InfinityIcon } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import {
+  Compass,
+  PenTool,
+  Rocket,
+  Server,
+  ShieldCheck,
+  Zap,
+  Clock,
+} from "lucide-react";
+import { VinylEasterEgg } from "@/components/shared/vinyl-easter-egg";
+import { ServiceModal } from "@/components/shared/service-modal";
+import { TechModal, TECH_STACK, type Tech } from "@/components/shared/tech-modal";
+import { Icon } from "@iconify/react";
+import { LiquidSpline, type SplineKind } from "./liquid-spline";
+import { LabCanvas, type LabShape } from "./lab-3d";
+import { MeshGradient } from "@paper-design/shaders-react";
 
 /* ═══════════════ ACTIVE SECTION TRACKING ═══════════════ */
 
@@ -18,9 +33,7 @@ const TRACKED_SECTIONS = [
   "services",
   "process",
   "stack",
-  "stats",
   "lab",
-  "testimonials",
   "team",
 ];
 
@@ -30,28 +43,66 @@ function useActiveSection(): string | null {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Найти запись с максимальной intersection-ratio
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) {
-          setActive(visible[0].target.id);
+    let rafId: number | null = null;
+
+    const compute = () => {
+      rafId = null;
+      // Якорь — строка на 30% высоты viewport. Активна та секция,
+      // чей top ближе к этой строке сверху (но уже прошёл её).
+      const anchor = window.innerHeight * 0.3;
+      let current: string | null = null;
+
+      for (const id of TRACKED_SECTIONS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        // Секция уже вошла (её верх выше или на уровне якоря)
+        if (rect.top - anchor <= 0 && rect.bottom > anchor) {
+          current = id;
+          break;
         }
-      },
-      {
-        rootMargin: "-20% 0px -60% 0px",
-        threshold: [0, 0.25, 0.5, 0.75, 1],
       }
-    );
 
-    TRACKED_SECTIONS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
+      // Если мы выше первой секции — active = null (до скролла)
+      // Если ниже последней — остаётся последняя видимая
+      if (!current) {
+        const first = document.getElementById(TRACKED_SECTIONS[0]);
+        if (first) {
+          const r = first.getBoundingClientRect();
+          if (r.top > anchor) {
+            setActive(null);
+            return;
+          }
+        }
+        // Ниже последней — берём последнюю
+        const last = document.getElementById(TRACKED_SECTIONS[TRACKED_SECTIONS.length - 1]);
+        if (last) {
+          const r = last.getBoundingClientRect();
+          if (r.bottom < anchor) {
+            setActive(TRACKED_SECTIONS[TRACKED_SECTIONS.length - 1]);
+            return;
+          }
+        }
+        return;
+      }
 
-    return () => observer.disconnect();
+      setActive(current);
+    };
+
+    const onScroll = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(compute);
+    };
+
+    compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return active;
@@ -131,15 +182,23 @@ const CLIENTS: ClientTile[] = [
   },
 ];
 
+type LabStatus = "active" | "shipped" | "exploration" | "concept";
 type LabTile = {
   id: string;
   title: string;
   kicker: string;
+  date: string;
+  status: LabStatus;
   desc: string;
-  bg: string;
-  text: "light" | "dark";
-  pattern?: "grid" | "dots" | "lines" | "radial" | "rings" | "noise";
-  accent?: string;
+  shape: LabShape;
+  color: string;
+};
+
+const LAB_STATUS_COLOR: Record<LabStatus, string> = {
+  active: "#10b981",
+  shipped: "#3b82f6",
+  exploration: "#a855f7",
+  concept: "#f59e0b",
 };
 
 const LAB: LabTile[] = [
@@ -147,80 +206,81 @@ const LAB: LabTile[] = [
     id: "partner-calc",
     title: "Партнёрский калькулятор",
     kicker: "TOOL",
+    date: "2026-04",
+    status: "active",
     desc: "Партнёр считает маржу сам — базовая цена плюс свободная наценка.",
-    bg: "#0a0a0a",
-    text: "light",
-    pattern: "grid",
-    accent: "#3b82f6",
+    shape: "/lab/partner-calc.png",
+    color: "#2563EB",
   },
   {
     id: "mvp-no-prepay",
     title: "MVP без предоплаты",
     kicker: "МОДЕЛЬ",
+    date: "2026-03",
+    status: "shipped",
     desc: "Инверсия риска — сначала MVP, потом счёт. Клиент видит результат раньше денег.",
-    bg: "#f5f5f5",
-    text: "dark",
-    pattern: "lines",
-    accent: "#10b981",
+    shape: "/lab/mvp-no-prepay.png",
+    color: "#93C5FD",
   },
   {
     id: "ai-audit",
     title: "AI-аудит процесса",
     kicker: "ЭКСПЕРИМЕНТ",
+    date: "2026-04",
+    status: "exploration",
     desc: "Ассистент слушает звонки клиента и находит утечки в воронке.",
-    bg: "linear-gradient(135deg, #0f172a, #1e293b)",
-    text: "light",
-    pattern: "dots",
-    accent: "#a855f7",
+    shape: "/lab/ai-audit.png",
+    color: "#2563EB",
   },
   {
     id: "tg-bot",
     title: "Telegram-бот заявок",
     kicker: "ИНТЕГРАЦИЯ",
+    date: "2026-02",
+    status: "shipped",
     desc: "Заявка из формы → Bitrix → уведомление в Telegram за 3 минуты.",
-    bg: "#229ED9",
-    text: "light",
-    pattern: "rings",
+    shape: "/lab/tg-bot.png",
+    color: "#93C5FD",
   },
   {
     id: "realtime",
     title: "Realtime-дашборд",
     kicker: "КОНЦЕПТ",
+    date: "2026-04",
+    status: "concept",
     desc: "Клиент видит статусы своих проектов и заявок в одной панели.",
-    bg: "#111827",
-    text: "light",
-    pattern: "radial",
-    accent: "#ef4444",
+    shape: "/lab/realtime.png",
+    color: "#2563EB",
   },
   {
     id: "crm-sync",
     title: "CRM-синхронизация",
     kicker: "БЭКЕНД",
+    date: "2026-01",
+    status: "shipped",
     desc: "Универсальный коннектор между сайтом и Bitrix / amoCRM / Notion.",
-    bg: "#fafafa",
-    text: "dark",
-    pattern: "grid",
-    accent: "#000",
+    shape: "/lab/crm-sync.png",
+    color: "#93C5FD",
   },
   {
     id: "ascii-easter",
     title: "ASCII в DevTools",
     kicker: "ФИРМА",
+    date: "2025-12",
+    status: "shipped",
     desc: "Открываешь F12 на любом нашем проекте — встречает подпись мастерской.",
-    bg: "#000",
-    text: "light",
-    pattern: "noise",
-    accent: "#22c55e",
+    shape: "/lab/ascii-easter.png",
+    color: "#525252",
   },
   {
     id: "inversion",
     title: "Инверсия риска",
     kicker: "ФИЛОСОФИЯ",
+    date: "2025-11",
+    status: "active",
     desc: "Не клиент рискует, а мы. Хеджирование — продукт остаётся как актив.",
-    bg: "linear-gradient(135deg, #f8fafc, #e2e8f0)",
-    text: "dark",
-    pattern: "lines",
-    accent: "#0f172a",
+    shape: "/lab/inversion.png",
+    color: "#2563EB",
   },
 ];
 
@@ -271,25 +331,19 @@ function Sidebar() {
     >
       <Link href="/" className="inline-flex items-baseline gap-1 group" aria-label="asystem.ai">
         <span className="text-[22px] font-semibold tracking-tight">asystem</span>
-        <span className="text-[22px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+        <span className="text-[22px] font-semibold" style={{ color: "#2563EB" }}>.</span>
         <span className="text-[22px] font-semibold tracking-tight">ai</span>
-        <span
-          className="ml-2 font-mono text-[10px]"
-          style={{ color: "#9ca3af", letterSpacing: "0.1em" }}
-        >
-          [r2026]
-        </span>
       </Link>
+
+      <ScrollProgress />
 
       <SidebarGroup title="Works">
         <SidebarLink href="#clients">клиенты · 4</SidebarLink>
-        <SidebarLink href="#guarantees">гарантии · 4</SidebarLink>
+        <SidebarLink href="#guarantees">обещания · 4</SidebarLink>
         <SidebarLink href="#services">услуги · 4</SidebarLink>
         <SidebarLink href="#process">процесс · 4</SidebarLink>
         <SidebarLink href="#stack">стек</SidebarLink>
-        <SidebarLink href="#stats">цифры</SidebarLink>
         <SidebarLink href="#lab">лаборатория · 8</SidebarLink>
-        <SidebarLink href="#testimonials">отзывы</SidebarLink>
       </SidebarGroup>
 
       <SidebarGroup title="Company">
@@ -355,7 +409,7 @@ function SidebarLink({
     <span
       className="text-[14px] transition-all duration-300 inline-flex items-center gap-2 relative"
       style={{
-        color: isActive ? "#ef4444" : "#0a0a0a",
+        color: isActive ? "#2563EB" : "#0a0a0a",
         transform: isActive ? "translateX(4px)" : "translateX(0)",
       }}
     >
@@ -363,13 +417,13 @@ function SidebarLink({
         <motion.span
           layoutId="sidebar-active-dot"
           className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "#ef4444", boxShadow: "0 0 8px rgba(239,68,68,0.6)" }}
+          style={{ background: "#2563EB", boxShadow: "0 0 8px rgba(37, 99, 235,0.6)" }}
           transition={{ type: "spring", stiffness: 380, damping: 30 }}
         />
       )}
       <span
         onMouseEnter={(e) => {
-          if (!isActive) (e.currentTarget as HTMLElement).style.color = "#ef4444";
+          if (!isActive) (e.currentTarget as HTMLElement).style.color = "#2563EB";
         }}
         onMouseLeave={(e) => {
           if (!isActive) (e.currentTarget as HTMLElement).style.color = "#0a0a0a";
@@ -403,11 +457,31 @@ function SidebarLink({
   );
 }
 
+function ScrollProgress() {
+  const activeSection = useContext(ActiveSectionContext);
+  const total = TRACKED_SECTIONS.length;
+  const idx = activeSection ? TRACKED_SECTIONS.indexOf(activeSection) : -1;
+  const pct = idx >= 0 ? Math.round(((idx + 1) / total) * 100) : 0;
+
+  return (
+    <div className="-mt-4">
+      <div className="relative h-[2px] w-full overflow-hidden" style={{ background: "#f0f0f0" }}>
+        <motion.div
+          className="absolute inset-y-0 left-0"
+          style={{ background: "#2563EB" }}
+          animate={{ width: `${pct}%` }}
+          transition={{ type: "spring", stiffness: 120, damping: 24, mass: 0.6 }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function LiveTimestamp() {
   const [time, setTime] = useState<string | null>(null);
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat("ru-RU", {
-      timeZone: "Asia/Almaty",
+      timeZone: "Asia/Bishkek",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
@@ -424,7 +498,7 @@ function LiveTimestamp() {
         className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
         style={{ background: "#10b981", boxShadow: "0 0 8px rgba(16,185,129,0.6)" }}
       />
-      СЕЙЧАС · {time} · ALMATY · ONLINE
+      СЕЙЧАС · {time} · BISHKEK · ONLINE
     </div>
   );
 }
@@ -434,6 +508,8 @@ function LiveTimestamp() {
 function Main() {
   return (
     <main id="main-content" className="flex-1 min-w-0">
+      <HeroBar />
+
       <SectionHeader
         id="clients"
         kicker="Clients · 4"
@@ -476,14 +552,6 @@ function Main() {
       <TechMarquee />
 
       <SectionHeader
-        id="stats"
-        kicker="Numbers"
-        title="В цифрах"
-        subtitle="Что мы измеряем в наших проектах."
-      />
-      <StatsStrip />
-
-      <SectionHeader
         id="lab"
         kicker="Lab · 8"
         title="Лаборатория"
@@ -499,14 +567,6 @@ function Main() {
       </div>
 
       <SectionHeader
-        id="testimonials"
-        kicker="Proof"
-        title="Говорят клиенты"
-        subtitle="Что пишут те, кто уже прошёл этот путь с нами."
-      />
-      <Testimonials />
-
-      <SectionHeader
         id="team"
         kicker="Team · 16"
         title="Команда"
@@ -517,46 +577,197 @@ function Main() {
       <FinalCTA />
 
       <SubmitRow />
+
+      {/* Footer wordmark + easter egg (egg в позиции точки) */}
+      <VinylEasterEgg />
     </main>
+  );
+}
+
+function detectWebGL(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function HeroBar() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroInView = useInView(heroRef, { amount: 0.01 });
+  const [hasWebGL, setHasWebGL] = useState(false);
+
+  useEffect(() => {
+    setHasWebGL(detectWebGL());
+  }, []);
+
+  const showShader = heroInView && hasWebGL;
+
+  return (
+    <div
+      ref={heroRef}
+      className="relative overflow-hidden px-6 lg:px-12 py-12 lg:py-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10"
+      style={{ borderBottom: "1px solid #e5e5e5" }}
+    >
+      {/* Animated editorial gradient — только если WebGL поддерживается + hero в viewport */}
+      {showShader && (
+        <MeshGradient
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 0.55,
+            pointerEvents: "none",
+          }}
+          colors={["#ffffff", "#DBEAFE", "#2563EB", "#FAFAFA", "#F5F5F4"]}
+          distortion={0.85}
+          swirl={0.25}
+          speed={0.35}
+        />
+      )}
+      {/* Статичный fallback-фон когда шейдер выключен или WebGL недоступен */}
+      {!showShader && (
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at 60% 40%, rgba(37, 99, 235,0.12), rgba(219,234,254,0.4) 45%, transparent 75%)",
+          }}
+        />
+      )}
+
+      <div className="relative z-10 max-w-3xl">
+        <h1
+          className="tracking-tight"
+          style={{
+            fontFamily: "var(--font-display, 'Space Grotesk'), sans-serif",
+            fontSize: "clamp(44px, 6vw, 88px)",
+            lineHeight: 0.95,
+            letterSpacing: "-0.035em",
+            color: "#0a0a0a",
+            fontWeight: 600,
+          }}
+        >
+          Независимая
+          <br />
+          <span style={{ fontStyle: "italic", fontWeight: 400, color: "#1a1a1a" }}>
+            AI-first студия
+          </span>
+          <span style={{ color: "#2563EB" }}>.</span>
+        </h1>
+      </div>
+
+      <div className="relative z-10 flex flex-col gap-4 shrink-0 self-end lg:self-center">
+        <div className="flex flex-col items-start lg:items-end">
+          <div
+            className="font-semibold tracking-tight"
+            style={{
+              fontFamily: "var(--font-display, 'Space Grotesk'), sans-serif",
+              fontSize: "clamp(72px, 7.5vw, 128px)",
+              lineHeight: 0.9,
+              color: "#0a0a0a",
+              letterSpacing: "-0.04em",
+            }}
+          >
+            4×
+          </div>
+          <div
+            className="font-mono text-[10px] mt-1"
+            style={{ color: "#525252", letterSpacing: "0.2em" }}
+          >
+            быстрее рынка
+          </div>
+        </div>
+        <div className="flex items-baseline gap-6 lg:gap-8">
+          {[
+            { num: "0 сом", label: "предоплаты" },
+            { num: "24h", label: "ответ по КП" },
+          ].map((kpi) => (
+            <div key={kpi.label} className="flex flex-col">
+              <div
+                className="font-semibold tracking-tight"
+                style={{
+                  fontFamily: "var(--font-display, 'Space Grotesk'), sans-serif",
+                  fontSize: "clamp(24px, 2.4vw, 36px)",
+                  lineHeight: 1,
+                  color: "#0a0a0a",
+                }}
+              >
+                {kpi.num}
+              </div>
+              <div
+                className="font-mono text-[10px] mt-2"
+                style={{ color: "#525252", letterSpacing: "0.15em" }}
+              >
+                {kpi.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FooterWordmark() {
+  return (
+    <div
+      aria-hidden
+      className="select-none overflow-hidden"
+      style={{
+        background: "#fafafa",
+        lineHeight: 0.82,
+        borderTop: "1px solid #e5e5e5",
+        paddingTop: "clamp(40px, 8vh, 96px)",
+        paddingBottom: "clamp(16px, 3vh, 32px)",
+      }}
+    >
+      <div
+        className="font-semibold tracking-tighter whitespace-nowrap text-center"
+        style={{
+          fontSize: "clamp(56px, 14vw, 220px)",
+          color: "rgba(10,10,10,0.18)",
+          paddingLeft: "clamp(16px, 3vw, 48px)",
+          paddingRight: "clamp(16px, 3vw, 48px)",
+        }}
+      >
+        asystem<span style={{ color: "rgba(37, 99, 235,0.5)" }}>.</span>ai
+      </div>
+    </div>
   );
 }
 
 function SectionHeader({
   id,
-  kicker,
   title,
-  subtitle,
 }: {
   id: string;
-  kicker: string;
+  kicker?: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }) {
   return (
     <motion.header
       id={id}
-      className="px-6 lg:px-12 py-16 lg:py-20"
+      className="px-6 lg:px-12 py-12 lg:py-16"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div
-        className="font-mono text-[11px] mb-4 inline-flex items-center gap-2"
-        style={{ color: "#9ca3af", letterSpacing: "0.2em", textTransform: "uppercase" }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
-        {kicker}
-      </div>
       <h1
         className="font-semibold tracking-tight"
         style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)", lineHeight: 1.05 }}
       >
         {title}
       </h1>
-      <p className="mt-3 text-[15px] max-w-xl" style={{ color: "#6b7280", lineHeight: 1.5 }}>
-        {subtitle}
-      </p>
     </motion.header>
   );
 }
@@ -564,19 +775,8 @@ function SectionHeader({
 /* ═══════════════ CLIENT TILE — информативная ═══════════════ */
 
 function ClientCell({ c, index }: { c: ClientTile; index: number }) {
-  const cardRef = useRef<HTMLAnchorElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: cardRef,
-    offset: ["start end", "end start"],
-  });
-  // Parallax: логотип плавно едет вверх на 30px по мере прокрутки карточки через viewport (desktop)
-  const logoY = useTransform(scrollYProgress, [0, 1], ["15%", "-15%"]);
-  // Noise-оверлей едет в противоположную сторону на 10% для глубины
-  const bgY = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
-
   return (
     <motion.a
-      ref={cardRef}
       href={`#case-${c.id}`}
       className="group relative flex flex-col transition-colors"
       style={{
@@ -618,12 +818,11 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
           </span>
         </div>
 
-        <motion.div
-          className="transition-transform duration-500 group-hover:scale-105 will-change-transform"
+        <div
+          className="transition-transform duration-500 group-hover:scale-105"
           style={{
             maxWidth: "60%",
             maxHeight: "70%",
-            y: logoY,
           }}
         >
           <Image
@@ -634,17 +833,8 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
             className="object-contain w-full h-auto"
             style={{ filter: "brightness(0) invert(1)" }}
           />
-        </motion.div>
+        </div>
 
-        {/* Noise texture с parallax */}
-        <motion.div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay will-change-transform"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            y: bgY,
-          }}
-        />
       </div>
 
       {/* BOTTOM — белый с инфой */}
@@ -671,8 +861,17 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
           </div>
         </div>
 
-        <div className="font-mono text-[11px]" style={{ color: "#9ca3af", letterSpacing: "0.1em" }}>
-          {c.stack}
+        <div
+          className="font-mono text-[11px] flex items-center justify-between"
+          style={{ color: "#9ca3af", letterSpacing: "0.1em" }}
+        >
+          <span>{c.stack}</span>
+          <span
+            className="inline-flex items-center gap-1 transition-all duration-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+            style={{ color: "#2563EB", letterSpacing: "0.2em" }}
+          >
+            VIEW CASE <span aria-hidden>→</span>
+          </span>
         </div>
       </div>
     </motion.a>
@@ -682,9 +881,6 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
 /* ═══════════════ LAB TILE ═══════════════ */
 
 function LabCell({ l, i }: { l: LabTile; i: number }) {
-  const textColor = l.text === "light" ? "#fff" : "#0a0a0a";
-  const subtleColor = l.text === "light" ? "rgba(255,255,255,0.55)" : "rgba(10,10,10,0.55)";
-
   return (
     <motion.a
       href="#"
@@ -692,130 +888,58 @@ function LabCell({ l, i }: { l: LabTile; i: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: (i % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative aspect-square overflow-hidden flex flex-col justify-between p-5"
+      className="group relative overflow-hidden flex flex-col"
       style={{
-        background: l.bg,
+        background: "#fafafa",
         borderRight: "1px solid #e5e5e5",
         borderBottom: "1px solid #e5e5e5",
       }}
     >
-      <LabPattern pattern={l.pattern} text={l.text} accent={l.accent} />
-
-      <div className="relative z-10 flex flex-col h-full">
+      {/* 3D canvas — upper portion (square) */}
+      <div className="relative aspect-square overflow-hidden">
+        <LabCanvas shape={l.shape} color={l.color} />
+        {/* subtle gradient fade at bottom for smooth text blend */}
         <div
-          className="font-mono text-[10px]"
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
           style={{
-            color: subtleColor,
-            letterSpacing: "0.2em",
+            background: "linear-gradient(to bottom, transparent, #fafafa)",
+          }}
+        />
+      </div>
+
+      {/* Content — lower portion */}
+      <div className="relative flex flex-col gap-2.5 p-5 pt-0">
+        <div
+          className="font-mono text-[10px] flex items-center gap-2 flex-wrap"
+          style={{
+            color: "rgba(10,10,10,0.55)",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
           }}
         >
-          {l.kicker}
+          <span>{l.date}</span>
+          <span style={{ opacity: 0.4 }}>/</span>
+          <span>{l.kicker}</span>
         </div>
 
-        <div className="mt-auto flex flex-col gap-2">
-          <div
-            className="font-semibold tracking-tight leading-tight transition-transform duration-500 group-hover:translate-x-1"
-            style={{ color: textColor, fontSize: "clamp(1rem, 1.4vw, 1.25rem)" }}
-          >
-            {l.title}
-          </div>
-          <p
-            className="text-[12.5px] leading-snug"
-            style={{ color: subtleColor }}
-          >
-            {l.desc}
-          </p>
+        <div
+          className="font-semibold tracking-tight leading-tight transition-transform duration-500 group-hover:translate-x-1"
+          style={{ color: "#0a0a0a", fontSize: "clamp(1rem, 1.4vw, 1.25rem)" }}
+        >
+          {l.title}
         </div>
+        <p
+          className="text-[12.5px] leading-snug"
+          style={{ color: "rgba(10,10,10,0.55)" }}
+        >
+          {l.desc}
+        </p>
       </div>
     </motion.a>
   );
 }
 
-function LabPattern({
-  pattern,
-  text,
-  accent,
-}: {
-  pattern?: LabTile["pattern"];
-  text: "light" | "dark";
-  accent?: string;
-}) {
-  if (!pattern) return null;
-  const strokeMain = text === "light" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-  const strokeAccent = accent ?? strokeMain;
-
-  switch (pattern) {
-    case "grid":
-      return (
-        <div
-          className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-60 pointer-events-none"
-          style={{
-            opacity: 0.45,
-            backgroundImage: `linear-gradient(${strokeMain} 1px, transparent 1px), linear-gradient(90deg, ${strokeMain} 1px, transparent 1px)`,
-            backgroundSize: "32px 32px",
-          }}
-        />
-      );
-    case "dots":
-      return (
-        <div
-          className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-80 pointer-events-none"
-          style={{
-            opacity: 0.6,
-            backgroundImage: `radial-gradient(${strokeMain} 1.5px, transparent 1.6px)`,
-            backgroundSize: "20px 20px",
-          }}
-        />
-      );
-    case "lines":
-      return (
-        <div
-          className="absolute inset-0 transition-transform duration-700 group-hover:-translate-x-2 pointer-events-none"
-          style={{
-            opacity: 0.5,
-            backgroundImage: `repeating-linear-gradient(45deg, ${strokeMain} 0 1px, transparent 1px 14px)`,
-          }}
-        />
-      );
-    case "radial":
-      return (
-        <div
-          className="absolute inset-0 transition-transform duration-700 group-hover:scale-110 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at 30% 30%, ${strokeAccent} 0%, transparent 50%)`,
-            opacity: 0.35,
-          }}
-        />
-      );
-    case "rings":
-      return (
-        <svg
-          className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-105 pointer-events-none"
-          viewBox="0 0 200 200"
-          fill="none"
-          preserveAspectRatio="xMidYMid slice"
-          aria-hidden
-        >
-          {[20, 45, 72, 100, 130].map((r) => (
-            <circle key={r} cx="100" cy="180" r={r} stroke={strokeMain} strokeWidth="1" />
-          ))}
-        </svg>
-      );
-    case "noise":
-      return (
-        <div
-          className="absolute inset-0 opacity-30 mix-blend-screen pointer-events-none"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
-        />
-      );
-    default:
-      return null;
-  }
-}
 
 /* ═══════════════ TEAM GRID ═══════════════ */
 
@@ -889,10 +1013,10 @@ function TeamLabel({ memberKey, visible }: { memberKey: string; visible: boolean
 /* ═══════════════ PEACE OF MIND ═══════════════ */
 
 const GUARANTEES = [
-  { icon: ShieldCheck, value: "0 с", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "Сначала MVP — потом счёт" },
-  { icon: Zap, value: "FIX", label: "ФИКС-ЦЕНА", sub: "Базовая цена известна заранее" },
+  { icon: Rocket, value: "4×", label: "БЫСТРЕЕ РЫНКА", sub: "MVP за 3-4 недели — не 3-4 месяца" },
+  { icon: ShieldCheck, value: "0 сом", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "Сначала MVP — потом счёт" },
+  { icon: Zap, value: "FIX", label: "ЛОЯЛЬНЫЕ ЦЕНЫ", sub: "Бишкек-rate, не Москва-rate. Базовая цена известна до старта." },
   { icon: Clock, value: "24h", label: "ОТВЕТ ПО КП", sub: "Шесть вопросов — и у вас цифры" },
-  { icon: InfinityIcon, value: "∞", label: "КОД ВАШ", sub: "Репозиторий и доступы с первого дня" },
 ];
 
 function PeaceOfMind() {
@@ -920,21 +1044,8 @@ function PeaceOfMind() {
       ref={sectionRef}
       id="guarantees"
       className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
-      style={{ background: "#0a0a0a", color: "#fff", borderTop: "1px solid #e5e5e5" }}
+      style={{ background: "#fafafa", color: "#0a0a0a", borderTop: "1px solid #e5e5e5" }}
     >
-      {/* Subtle grid pattern с легким parallax */}
-      <motion.div
-        className="absolute inset-0 opacity-25 pointer-events-none will-change-transform"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-        initial={{ scale: 1.05, opacity: 0 }}
-        animate={headerInView ? { scale: 1, opacity: 0.25 } : {}}
-        transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-      />
-
       <div className="relative">
         {/* Mask-reveal header */}
         <div className="max-w-3xl mb-12 lg:mb-16 overflow-hidden">
@@ -943,25 +1054,18 @@ function PeaceOfMind() {
             animate={headerInView ? { clipPath: "inset(0% 0 0 0)" } : {}}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div
-              className="font-mono text-[11px] mb-4 inline-flex items-center gap-2"
-              style={{ color: "#ef4444", letterSpacing: "0.2em" }}
-            >
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#ef4444] animate-pulse" />
-              PEACE OF MIND
-            </div>
             <h2
               className="font-semibold tracking-tight"
               style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1 }}
             >
               Четыре обещания.
               <br />
-              И <span style={{ color: "#ef4444" }}>четыре клиента</span>, которые их проверили.
+              И <span style={{ color: "#2563EB" }}>четыре клиента</span>, которые их проверили.
             </h2>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "rgba(10,10,10,0.08)" }}>
           {GUARANTEES.map((g, i) => (
             <GuaranteeCell key={i} g={g} index={i} parentRevealed={revealed} />
           ))}
@@ -972,9 +1076,9 @@ function PeaceOfMind() {
           animate={headerInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 1.0 }}
           className="mt-10 flex items-center gap-3 font-mono text-[11px]"
-          style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.15em" }}
+          style={{ color: "rgba(10,10,10,0.45)", letterSpacing: "0.15em" }}
         >
-          <span className="inline-block w-8 h-px" style={{ background: "rgba(255,255,255,0.3)" }} />
+          <span className="inline-block w-8 h-px" style={{ background: "rgba(10,10,10,0.3)" }} />
           ПОДТВЕРЖДАЮТ · МИНОБР КР · АУРВА · RED CHARGE · TULPAR EXPRESS
         </motion.div>
       </div>
@@ -1003,13 +1107,13 @@ function GuaranteeCell({
         ease: [0.22, 1, 0.36, 1],
       }}
       className="p-6 lg:p-8 flex flex-col gap-4 group"
-      style={{ background: "#0a0a0a" }}
+      style={{ background: "#fff" }}
     >
       <Icon
         className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-3deg]"
         size={24}
         strokeWidth={1.5}
-        style={{ color: "#ef4444" }}
+        style={{ color: "#2563EB" }}
       />
       <div
         className="font-semibold tracking-tight"
@@ -1020,11 +1124,11 @@ function GuaranteeCell({
       <div>
         <div
           className="font-mono text-[11px] mb-2"
-          style={{ color: "#ef4444", letterSpacing: "0.15em" }}
+          style={{ color: "#2563EB", letterSpacing: "0.15em" }}
         >
           {g.label}
         </div>
-        <div className="text-[13px]" style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.45 }}>
+        <div className="text-[13px]" style={{ color: "rgba(10,10,10,0.55)", lineHeight: 1.45 }}>
           {g.sub}
         </div>
       </div>
@@ -1039,6 +1143,7 @@ const PROCESS: Array<{
   step: string;
   title: string;
   desc: string;
+  participation: string;
   duration: string;
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
 }> = [
@@ -1046,7 +1151,8 @@ const PROCESS: Array<{
     id: "discovery",
     step: "01",
     title: "Discovery",
-    desc: "30-минутный созвон. Слушаем реальную боль, не пишем ТЗ на 14 страниц. Определяем бизнес-цель.",
+    desc: "30-минутный созвон. Слушаем реальную боль, не пишем ТЗ на 14 страниц.",
+    participation: "30 мин созвон",
     duration: "1-2 дня",
     icon: Compass,
   },
@@ -1054,7 +1160,8 @@ const PROCESS: Array<{
     id: "design",
     step: "02",
     title: "Проектирование",
-    desc: "Архитектура, UX, прототип. Один цикл правок перед стартом разработки. Фикс-цена после этого шага.",
+    desc: "Архитектура, UX, прототип. Один цикл правок перед стартом. Фикс-цена после этого.",
+    participation: "1 ревью макетов",
     duration: "3-7 дней",
     icon: PenTool,
   },
@@ -1062,7 +1169,8 @@ const PROCESS: Array<{
     id: "build",
     step: "03",
     title: "Разработка MVP",
-    desc: "Спринты по неделе. Вы видите прогресс в режиме реального времени через Telegram + превью.",
+    desc: "Спринты по неделе. Прогресс в реальном времени через Telegram + превью.",
+    participation: "еженедельный демо",
     duration: "3-6 недель",
     icon: Rocket,
   },
@@ -1070,7 +1178,8 @@ const PROCESS: Array<{
     id: "production",
     step: "04",
     title: "Production",
-    desc: "Деплой, мониторинг, передача кода и доступов. Только после этого выставляем счёт.",
+    desc: "Деплой, мониторинг, передача кода и доступов. Только после этого — счёт.",
+    participation: "приёмка + оплата",
     duration: "+ поддержка",
     icon: Server,
   },
@@ -1079,17 +1188,28 @@ const PROCESS: Array<{
 function ProcessSteps() {
   return (
     <div
-      className="flex flex-col"
-      style={{ borderTop: "1px solid #e5e5e5" }}
+      className="relative grid grid-cols-1 md:grid-cols-4"
+      style={{ borderTop: "1px solid #e5e5e5", background: "#fff" }}
     >
+      {/* Horizontal connector line — only desktop, sits at icon row */}
+      <div
+        aria-hidden
+        className="hidden md:block absolute left-0 right-0 pointer-events-none"
+        style={{
+          top: "calc(clamp(56px, 5.5vw, 80px) + 44px)",
+          height: "1px",
+          background:
+            "repeating-linear-gradient(to right, #e5e5e5 0 6px, transparent 6px 12px)",
+        }}
+      />
       {PROCESS.map((p, i) => (
-        <ProcessRow key={p.id} p={p} index={i} />
+        <ProcessStep key={p.id} p={p} index={i} />
       ))}
     </div>
   );
 }
 
-function ProcessRow({
+function ProcessStep({
   p,
   index,
 }: {
@@ -1099,51 +1219,70 @@ function ProcessRow({
   const Icon = p.icon;
   return (
     <motion.div
-      initial={{ opacity: 0, x: -24 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      className="group grid grid-cols-1 md:grid-cols-[120px_80px_1fr_140px] items-start gap-4 md:gap-8 px-6 lg:px-12 py-8 lg:py-10 transition-colors"
+      className="group relative flex flex-col gap-5 px-6 lg:px-8 py-10 lg:py-12 transition-colors"
       style={{
+        borderRight: "1px solid #e5e5e5",
         borderBottom: "1px solid #e5e5e5",
-        background: "#fff",
       }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#fafafa")}
-      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#fff")}
     >
-      <div
-        className="font-semibold tracking-tight select-none transition-colors duration-500 group-hover:text-[#ef4444]"
-        style={{
-          fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
-          lineHeight: 1,
-          color: "#e5e5e5",
-        }}
-      >
-        {p.step}
+      <div className="flex items-baseline gap-3">
+        <span
+          className="font-semibold tracking-tight select-none transition-colors duration-500 group-hover:text-[#2563EB]"
+          style={{
+            fontSize: "clamp(56px, 5.5vw, 80px)",
+            lineHeight: 1,
+            color: "#e5e5e5",
+            letterSpacing: "-0.03em",
+          }}
+        >
+          {p.step}
+        </span>
       </div>
 
-      <div className="flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-        <Icon size={32} strokeWidth={1.25} className="text-[#0a0a0a]" />
+      {/* Icon node on timeline */}
+      <div
+        className="relative self-start flex items-center justify-center transition-transform duration-500 group-hover:scale-110 w-[56px] h-[56px] rounded-full"
+        style={{
+          background: "#fff",
+          border: "1px solid #e5e5e5",
+          zIndex: 1,
+        }}
+      >
+        <Icon size={24} strokeWidth={1.25} className="text-[#0a0a0a]" />
       </div>
 
       <div className="flex flex-col gap-2">
         <h3
           className="font-semibold tracking-tight transition-transform duration-500 group-hover:translate-x-1"
-          style={{ fontSize: "clamp(1.25rem, 1.8vw, 1.75rem)", lineHeight: 1.15, color: "#0a0a0a" }}
+          style={{ fontSize: "clamp(1.125rem, 1.3vw, 1.375rem)", lineHeight: 1.2, color: "#0a0a0a" }}
         >
           {p.title}
         </h3>
-        <p className="text-[14.5px] max-w-xl" style={{ color: "#525252", lineHeight: 1.55 }}>
+        <p className="text-[13.5px]" style={{ color: "#525252", lineHeight: 1.55 }}>
           {p.desc}
         </p>
       </div>
 
-      <div className="md:text-right">
-        <div className="font-mono text-[10px]" style={{ color: "#9ca3af", letterSpacing: "0.2em" }}>
-          DURATION
+      <div className="mt-auto flex flex-col gap-3 pt-5" style={{ borderTop: "1px solid #f0f0f0" }}>
+        <div className="flex flex-col gap-1">
+          <div className="font-mono text-[9px]" style={{ color: "#9ca3af", letterSpacing: "0.2em" }}>
+            ВАШЕ УЧАСТИЕ
+          </div>
+          <div className="text-[13px]" style={{ color: "#0a0a0a" }}>
+            {p.participation}
+          </div>
         </div>
-        <div className="font-mono text-[13px] mt-1" style={{ color: "#0a0a0a", letterSpacing: "0.05em" }}>
-          {p.duration}
+        <div className="flex flex-col gap-1">
+          <div className="font-mono text-[9px]" style={{ color: "#9ca3af", letterSpacing: "0.2em" }}>
+            DURATION
+          </div>
+          <div className="font-mono text-[13px]" style={{ color: "#0a0a0a" }}>
+            {p.duration}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -1152,80 +1291,92 @@ function ProcessRow({
 
 /* ═══════════════ TECH MARQUEE ═══════════════ */
 
-const TECH_ITEMS = [
-  "Next.js 16", "React 19", "TypeScript", "PostgreSQL", "Supabase",
-  "Prisma", "Tailwind CSS v4", "shadcn/ui", "Framer Motion", "next-intl",
-  "Telegram Bot API", "Bitrix24", "amoCRM", "1C", "n8n",
-  "OpenAI GPT-4o", "Claude", "Anthropic SDK", "Whisper", "pgvector",
-  "Docker", "Vercel", "GitHub Actions", "Playwright", "Stripe",
-  "OCPP", "React Native", "Expo", "WebSocket", "Redis",
-];
-
 function TechMarquee() {
-  const items = [...TECH_ITEMS, ...TECH_ITEMS];
-  const reversed = [...TECH_ITEMS].reverse();
+  const [active, setActive] = useState<Tech | null>(null);
+  const items = [...TECH_STACK, ...TECH_STACK];
+  const reversed = [...TECH_STACK].reverse();
   const itemsReversed = [...reversed, ...reversed];
 
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [active]);
+
   return (
-    <div
-      className="relative py-12 lg:py-16 overflow-hidden"
-      style={{
-        borderTop: "1px solid #e5e5e5",
-        borderBottom: "1px solid #e5e5e5",
-        background: "#fafafa",
-      }}
-    >
-      {/* Edge fades */}
+    <>
       <div
-        className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-        style={{ background: "linear-gradient(to right, #fafafa, transparent)" }}
-      />
-      <div
-        className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-        style={{ background: "linear-gradient(to left, #fafafa, transparent)" }}
-      />
+        className="relative py-12 lg:py-16 overflow-hidden"
+        style={{
+          borderTop: "1px solid #e5e5e5",
+          borderBottom: "1px solid #e5e5e5",
+          background: "#fafafa",
+        }}
+      >
+        {/* Edge fades */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+          style={{ background: "linear-gradient(to right, #fafafa, transparent)" }}
+        />
+        <div
+          className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+          style={{ background: "linear-gradient(to left, #fafafa, transparent)" }}
+        />
 
-      <div className="flex gap-3 mb-4 marquee-row">
-        {items.map((tech, i) => (
-          <TechPill key={`a-${i}`} tech={tech} />
-        ))}
-      </div>
-      <div className="flex gap-3 marquee-row-reverse">
-        {itemsReversed.map((tech, i) => (
-          <TechPill key={`b-${i}`} tech={tech} />
-        ))}
-      </div>
+        <div className="flex gap-3 mb-4 marquee-row">
+          {items.map((tech, i) => (
+            <TechPill key={`a-${i}`} tech={tech} onOpen={() => setActive(tech)} />
+          ))}
+        </div>
+        <div className="flex gap-3 marquee-row-reverse">
+          {itemsReversed.map((tech, i) => (
+            <TechPill key={`b-${i}`} tech={tech} onOpen={() => setActive(tech)} />
+          ))}
+        </div>
 
-      <style jsx>{`
-        .marquee-row {
-          animation: marquee 50s linear infinite;
-          width: max-content;
-        }
-        .marquee-row-reverse {
-          animation: marquee-reverse 50s linear infinite;
-          width: max-content;
-        }
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        @keyframes marquee-reverse {
-          from { transform: translateX(-50%); }
-          to { transform: translateX(0); }
-        }
-        .marquee-row:hover,
-        .marquee-row-reverse:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-    </div>
+        <style jsx>{`
+          .marquee-row {
+            animation: marquee 50s linear infinite;
+            width: max-content;
+          }
+          .marquee-row-reverse {
+            animation: marquee-reverse 50s linear infinite;
+            width: max-content;
+          }
+          @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+          }
+          @keyframes marquee-reverse {
+            from { transform: translateX(-50%); }
+            to { transform: translateX(0); }
+          }
+          .marquee-row:hover,
+          .marquee-row-reverse:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+      </div>
+      <TechModal tech={active} onClose={() => setActive(null)} />
+    </>
   );
 }
 
-function TechPill({ tech }: { tech: string }) {
+function TechPill({ tech, onOpen }: { tech: Tech; onOpen: () => void }) {
+  const Logo = tech.logo;
   return (
-    <span
-      className="flex-shrink-0 px-4 py-2 whitespace-nowrap transition-colors duration-300 font-mono"
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${tech.name} — подробнее`}
+      className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 whitespace-nowrap transition-colors duration-300 font-mono cursor-pointer"
       style={{
         fontSize: "12px",
         letterSpacing: "0.05em",
@@ -1234,16 +1385,21 @@ function TechPill({ tech }: { tech: string }) {
         background: "#fff",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.color = "#ef4444";
-        (e.currentTarget as HTMLElement).style.borderColor = "#ef4444";
+        (e.currentTarget as HTMLElement).style.color = "#2563EB";
+        (e.currentTarget as HTMLElement).style.borderColor = "#2563EB";
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.color = "#525252";
         (e.currentTarget as HTMLElement).style.borderColor = "#e5e5e5";
       }}
     >
-      {tech}
-    </span>
+      {Logo ? (
+        <Logo size={12} color={tech.logoColor} />
+      ) : tech.fallback ? (
+        <span style={{ fontSize: "11px" }}>{tech.fallback}</span>
+      ) : null}
+      {tech.name}
+    </button>
   );
 }
 
@@ -1253,295 +1409,192 @@ const SERVICES: Array<{
   id: string;
   title: string;
   desc: string;
+  details: string;
+  includes: string[];
+  price: string;
   time: string;
   stack: string;
-  icon: string;
+  fluentIcon: string;
+  splineKind: SplineKind;
 }> = [
   {
     id: "web",
     title: "Сайты и веб-платформы",
     desc: "Лендинги, корпоративные сайты, enterprise-платформы. Next.js, интеграции, SEO, аналитика.",
+    details:
+      "От быстрых лендингов до enterprise-платформ с десятками интеграций. Next.js 16 + React 19 — стек, который одобрит ваш тех-директор. SEO-оптимизация, адаптив и аналитика — из коробки, не отдельным пунктом в смете.",
+    includes: [
+      "Дизайн-прототип в Figma — превью за 7 дней",
+      "Адаптив: mobile · tablet · desktop",
+      "Интеграции: CRM, почта, платежи, Bitrix",
+      "SEO + метатеги + OpenGraph + sitemap",
+      "Аналитика: Yandex.Metrika + GA4 + heatmap",
+      "Хостинг Vercel + CDN по миру",
+    ],
+    price: "от $1 500",
     time: "от 1 месяца",
     stack: "Next.js · React · Postgres",
-    icon: "↗",
+    fluentIcon: "fluent-emoji:globe-showing-europe-africa",
+    splineKind: "globe",
   },
   {
     id: "bots",
     title: "Боты и AI-ассистенты",
     desc: "Telegram, WhatsApp, web-чат. AI-ассистенты обучаем на ваших данных — отвечают 24/7.",
+    details:
+      "Боты в Telegram, WhatsApp, веб-чате — плюс AI-ассистенты, обученные на вашем каталоге, FAQ и базе знаний. Отвечают 24/7 на типовые вопросы, ведут предзапись, передают горячих лидов оператору.",
+    includes: [
+      "Telegram · WhatsApp · web-widget",
+      "GPT-4 · Claude · локальные LLM на выбор",
+      "RAG — обучение на ваших данных",
+      "Сценарии + fallback на живого оператора",
+      "Аналитика диалогов + тепловая карта вопросов",
+      "API-интеграция с Bitrix · amoCRM · 1С",
+    ],
+    price: "от $900",
     time: "от 2 недель",
     stack: "Python · GPT-4 · aiogram",
-    icon: "◐",
+    fluentIcon: "fluent-emoji:robot",
+    splineKind: "robot",
   },
   {
     id: "automation",
     title: "Автоматизация и CRM",
     desc: "Скоринг лидов, синхронизация с Bitrix/amoCRM/1С, автоворонки, отчётность.",
+    details:
+      "Связываем разрозненные системы в единый поток. Лиды сами скорятся и распределяются, автоворонки закрывают рутину, отчёты приходят сами. Работаем с Bitrix24, amoCRM, 1С и n8n.",
+    includes: [
+      "Скоринг лидов по 10+ признакам",
+      "Синхронизация CRM ↔ сайт ↔ почта",
+      "Автоворонки + reminder-серии",
+      "Интеграции с 1С, бухгалтерией, складом",
+      "Дашборды с KPI в реальном времени",
+      "SLA-оповещения в Telegram",
+    ],
+    price: "от $1 200",
     time: "от 3 недель",
     stack: "Python · n8n · Bitrix24",
-    icon: "⚡",
+    fluentIcon: "fluent-emoji:gear",
+    splineKind: "gear",
   },
   {
     id: "mobile",
     title: "Мобильные приложения",
     desc: "React Native для iOS и Android. Один код — две платформы. Push, in-app, аналитика.",
+    details:
+      "React Native + Expo — одна кодовая база, iOS и Android одновременно. Публикуем в App Store и Google Play, интегрируем push-уведомления, in-app покупки, геолокацию, offline-режим.",
+    includes: [
+      "iOS + Android одновременно",
+      "React Native · Expo SDK · TypeScript",
+      "Push-уведомления + in-app purchases",
+      "Offline-first архитектура",
+      "Публикация в App Store + Google Play",
+      "Интеграция с вашим бэкендом",
+    ],
+    price: "от $3 500",
     time: "от 6 недель",
     stack: "React Native · Expo",
-    icon: "◱",
+    fluentIcon: "fluent-emoji:mobile-phone",
+    splineKind: "phone",
   },
 ];
 
 function ServicesGrid() {
+  const [active, setActive] = useState<(typeof SERVICES)[number] | null>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [active]);
+
   return (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
-      style={{ borderTop: "1px solid #e5e5e5", borderLeft: "1px solid #e5e5e5" }}
-    >
-      {SERVICES.map((s, i) => (
-        <ServiceCell key={s.id} s={s} i={i} />
-      ))}
-    </div>
+    <>
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+        style={{ borderTop: "1px solid #e5e5e5", borderLeft: "1px solid #e5e5e5" }}
+      >
+        {SERVICES.map((s, i) => (
+          <ServiceCell key={s.id} s={s} i={i} onOpen={() => setActive(s)} />
+        ))}
+      </div>
+      <ServiceModal service={active} onClose={() => setActive(null)} />
+    </>
   );
 }
 
-function ServiceCell({ s, i }: { s: (typeof SERVICES)[number]; i: number }) {
+function ServiceCell({
+  s,
+  i,
+  onOpen,
+}: {
+  s: (typeof SERVICES)[number];
+  i: number;
+  onOpen: () => void;
+}) {
   return (
-    <motion.a
-      href="/client/request"
+    <motion.button
+      type="button"
+      onClick={onOpen}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative flex flex-col justify-between p-6 lg:p-8 aspect-square transition-colors"
+      className="group relative flex flex-col aspect-square overflow-hidden transition-colors text-left cursor-pointer"
       style={{
         borderRight: "1px solid #e5e5e5",
         borderBottom: "1px solid #e5e5e5",
         background: "#fff",
       }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#fafafa")}
-      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#fff")}
     >
-      <div className="flex items-start justify-between">
+      {/* Spline canvas — заполняет верхнюю часть карточки */}
+      <div className="relative flex-1 min-h-0">
+        <LiquidSpline kind={s.splineKind} />
+        {/* Fade-out снизу для плавного перехода к тексту */}
         <div
-          className="font-mono text-[10px]"
-          style={{ color: "#9ca3af", letterSpacing: "0.2em" }}
-        >
-          0{i + 1} / SERVICE
-        </div>
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, transparent, #fff)" }}
+        />
         <span
-          className="font-display"
-          style={{ fontSize: "28px", color: "#ef4444", lineHeight: 1 }}
+          className="absolute top-4 right-4 font-mono text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ color: "#2563EB", letterSpacing: "0.2em" }}
         >
-          {s.icon}
+          OPEN →
         </span>
       </div>
 
-      <div className="flex flex-col gap-3">
+      {/* Текст внизу */}
+      <div className="relative px-6 lg:px-8 pb-6 lg:pb-8 flex flex-col gap-2.5 shrink-0">
         <h3
           className="font-semibold tracking-tight transition-transform duration-500 group-hover:translate-x-1"
-          style={{ fontSize: "clamp(1.125rem, 1.4vw, 1.375rem)", lineHeight: 1.2, color: "#0a0a0a" }}
+          style={{ fontSize: "clamp(1.05rem, 1.3vw, 1.25rem)", lineHeight: 1.2, color: "#0a0a0a" }}
         >
           {s.title}
         </h3>
-        <p className="text-[13.5px]" style={{ color: "#525252", lineHeight: 1.5 }}>
+        <p className="text-[13px]" style={{ color: "#525252", lineHeight: 1.45 }}>
           {s.desc}
         </p>
-        <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid #f0f0f0" }}>
-          <span className="font-mono text-[11px]" style={{ color: "#0a0a0a", letterSpacing: "0.1em" }}>
+        <div
+          className="flex items-center justify-between pt-2.5"
+          style={{ borderTop: "1px solid #f0f0f0" }}
+        >
+          <span className="font-mono text-[10.5px]" style={{ color: "#0a0a0a", letterSpacing: "0.1em" }}>
             {s.time}
           </span>
-          <span className="font-mono text-[10px]" style={{ color: "#9ca3af", letterSpacing: "0.1em" }}>
+          <span className="font-mono text-[9.5px]" style={{ color: "#9ca3af", letterSpacing: "0.1em" }}>
             {s.stack}
           </span>
         </div>
       </div>
-    </motion.a>
-  );
-}
-
-/* ═══════════════ STATS ═══════════════ */
-
-const STATS: Array<{ value: string; label: string; sub?: string }> = [
-  { value: "4×", label: "БЫСТРЕЕ РЫНКА", sub: "Средний срок запуска" },
-  { value: "0 с", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "MVP — потом счёт" },
-  { value: "99.2%", label: "ТОЧНОСТЬ AI", sub: "На парсинге и скоринге" },
-  { value: "3 мин", label: "ОТВЕТ МЕНЕДЖЕРА", sub: "Среднее по проектам" },
-];
-
-function StatsStrip() {
-  return (
-    <div
-      className="grid grid-cols-2 md:grid-cols-4"
-      style={{
-        borderTop: "1px solid #e5e5e5",
-        borderLeft: "1px solid #e5e5e5",
-        background: "#0a0a0a",
-        color: "#fff",
-      }}
-    >
-      {STATS.map((s, i) => (
-        <StatCell key={i} s={s} i={i} />
-      ))}
-    </div>
-  );
-}
-
-function StatCell({ s, i }: { s: (typeof STATS)[number]; i: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.5 });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay: i * 0.08 }}
-      className="p-8 lg:p-10 flex flex-col gap-3 group"
-      style={{
-        borderRight: "1px solid rgba(255,255,255,0.06)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <div
-        className="font-mono text-[10px] flex items-center gap-2"
-        style={{ color: "rgba(255,255,255,0.55)", letterSpacing: "0.2em" }}
-      >
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "#10b981", boxShadow: "0 0 8px #10b981" }}
-        />
-        {String(i + 1).padStart(2, "0")} / STAT
-      </div>
-      <div
-        className="font-semibold tracking-tight transition-transform duration-500 group-hover:translate-x-1"
-        style={{ fontSize: "clamp(2.25rem, 4vw, 3.75rem)", lineHeight: 1 }}
-      >
-        <AnimatedStatValue value={s.value} inView={isInView} delay={i * 0.1} />
-      </div>
-      <div className="mt-auto">
-        <div
-          className="font-mono text-[11px]"
-          style={{ color: "#ef4444", letterSpacing: "0.15em" }}
-        >
-          {s.label}
-        </div>
-        {s.sub && (
-          <div className="text-[13px] mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>
-            {s.sub}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-function AnimatedStatValue({ value, inView, delay }: { value: string; inView: boolean; delay: number }) {
-  // Extract numeric part if exists: "4×" → 4 + "×", "99.2%" → 99.2 + "%", "3 мин" → 3 + " мин", "0 с" → 0 + " ₸"
-  const match = value.match(/^([\d.]+)(.*)$/);
-  const [display, setDisplay] = useState(() => (match ? "0" + (match[2] ?? "") : value));
-  const mv = useMotionValue(0);
-
-  useEffect(() => {
-    if (!inView || !match) return;
-    const target = parseFloat(match[1]);
-    const suffix = match[2] ?? "";
-    const controls = animate(mv, target, {
-      duration: 1.2,
-      delay,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => {
-        const formatted =
-          target % 1 === 0 ? Math.round(v).toString() : v.toFixed(1);
-        setDisplay(formatted + suffix);
-      },
-    });
-    return () => controls.stop();
-  }, [inView, match, mv, delay]);
-
-  if (!match) return <>{value}</>;
-  return <>{display}</>;
-}
-
-/* ═══════════════ TESTIMONIALS ═══════════════ */
-
-const TESTIMONIALS: Array<{
-  quote: string;
-  author: string;
-  role: string;
-  metric: string;
-}> = [
-  {
-    quote:
-      "Сделали за 3 недели то, что другие обещали за 3 месяца. Реально без предоплаты — сначала увидел результат, потом платил.",
-    author: "Директор",
-    role: "Tulpar Express",
-    metric: "−68% времени на синхронизацию",
-  },
-  {
-    quote:
-      "Интеграция с 1С прошла без единой ошибки в учёте. Команда знает что делает. И — отвечают в Telegram в 3 минуты.",
-    author: "Руководитель IT",
-    role: "Red Petroleum",
-    metric: "100% автоматизация склада",
-  },
-];
-
-function Testimonials() {
-  return (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2"
-      style={{ borderTop: "1px solid #e5e5e5", borderLeft: "1px solid #e5e5e5" }}
-    >
-      {TESTIMONIALS.map((t, i) => (
-        <blockquote
-          key={i}
-          className="p-8 lg:p-12 flex flex-col gap-8"
-          style={{
-            borderRight: "1px solid #e5e5e5",
-            borderBottom: "1px solid #e5e5e5",
-            background: i === 0 ? "#fff" : "#fafafa",
-          }}
-        >
-          <div
-            className="font-mono text-[11px]"
-            style={{ color: "#9ca3af", letterSpacing: "0.2em" }}
-          >
-            TESTIMONIAL · 0{i + 1}
-          </div>
-
-          <p
-            className="font-display"
-            style={{
-              fontSize: "clamp(1.15rem, 1.6vw, 1.5rem)",
-              lineHeight: 1.4,
-              color: "#0a0a0a",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            <span style={{ color: "#ef4444" }}>&ldquo;</span>
-            {t.quote}
-            <span style={{ color: "#ef4444" }}>&rdquo;</span>
-          </p>
-
-          <div className="mt-auto flex items-end justify-between gap-4">
-            <div>
-              <div className="text-[14px] font-semibold" style={{ color: "#0a0a0a" }}>
-                {t.author}
-              </div>
-              <div className="text-[13px]" style={{ color: "#6b7280" }}>
-                {t.role}
-              </div>
-            </div>
-            <div
-              className="font-mono text-[11px] text-right"
-              style={{ color: "#10b981", letterSpacing: "0.1em" }}
-            >
-              {t.metric}
-            </div>
-          </div>
-        </blockquote>
-      ))}
-    </div>
+    </motion.button>
   );
 }
 
@@ -1551,22 +1604,12 @@ function FinalCTA() {
   return (
     <section
       className="px-6 lg:px-12 py-20 lg:py-32 relative overflow-hidden"
-      style={{ background: "#0a0a0a", color: "#fff", borderTop: "1px solid #e5e5e5" }}
+      style={{ background: "#fafafa", color: "#0a0a0a", borderTop: "1px solid #e5e5e5" }}
     >
-      {/* Grid pattern */}
-      <div
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
-
       <div className="relative max-w-3xl">
         <div
           className="font-mono text-[11px] mb-6"
-          style={{ color: "#ef4444", letterSpacing: "0.3em" }}
+          style={{ color: "#2563EB", letterSpacing: "0.3em" }}
         >
           START
         </div>
@@ -1580,7 +1623,7 @@ function FinalCTA() {
         </h2>
         <p
           className="mt-6 max-w-xl text-[16px]"
-          style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.55 }}
+          style={{ color: "rgba(10,10,10,0.65)", lineHeight: 1.55 }}
         >
           Шесть вопросов за 3 минуты. Получите оценку по времени и цене — без созвонов,
           без «оставьте номер — мы перезвоним».
@@ -1591,13 +1634,13 @@ function FinalCTA() {
             href="/client/request"
             className="inline-flex items-center gap-3 px-7 py-4 font-medium transition-colors"
             style={{
-              background: "#ef4444",
+              background: "#2563EB",
               color: "#fff",
               fontSize: "15px",
               letterSpacing: "0.02em",
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#dc2626")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#ef4444")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1D4ED8")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#2563EB")}
           >
             Начать — 6 вопросов
             <span>→</span>
@@ -1606,12 +1649,12 @@ function FinalCTA() {
             href="mailto:hello@asystem.ai"
             className="inline-flex items-center gap-3 px-7 py-4 font-medium transition-colors"
             style={{
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "#fff",
+              border: "1px solid rgba(10,10,10,0.2)",
+              color: "#0a0a0a",
               fontSize: "15px",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+              (e.currentTarget as HTMLElement).style.background = "rgba(10,10,10,0.05)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -1623,7 +1666,7 @@ function FinalCTA() {
 
         <div
           className="mt-16 flex items-center gap-8 font-mono text-[11px]"
-          style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em" }}
+          style={{ color: "rgba(10,10,10,0.4)", letterSpacing: "0.15em" }}
         >
           <span>✓ БЕЗ ПРЕДОПЛАТЫ</span>
           <span>✓ ФИКС-ЦЕНА</span>

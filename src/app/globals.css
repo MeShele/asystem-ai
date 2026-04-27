@@ -52,14 +52,18 @@
   --color-accent-400: #ff7a45;
   --color-accent-500: #ff6b35;
 
-  --font-sans: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-inter), ui-monospace, monospace;
 
   --radius-lg: 16px;
   --radius-md: 10px;
   --radius-sm: 8px;
 }
+
+/* Inter variant-features: tabular-nums + alternate 1/i для mono-look на лейблах */
+html { font-feature-settings: "cv11"; }
+.font-mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum", "ss01", "cv11"; letter-spacing: 0; }
 
 /* Dynamic tokens — NO inline, so Tailwind uses var() refs that .dark can override */
 @theme {

@@ -42,7 +42,7 @@ export function Navbar() {
             aria-label="asystem.ai"
           >
             <span className="text-[18px] font-semibold tracking-tight">asystem</span>
-            <span className="text-[18px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+            <span className="text-[18px] font-semibold" style={{ color: "#2563EB" }}>.</span>
             <span className="text-[18px] font-semibold tracking-tight">ai</span>
             <span
               className="ml-2 font-mono text-[10px]"
@@ -63,7 +63,7 @@ export function Navbar() {
                   color: "#0a0a0a",
                   letterSpacing: "0.05em",
                 }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
               >
                 {item.label}
@@ -94,8 +94,8 @@ export function Navbar() {
                 letterSpacing: "0.05em",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "#ef4444";
-                (e.currentTarget as HTMLElement).style.borderBottomColor = "#ef4444";
+                (e.currentTarget as HTMLElement).style.color = "#2563EB";
+                (e.currentTarget as HTMLElement).style.borderBottomColor = "#2563EB";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.color = "#0a0a0a";
@@ -116,7 +116,7 @@ export function Navbar() {
                 style={{
                   width: mobileOpen ? "16px" : "8px",
                   height: "8px",
-                  background: "#ef4444",
+                  background: "#2563EB",
                 }}
               />
             </button>
@@ -144,7 +144,7 @@ export function Navbar() {
               <a
                 href="mailto:hello@asystem.ai"
                 className="font-mono text-[13px] mt-2"
-                style={{ color: "#ef4444", letterSpacing: "0.05em" }}
+                style={{ color: "#2563EB", letterSpacing: "0.05em" }}
               >
                 hello@asystem.ai →
               </a>

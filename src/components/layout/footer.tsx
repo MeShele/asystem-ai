@@ -8,7 +8,7 @@ export function Footer() {
 
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat("ru-RU", {
-      timeZone: "Asia/Almaty",
+      timeZone: "Asia/Bishkek",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
@@ -23,18 +23,18 @@ export function Footer() {
     <footer
       className="relative"
       style={{
-        background: "#0a0a0a",
-        color: "#fff",
+        background: "#fafafa",
+        color: "#0a0a0a",
         borderTop: "1px solid #e5e5e5",
       }}
     >
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-20 lg:py-28">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 pt-20 lg:pt-28">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           {/* Brand + meta */}
           <div className="md:col-span-5">
             <Link href="/" className="inline-flex items-baseline gap-1 group">
               <span className="text-[32px] font-semibold tracking-tight">asystem</span>
-              <span className="text-[32px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+              <span className="text-[32px] font-semibold" style={{ color: "#2563EB" }}>.</span>
               <span className="text-[32px] font-semibold tracking-tight">ai</span>
             </Link>
             <p
@@ -42,24 +42,24 @@ export function Footer() {
               style={{
                 fontSize: "14px",
                 lineHeight: 1.55,
-                color: "rgba(255,255,255,0.55)",
+                color: "rgba(10,10,10,0.55)",
               }}
             >
-              Independent AI-first IT studio · Bishkek, KG.
+              Независимая AI-first студия · Бишкек, Кыргызстан.
               <br />
-              16 people · 4 production clients · no prepay · fixed price.
+              16 человек · 4 клиента в production · без предоплаты · фикс-цена.
             </p>
 
             {time && (
               <div
                 className="mt-8 font-mono text-[11px] flex items-center gap-2"
-                style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.1em" }}
+                style={{ color: "rgba(10,10,10,0.45)", letterSpacing: "0.1em" }}
               >
                 <span
                   className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
                   style={{ background: "#10b981", boxShadow: "0 0 8px rgba(16,185,129,0.6)" }}
                 />
-                СЕЙЧАС · {time} · ALMATY · ONLINE
+                СЕЙЧАС · {time} · BISHKEK · ONLINE
               </div>
             )}
           </div>
@@ -68,7 +68,7 @@ export function Footer() {
           <div className="md:col-span-3">
             <div
               className="font-mono text-[10px] mb-5"
-              style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em" }}
+              style={{ color: "rgba(10,10,10,0.4)", letterSpacing: "0.2em" }}
             >
               WORKS
             </div>
@@ -83,9 +83,9 @@ export function Footer() {
                   <Link
                     href={item.href}
                     className="transition-colors"
-                    style={{ fontSize: "14px", color: "#fff" }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                    style={{ fontSize: "14px", color: "#0a0a0a" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                   >
                     {item.label}
                   </Link>
@@ -98,7 +98,7 @@ export function Footer() {
           <div className="md:col-span-4">
             <div
               className="font-mono text-[10px] mb-5"
-              style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em" }}
+              style={{ color: "rgba(10,10,10,0.4)", letterSpacing: "0.2em" }}
             >
               CONTACT
             </div>
@@ -107,9 +107,9 @@ export function Footer() {
                 <a
                   href="mailto:hello@asystem.ai"
                   className="transition-colors"
-                  style={{ fontSize: "14px", color: "#fff" }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                  style={{ fontSize: "14px", color: "#0a0a0a" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                 >
                   hello@asystem.ai
                 </a>
@@ -120,9 +120,9 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors"
-                  style={{ fontSize: "14px", color: "#fff" }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                  style={{ fontSize: "14px", color: "#0a0a0a" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                 >
                   Telegram · @asystem_ai
                 </a>
@@ -133,9 +133,9 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors"
-                  style={{ fontSize: "14px", color: "#fff" }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
+                  style={{ fontSize: "14px", color: "#0a0a0a" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                 >
                   WhatsApp
                 </a>
@@ -143,15 +143,37 @@ export function Footer() {
             </ul>
           </div>
         </div>
+      </div>
 
+      {/* Wordmark — full viewport width, ghost */}
+      <div
+        aria-hidden
+        className="select-none overflow-hidden mt-16 lg:mt-24"
+        style={{ lineHeight: 0.82 }}
+      >
+        <div
+          className="font-semibold tracking-tighter whitespace-nowrap"
+          style={{
+            fontFamily: "var(--font-display, 'Space Grotesk'), sans-serif",
+            fontSize: "clamp(120px, 24vw, 420px)",
+            color: "rgba(10,10,10,0.08)",
+            paddingLeft: "clamp(16px, 3vw, 48px)",
+            paddingRight: "clamp(16px, 3vw, 48px)",
+          }}
+        >
+          asystem<span style={{ color: "rgba(37, 99, 235,0.5)" }}>.</span>ai
+        </div>
+      </div>
+
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 pb-12 lg:pb-16">
         {/* Bottom bar */}
         <div
-          className="mt-20 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+          className="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+          style={{ borderTop: "1px solid #e5e5e5" }}
         >
           <div
             className="font-mono text-[11px]"
-            style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em" }}
+            style={{ color: "rgba(10,10,10,0.4)", letterSpacing: "0.1em" }}
           >
             © 2026 asystem.ai · BISHKEK, KG · 42.87°N 74.57°E
           </div>
@@ -161,7 +183,7 @@ export function Footer() {
               className="font-mono"
               style={{
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.4)",
+                color: "rgba(10,10,10,0.4)",
                 letterSpacing: "0.1em",
               }}
             >
@@ -172,7 +194,7 @@ export function Footer() {
               className="font-mono"
               style={{
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.4)",
+                color: "rgba(10,10,10,0.4)",
                 letterSpacing: "0.1em",
               }}
             >

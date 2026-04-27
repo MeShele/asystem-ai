@@ -41,7 +41,7 @@ export function StepServiceType({ value, onChange }: Props) {
               <span
                 className="font-mono text-[11px] mt-[6px] shrink-0"
                 style={{
-                  color: selected ? "#ef4444" : "#9ca3af",
+                  color: selected ? "#2563EB" : "#9ca3af",
                   letterSpacing: "0.15em",
                 }}
               >
@@ -51,7 +51,7 @@ export function StepServiceType({ value, onChange }: Props) {
                 <Icon
                   size={22}
                   strokeWidth={1.5}
-                  style={{ color: selected ? "#ef4444" : "#525252" }}
+                  style={{ color: selected ? "#2563EB" : "#525252" }}
                 />
                 <span
                   className="font-semibold"

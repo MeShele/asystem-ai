@@ -111,7 +111,7 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
                 rows={3}
                 value={details.botFunction || ""}
                 onChange={(e) => set("botFunction", e.target.value)}
-                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
                 onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
               />
             </div>
@@ -137,7 +137,7 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
                 rows={3}
                 value={details.appDesc || ""}
                 onChange={(e) => set("appDesc", e.target.value)}
-                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+                onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
                 onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
               />
             </div>
@@ -152,7 +152,7 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
               rows={4}
               value={details.automationDesc || ""}
               onChange={(e) => set("automationDesc", e.target.value)}
-              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
               onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             />
           </div>
@@ -166,7 +166,7 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
               rows={4}
               value={details.customDesc || ""}
               onChange={(e) => set("customDesc", e.target.value)}
-              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
               onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             />
           </div>
@@ -180,7 +180,7 @@ export function StepDetails({ serviceType, details, onChange }: Props) {
             placeholder="https://..."
             value={details.examples || ""}
             onChange={(e) => set("examples", e.target.value)}
-            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
             onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
           />
         </div>

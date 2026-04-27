@@ -107,7 +107,7 @@ export function QuizForm() {
           style={{ border: "1px solid #e5e5e5", background: "#fafafa", letterSpacing: "0.1em" }}
         >
           <span style={{ color: "#9ca3af" }}>REQUEST ID</span>
-          <span style={{ color: "#ef4444", fontSize: "14px" }}>{requestId}</span>
+          <span style={{ color: "#2563EB", fontSize: "14px" }}>{requestId}</span>
         </div>
         <div className="mt-10">
           <a
@@ -169,7 +169,7 @@ export function QuizForm() {
             <motion.div
               key={i}
               className="flex-1 h-px"
-              style={{ background: i < step ? "#ef4444" : "#e5e5e5" }}
+              style={{ background: i < step ? "#2563EB" : "#e5e5e5" }}
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: 0.4, delay: i * 0.04 }}
@@ -182,9 +182,9 @@ export function QuizForm() {
       <div className="mb-10">
         <div
           className="font-mono text-[11px] mb-3 inline-flex items-center gap-2"
-          style={{ color: "#ef4444", letterSpacing: "0.2em" }}
+          style={{ color: "#2563EB", letterSpacing: "0.2em" }}
         >
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
           {currentStep.kicker} / {currentStep.title.toUpperCase()}
         </div>
         <h2
@@ -232,9 +232,9 @@ export function QuizForm() {
         <div
           className="mt-6 px-4 py-3 font-mono text-[12px]"
           style={{
-            color: "#ef4444",
-            border: "1px solid rgba(239,68,68,0.3)",
-            background: "rgba(239,68,68,0.05)",
+            color: "#2563EB",
+            border: "1px solid rgba(37, 99, 235,0.3)",
+            background: "rgba(37, 99, 235,0.05)",
             letterSpacing: "0.05em",
           }}
         >
@@ -272,16 +272,16 @@ export function QuizForm() {
             aria-label={t("next")}
             className="inline-flex items-center gap-3 px-7 py-3.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
-              background: "#ef4444",
+              background: "#2563EB",
               color: "#fff",
               fontSize: "14px",
               fontWeight: 500,
               letterSpacing: "0.02em",
             }}
             onMouseEnter={(e) => {
-              if (canNext) (e.currentTarget as HTMLElement).style.background = "#dc2626";
+              if (canNext) (e.currentTarget as HTMLElement).style.background = "#1D4ED8";
             }}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#ef4444")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#2563EB")}
           >
             {t("next")}
             <ArrowRight size={14} />
@@ -291,9 +291,9 @@ export function QuizForm() {
             onClick={submit}
             disabled={!canNext || isSubmitting}
             aria-label={t("submit")}
-            className="inline-flex items-center gap-3 px-7 py-3.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-3 px-7 py-3.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1D4ED8]"
             style={{
-              background: "#0a0a0a",
+              background: "#2563EB",
               color: "#fff",
               fontSize: "14px",
               fontWeight: 500,

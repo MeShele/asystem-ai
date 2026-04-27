@@ -30,7 +30,7 @@ export function StepBudget({ value, onChange }: Props) {
               <span
                 className="font-mono text-[11px] shrink-0"
                 style={{
-                  color: selected ? "#ef4444" : "#9ca3af",
+                  color: selected ? "#2563EB" : "#9ca3af",
                   letterSpacing: "0.15em",
                 }}
               >
@@ -45,7 +45,7 @@ export function StepBudget({ value, onChange }: Props) {
               {selected && (
                 <span
                   className="font-mono text-[10px]"
-                  style={{ color: "#ef4444", letterSpacing: "0.15em" }}
+                  style={{ color: "#2563EB", letterSpacing: "0.15em" }}
                 >
                   SELECTED →
                 </span>

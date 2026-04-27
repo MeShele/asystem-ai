@@ -41,7 +41,7 @@ function PartnerSidebar() {
     >
       <Link href="/" className="inline-flex items-baseline gap-1">
         <span className="text-[22px] font-semibold tracking-tight">asystem</span>
-        <span className="text-[22px] font-semibold" style={{ color: "#ef4444" }}>.</span>
+        <span className="text-[22px] font-semibold" style={{ color: "#2563EB" }}>.</span>
         <span className="text-[22px] font-semibold tracking-tight">ai</span>
         <span
           className="ml-2 font-mono text-[10px]"
@@ -114,7 +114,7 @@ function SidebarLink({
     <span
       className="text-[14px] transition-colors"
       style={{ color: "#0a0a0a" }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#ef4444")}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
       onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
     >
       {children}
@@ -147,7 +147,7 @@ function LiveTimestamp() {
   const [time, setTime] = useState<string | null>(null);
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat("ru-RU", {
-      timeZone: "Asia/Almaty",
+      timeZone: "Asia/Bishkek",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
@@ -167,7 +167,7 @@ function LiveTimestamp() {
         className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
         style={{ background: "#10b981", boxShadow: "0 0 8px rgba(16,185,129,0.6)" }}
       />
-      ONLINE · {time} · ALMATY
+      ONLINE · {time} · BISHKEK
     </div>
   );
 }
@@ -201,9 +201,9 @@ function HeroSection() {
       >
         <div
           className="font-mono text-[11px] mb-6 inline-flex items-center gap-2"
-          style={{ color: "#ef4444", letterSpacing: "0.2em" }}
+          style={{ color: "#2563EB", letterSpacing: "0.2em" }}
         >
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#ef4444] animate-pulse" />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-pulse" />
           PARTNER · CLOSED BETA
         </div>
 
@@ -238,14 +238,14 @@ function HeroSection() {
             href="#apply"
             className="inline-flex items-center gap-3 px-7 py-4 transition-colors"
             style={{
-              background: "#ef4444",
+              background: "#2563EB",
               color: "#fff",
               fontSize: "15px",
               fontWeight: 500,
               letterSpacing: "0.02em",
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#dc2626")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#ef4444")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1D4ED8")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#2563EB")}
           >
             Стать партнёром
             <ArrowRight size={16} />
@@ -354,7 +354,7 @@ function HowSection() {
               >
                 {s.n}
               </span>
-              <s.icon size={22} strokeWidth={1.5} style={{ color: "#ef4444" }} />
+              <s.icon size={22} strokeWidth={1.5} style={{ color: "#2563EB" }} />
             </div>
             <h3
               className="font-semibold tracking-tight"
@@ -379,28 +379,27 @@ function MathSection() {
     <section
       id="math"
       className="px-6 lg:px-12 py-16 lg:py-24"
-      style={{ background: "#0a0a0a", color: "#fff", borderTop: "1px solid #e5e5e5" }}
+      style={{ background: "#fafafa", color: "#0a0a0a", borderTop: "1px solid #e5e5e5" }}
     >
       <SectionHeader
         kicker="Math · example"
         title="Математика сделки"
         subtitle="Пример: клиент готов платить $1 200. Вот как делится."
-        onDark
       />
 
       <div className="mt-12 max-w-4xl">
         <div className="font-mono text-sm lg:text-[15px] leading-loose">
           {[
-            { l: "Бюджет клиента", v: "$1 200", c: "rgba(255,255,255,0.6)" },
-            { l: "Наша базовая цена", v: "$600", c: "#fff" },
+            { l: "Бюджет клиента", v: "$1 200", c: "rgba(10,10,10,0.6)" },
+            { l: "Наша базовая цена", v: "$600", c: "#0a0a0a" },
             { l: "├─ 15% комиссия — тебе сразу", v: "+$90", c: "#10b981" },
-            { l: "└─ остаётся у asystem", v: "$510", c: "rgba(255,255,255,0.6)" },
+            { l: "└─ остаётся у asystem", v: "$510", c: "rgba(10,10,10,0.6)" },
             { l: "", v: "", c: "" },
-            { l: "Наценка (твоя, свободная)", v: "$600", c: "#fff" },
+            { l: "Наценка (твоя, свободная)", v: "$600", c: "#0a0a0a" },
             { l: "├─ 50% тебе", v: "+$300", c: "#10b981" },
-            { l: "└─ 50% asystem", v: "$300", c: "rgba(255,255,255,0.6)" },
+            { l: "└─ 50% asystem", v: "$300", c: "rgba(10,10,10,0.6)" },
             { l: "", v: "", c: "" },
-            { l: "ИТОГО ТЕБЕ", v: "$390", c: "#ef4444", big: true },
+            { l: "ИТОГО ТЕБЕ", v: "$390", c: "#2563EB", big: true },
           ].map((r, i) =>
             r.l === "" ? (
               <div key={i} className="h-4" />
@@ -417,7 +416,7 @@ function MathSection() {
                   fontWeight: r.big ? 600 : 400,
                   paddingTop: r.big ? "16px" : "4px",
                   paddingBottom: r.big ? "16px" : "4px",
-                  borderTop: r.big ? "1px solid rgba(255,255,255,0.15)" : undefined,
+                  borderTop: r.big ? "1px solid rgba(10,10,10,0.15)" : undefined,
                 }}
               >
                 <span style={{ color: r.c, whiteSpace: "nowrap" }}>{r.l}</span>
@@ -439,13 +438,13 @@ function MathSection() {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="mt-10 p-6 font-mono text-[13px]"
           style={{
-            background: "rgba(239,68,68,0.08)",
-            border: "1px solid rgba(239,68,68,0.25)",
+            background: "rgba(37, 99, 235,0.08)",
+            border: "1px solid rgba(37, 99, 235,0.25)",
             lineHeight: 1.55,
-            color: "rgba(255,255,255,0.8)",
+            color: "rgba(10,10,10,0.8)",
           }}
         >
-          <strong style={{ color: "#ef4444" }}>НАЦЕНКА — ТВОЯ</strong>. Назначаешь сам.
+          <strong style={{ color: "#2563EB" }}>НАЦЕНКА — ТВОЯ</strong>. Назначаешь сам.
           Клиенту показываешь финальную цену. Нашу базовую (`$600` в примере) он
           никогда не видит.
         </motion.div>
@@ -530,28 +529,50 @@ function TermsSection() {
       <SectionHeader kicker="Terms" title="Условия на пальцах" subtitle="Что делает партнёр — что делаем мы. Без юридического крыжа." />
       <div className="mt-12 max-w-4xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-px" style={{ background: "#e5e5e5" }}>
-          <div className="p-5 lg:p-6" style={{ background: "#fafafa" }}>
+          {/* Headers */}
+          <div className="p-5 lg:p-6 flex items-center gap-2" style={{ background: "#f5f5f5" }}>
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: "#2563EB" }}
+            />
             <div
-              className="font-mono text-[11px] mb-3"
-              style={{ color: "#9ca3af", letterSpacing: "0.2em" }}
+              className="font-mono text-[11px]"
+              style={{ color: "#0a0a0a", letterSpacing: "0.25em", fontWeight: 600 }}
             >
               ТЫ
             </div>
+            <span
+              className="font-mono text-[10px] ml-2"
+              style={{ color: "#9ca3af", letterSpacing: "0.15em" }}
+            >
+              — партнёр
+            </span>
           </div>
-          <div className="p-5 lg:p-6" style={{ background: "#fafafa" }}>
+          <div className="p-5 lg:p-6 flex items-center gap-2" style={{ background: "#f5f5f5" }}>
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: "#10b981" }}
+            />
             <div
-              className="font-mono text-[11px] mb-3"
-              style={{ color: "#9ca3af", letterSpacing: "0.2em" }}
+              className="font-mono text-[11px]"
+              style={{ color: "#0a0a0a", letterSpacing: "0.25em", fontWeight: 600 }}
             >
               МЫ
             </div>
+            <span
+              className="font-mono text-[10px] ml-2"
+              style={{ color: "#9ca3af", letterSpacing: "0.15em" }}
+            >
+              — asystem
+            </span>
           </div>
 
-          {TERMS_ROWS.map((r, i) => (
+          {/* Rows: чередуем THEY и WE попарно чтобы grid 2-cols правильно разложил */}
+          {TERMS_ROWS.flatMap((r, i) => [
             <motion.div
               key={`they-${i}`}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              initial={{ opacity: 0, x: -8 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
               className="p-5 lg:p-6"
@@ -560,7 +581,7 @@ function TermsSection() {
               <div className="flex items-start gap-3">
                 <span
                   className="font-mono text-[10px] mt-[3px] shrink-0"
-                  style={{ color: "#9ca3af", letterSpacing: "0.15em" }}
+                  style={{ color: "#2563EB", letterSpacing: "0.15em", fontWeight: 600 }}
                 >
                   0{i + 1}
                 </span>
@@ -568,31 +589,28 @@ function TermsSection() {
                   {r.they}
                 </span>
               </div>
-            </motion.div>
-          )).concat(
-            TERMS_ROWS.map((r, i) => (
-              <motion.div
-                key={`we-${i}`}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: i * 0.05 + 0.1 }}
-                className="p-5 lg:p-6"
-                style={{ background: "#fff" }}
-              >
-                <div className="flex items-start gap-3">
-                  <ShieldCheck
-                    size={14}
-                    strokeWidth={2}
-                    style={{ color: "#10b981", marginTop: "5px", flexShrink: 0 }}
-                  />
-                  <span style={{ fontSize: "14.5px", lineHeight: 1.5, color: "#0a0a0a" }}>
-                    {r.we}
-                  </span>
-                </div>
-              </motion.div>
-            ))
-          )}
+            </motion.div>,
+            <motion.div
+              key={`we-${i}`}
+              initial={{ opacity: 0, x: 8 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: i * 0.05 + 0.08 }}
+              className="p-5 lg:p-6"
+              style={{ background: "#fff" }}
+            >
+              <div className="flex items-start gap-3">
+                <ShieldCheck
+                  size={14}
+                  strokeWidth={2}
+                  style={{ color: "#10b981", marginTop: "5px", flexShrink: 0 }}
+                />
+                <span style={{ fontSize: "14.5px", lineHeight: 1.5, color: "#0a0a0a" }}>
+                  {r.we}
+                </span>
+              </div>
+            </motion.div>,
+          ])}
         </div>
       </div>
     </section>
@@ -679,7 +697,7 @@ function FAQItem({
             style={{
               fontSize: "clamp(1rem, 1.4vw, 1.25rem)",
               lineHeight: 1.3,
-              color: open ? "#ef4444" : "#0a0a0a",
+              color: open ? "#2563EB" : "#0a0a0a",
             }}
           >
             {item.q}
@@ -691,7 +709,7 @@ function FAQItem({
             transform: open ? "rotate(45deg)" : "rotate(0)",
             fontSize: "24px",
             lineHeight: 1,
-            color: open ? "#ef4444" : "#9ca3af",
+            color: open ? "#2563EB" : "#9ca3af",
           }}
         >
           +
@@ -719,21 +737,12 @@ function FinalCTA() {
     <section
       id="apply"
       className="px-6 lg:px-12 py-20 lg:py-32 relative overflow-hidden"
-      style={{ background: "#0a0a0a", color: "#fff", borderTop: "1px solid #e5e5e5" }}
+      style={{ background: "#fafafa", color: "#0a0a0a", borderTop: "1px solid #e5e5e5" }}
     >
-      <div
-        className="absolute inset-0 opacity-25 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
-
       <div className="relative max-w-3xl">
         <div
           className="font-mono text-[11px] mb-6"
-          style={{ color: "#ef4444", letterSpacing: "0.3em" }}
+          style={{ color: "#2563EB", letterSpacing: "0.3em" }}
         >
           APPLY
         </div>
@@ -747,7 +756,7 @@ function FinalCTA() {
         >
           Напиши нам.
           <br />
-          <span style={{ color: "#9ca3af" }}>Одна переписка в Telegram —</span>
+          <span style={{ color: "#525252" }}>Одна переписка в Telegram —</span>
           <br />
           и начинаем.
         </h2>
@@ -756,7 +765,7 @@ function FinalCTA() {
           style={{
             fontSize: "16px",
             lineHeight: 1.55,
-            color: "rgba(255,255,255,0.65)",
+            color: "rgba(10,10,10,0.65)",
           }}
         >
           Без анкет на 40 вопросов, без Zoom-интервью.
@@ -770,13 +779,13 @@ function FinalCTA() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-7 py-4 transition-colors"
             style={{
-              background: "#ef4444",
+              background: "#2563EB",
               color: "#fff",
               fontSize: "15px",
               fontWeight: 500,
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#dc2626")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#ef4444")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1D4ED8")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#2563EB")}
           >
             Написать в Telegram
             <ArrowRight size={16} />
@@ -785,12 +794,12 @@ function FinalCTA() {
             href="mailto:partner@asystem.ai"
             className="inline-flex items-center gap-3 px-7 py-4 transition-colors"
             style={{
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "#fff",
+              border: "1px solid rgba(10,10,10,0.2)",
+              color: "#0a0a0a",
               fontSize: "15px",
               fontWeight: 500,
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(10,10,10,0.05)")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
           >
             partner@asystem.ai
@@ -799,7 +808,7 @@ function FinalCTA() {
 
         <div
           className="mt-16 flex flex-wrap items-center gap-6 font-mono text-[11px]"
-          style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em" }}
+          style={{ color: "rgba(10,10,10,0.4)", letterSpacing: "0.15em" }}
         >
           <span>✓ CLOSED BETA · 20 СЛОТОВ</span>
           <span>✓ ПЕРВАЯ СДЕЛКА — БЕЗ ДОГОВОРА</span>
@@ -833,12 +842,12 @@ function SectionHeader({
       <div
         className="font-mono text-[11px] mb-4 inline-flex items-center gap-2"
         style={{
-          color: onDark ? "#ef4444" : "#ef4444",
+          color: onDark ? "#2563EB" : "#2563EB",
           letterSpacing: "0.2em",
           textTransform: "uppercase",
         }}
       >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
         {kicker}
       </div>
       <h2

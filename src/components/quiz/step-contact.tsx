@@ -49,7 +49,7 @@ export function StepContact({ data, onChange }: Props) {
         <Field label={`${t("name")} · обязательно`}>
           <input
             style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
             onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             type="text"
             placeholder="Как к вам обращаться"
@@ -61,7 +61,7 @@ export function StepContact({ data, onChange }: Props) {
         <Field label={t("company")}>
           <input
             style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
             onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
             type="text"
             placeholder="Название компании"
@@ -74,7 +74,7 @@ export function StepContact({ data, onChange }: Props) {
           <Field label={`${t("phone")} · обязательно`}>
             <input
               style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
               onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
               type="tel"
               placeholder="+996 ___ ___ ___"
@@ -85,7 +85,7 @@ export function StepContact({ data, onChange }: Props) {
           <Field label={t("email")}>
             <input
               style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#ef4444")}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = "#2563EB")}
               onBlur={(e) => (e.currentTarget.style.borderBottomColor = "#e5e5e5")}
               type="email"
               placeholder="name@company.kg"

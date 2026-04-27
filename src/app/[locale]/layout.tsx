@@ -7,24 +7,13 @@ import "../globals.css";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
-import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter",
   display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export async function generateMetadata({
@@ -77,7 +66,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning className={`${spaceGrotesk.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang={locale} suppressHydrationWarning className={inter.variable}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script
