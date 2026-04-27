@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, initPartnerTables } from "@/lib/db";
+import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
 import { MILESTONES, getCurrentLevel, getNextLevel, getProgressToNext } from "@/lib/achievements";
 
 export async function GET(req: NextRequest) {
@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   const db = getDb();
   await initPartnerTables();
+  await initProjectTables();
 
   const partners = await db`
     SELECT partner_id, name, email, phone, company, ref_code, telegram_id, telegram_username, commission_rate, status, created_at
@@ -22,28 +23,34 @@ export async function GET(req: NextRequest) {
 
   const partner = partners[0];
 
-  // Get partner's clients
-  const clients = await db`
-    SELECT * FROM partner_clients
+  // New system: stats from projects, not legacy partner_clients
+  const projectsRows = await db`
+    SELECT * FROM projects
     WHERE partner_id = ${partnerId}
     ORDER BY created_at DESC
   ` as Record<string, unknown>[];
 
-  // Calculate stats
-  const totalClients = clients.length;
-  const activeClients = clients.filter((c: Record<string, unknown>) => c.status !== "completed" && c.status !== "cancelled").length;
-  const completedClients = clients.filter((c: Record<string, unknown>) => c.status === "completed").length;
-  const totalEarned = clients.reduce((sum: number, c: Record<string, unknown>) => sum + Number(c.commission || 0), 0);
+  const totalClients = projectsRows.length;
+  const activeClients = projectsRows.filter((p) => p.status !== "completed" && p.status !== "cancelled").length;
+  const completedClients = projectsRows.filter((p) => p.status === "completed").length;
 
-  // Monthly earnings (last 12 months)
+  // Earned = ACTUAL payouts to partner
+  const earnedRow = await db`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM partner_payouts
+    WHERE partner_id = ${partnerId}
+  ` as Record<string, unknown>[];
+  const totalEarned = Number(earnedRow[0]?.total || 0);
+
+  // Monthly earnings (last 12 months) — based on actual payout dates
   const monthlyEarnings = await db`
     SELECT
-      TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') as month,
-      COALESCE(SUM(commission), 0) as earned
-    FROM partner_clients
+      TO_CHAR(DATE_TRUNC('month', paid_at), 'YYYY-MM') as month,
+      COALESCE(SUM(amount), 0) as earned
+    FROM partner_payouts
     WHERE partner_id = ${partnerId}
-      AND created_at >= NOW() - INTERVAL '12 months'
-    GROUP BY DATE_TRUNC('month', created_at)
+      AND paid_at >= (NOW() - INTERVAL '12 months')::date
+    GROUP BY DATE_TRUNC('month', paid_at)
     ORDER BY month ASC
   ` as Record<string, unknown>[];
 
@@ -81,7 +88,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     partner,
-    clients,
+    clients: [],
     stats: {
       totalClients,
       activeClients,

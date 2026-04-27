@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, UserPlus, Mail, Phone, MessageCircle } from "lucide-react";
+import { useRouter } from "@/i18n/navigation";
+import { Search, UserPlus, Mail, Phone, RefreshCcw } from "lucide-react";
 
 interface Partner {
   partner_id: string;
@@ -20,17 +21,36 @@ interface Partner {
 }
 
 export default function PartnersPage() {
+  const router = useRouter();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [search, setSearch] = useState("");
+  const [resetting, setResetting] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     fetch("/api/partners")
       .then((r) => r.json())
       .then((data) =>
         setPartners(Array.isArray(data) ? data : [])
       )
       .catch(() => setPartners([]));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  const handleReset = async (partnerId: string, name: string) => {
+    if (!confirm(`Сбросить legacy-данные партнёра «${name}»?\n\nБудут удалены: старые заявки (partner_clients), сообщения и достижения.\nНовые проекты НЕ затрагиваются.`)) return;
+    setResetting(partnerId);
+    const res = await fetch(`/api/admin/partners/${partnerId}/reset`, { method: "POST" });
+    setResetting(null);
+    if (res.ok) {
+      load();
+      alert("Готово. Старые данные удалены.");
+    } else {
+      alert("Ошибка при сбросе");
+    }
+  };
 
   const filtered = partners.filter(
     (p) =>
@@ -74,7 +94,7 @@ export default function PartnersPage() {
           { label: "Всего", value: partners.length, color: "text-brand-500" },
           { label: "Активных", value: partners.filter((p) => p.status === "active").length, color: "text-green-500" },
           { label: "Клиентов", value: partners.reduce((sum, p) => sum + Number(p.total_clients || 0), 0), color: "text-blue-500" },
-          { label: "Заработок", value: `${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString()} сом`, color: "text-purple-500" },
+          { label: "Выплачено партнёрам", value: `$${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString("ru-RU")}`, color: "text-green-500" },
         ].map((s) => (
           <div key={s.label} className="p-4 rounded-xl border border-border-faint bg-surface">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -97,7 +117,8 @@ export default function PartnersPage() {
               return (
                 <motion.div
                   key={partner.partner_id}
-                  className="flex items-center gap-4 p-4 hover:bg-surface-raised transition-colors"
+                  onClick={() => router.push(`/admin/partners/${partner.partner_id}`)}
+                  className="flex items-center gap-4 p-4 hover:bg-surface-raised transition-colors cursor-pointer"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.03 }}
@@ -140,8 +161,8 @@ export default function PartnersPage() {
                       <div className="text-text-muted">клиентов</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-bold text-sm text-green-500">{Number(partner.total_earned).toLocaleString()}</div>
-                      <div className="text-text-muted">заработок</div>
+                      <div className="font-bold text-sm text-green-500">${Number(partner.total_earned).toLocaleString("ru-RU")}</div>
+                      <div className="text-text-muted">выплачено</div>
                     </div>
                     <div className="text-center">
                       <div className="font-bold text-sm">{Math.round(Number(partner.commission_rate) * 100)}%</div>
@@ -150,7 +171,7 @@ export default function PartnersPage() {
                   </div>
 
                   {/* Contact */}
-                  <div className="hidden sm:flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {partner.phone && (
                       <a href={`tel:${partner.phone}`} className="w-8 h-8 rounded-lg border border-border-faint flex items-center justify-center hover:bg-brand-500/10 hover:border-brand-500/30 transition-all">
                         <Phone className="w-3.5 h-3.5 text-text-muted" />
@@ -161,6 +182,14 @@ export default function PartnersPage() {
                         <Mail className="w-3.5 h-3.5 text-text-muted" />
                       </a>
                     )}
+                    <button
+                      onClick={() => handleReset(partner.partner_id, partner.name)}
+                      disabled={resetting === partner.partner_id}
+                      title="Сбросить legacy-данные (старые заявки и достижения)"
+                      className="w-8 h-8 rounded-lg border border-border-faint flex items-center justify-center hover:bg-orange-500/10 hover:border-orange-500/30 transition-all disabled:opacity-50"
+                    >
+                      <RefreshCcw className={`w-3.5 h-3.5 text-text-muted ${resetting === partner.partner_id ? "animate-spin" : ""}`} />
+                    </button>
                   </div>
 
                   {/* Date */}

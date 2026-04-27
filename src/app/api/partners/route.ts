@@ -17,12 +17,9 @@ export async function GET(req: NextRequest) {
         p.partner_id, p.name, p.email, p.phone, p.company,
         p.ref_code, p.commission_rate, p.status, p.telegram_username,
         p.created_at,
-        COUNT(pc.id) as total_clients,
-        COALESCE(SUM(pc.commission), 0) as total_earned
+        (SELECT COUNT(*) FROM projects pr WHERE pr.partner_id = p.partner_id) AS total_clients,
+        (SELECT COALESCE(SUM(amount), 0) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id) AS total_earned
       FROM partners p
-      LEFT JOIN partner_clients pc ON pc.partner_id = p.partner_id
-      GROUP BY p.id, p.partner_id, p.name, p.email, p.phone, p.company,
-               p.ref_code, p.commission_rate, p.status, p.telegram_username, p.created_at
       ORDER BY p.created_at DESC
     `;
 
