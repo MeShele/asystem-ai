@@ -42,6 +42,11 @@ interface ProjectDetail {
   progress_percent: number;
   status: string;
   partner_commission_percent: number;
+  tier: string;
+  contract_signed_at: string | null;
+  delivered_in_30_days: boolean;
+  has_retention_bonus: boolean;
+  has_churn_penalty: boolean;
   created_at: string;
 }
 
@@ -108,6 +113,11 @@ export default function AdminProjectDetailPage({
     progressPercent: 0,
     status: "planning",
     partnerCommissionPercent: 0,
+    tier: "T1",
+    contractSignedAt: "",
+    deliveredIn30Days: false,
+    hasRetentionBonus: false,
+    hasChurnPenalty: false,
   });
 
   const load = useCallback(() => {
@@ -131,6 +141,11 @@ export default function AdminProjectDetailPage({
             progressPercent: Number(p.progress_percent || 0),
             status: p.status || "planning",
             partnerCommissionPercent: Number(p.partner_commission_percent || 0),
+            tier: p.tier || "T1",
+            contractSignedAt: p.contract_signed_at ? String(p.contract_signed_at).slice(0, 10) : "",
+            deliveredIn30Days: Boolean(p.delivered_in_30_days),
+            hasRetentionBonus: Boolean(p.has_retention_bonus),
+            hasChurnPenalty: Boolean(p.has_churn_penalty),
           });
         }
         setLoading(false);
@@ -177,6 +192,7 @@ export default function AdminProjectDetailPage({
 
   const dirty = useMemo(() => {
     if (!project) return false;
+    const origContractDate = project.contract_signed_at ? String(project.contract_signed_at).slice(0, 10) : "";
     const fieldsDirty =
       form.name !== (project.name || "") ||
       form.description !== (project.description || "") ||
@@ -186,7 +202,12 @@ export default function AdminProjectDetailPage({
       form.partnerId !== (project.partner_id || "") ||
       form.progressPercent !== Number(project.progress_percent || 0) ||
       form.status !== project.status ||
-      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0);
+      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0) ||
+      form.tier !== (project.tier || "T1") ||
+      form.contractSignedAt !== origContractDate ||
+      form.deliveredIn30Days !== Boolean(project.delivered_in_30_days) ||
+      form.hasRetentionBonus !== Boolean(project.has_retention_bonus) ||
+      form.hasChurnPenalty !== Boolean(project.has_churn_penalty);
     return fieldsDirty || stagesDirty;
   }, [form, project, stagesDirty]);
 
@@ -208,6 +229,11 @@ export default function AdminProjectDetailPage({
           progress_percent: Number(form.progressPercent),
           status: form.status,
           partner_commission_percent: Number(form.partnerCommissionPercent),
+          tier: form.tier,
+          contract_signed_at: form.contractSignedAt || null,
+          delivered_in_30_days: form.deliveredIn30Days,
+          has_retention_bonus: form.hasRetentionBonus,
+          has_churn_penalty: form.hasChurnPenalty,
         }),
       });
 
@@ -470,6 +496,55 @@ export default function AdminProjectDetailPage({
             </span>
           </div>
         )}
+      </Section>
+
+      {/* Tier + contract */}
+      <Section title="Тип проекта и договор" subtitle="Тир определяет acceptance criteria для уровня партнёра. Дата договора фиксирует «сделку» в зачёт уровня.">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Тир проекта">
+            <select
+              value={form.tier}
+              onChange={(e) => setForm({ ...form, tier: e.target.value })}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            >
+              <option value="T1">T1 — MVP ($500–2 000, 1–2 нед)</option>
+              <option value="T2">T2 — Полная упаковка ($30–100K, 1–2 мес)</option>
+              <option value="T4">T4 — Equity / токены</option>
+            </select>
+          </Field>
+          <Field label="Дата подписания договора">
+            <input
+              type="date"
+              value={form.contractSignedAt}
+              onChange={(e) => setForm({ ...form, contractSignedAt: e.target.value })}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* Multipliers */}
+      <Section title="Множители комиссии" subtitle="Применяются поверх базовой ставки уровня. Сохраняются вместе с проектом.">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <CheckboxField
+            label="+10% быстрая сдача (<30 дней)"
+            checked={form.deliveredIn30Days}
+            onChange={(v) => setForm({ ...form, deliveredIn30Days: v })}
+            color="green"
+          />
+          <CheckboxField
+            label="+5% retention 12 мес"
+            checked={form.hasRetentionBonus}
+            onChange={(v) => setForm({ ...form, hasRetentionBonus: v })}
+            color="green"
+          />
+          <CheckboxField
+            label="−5% churn (60 дн неактивности)"
+            checked={form.hasChurnPenalty}
+            onChange={(v) => setForm({ ...form, hasChurnPenalty: v })}
+            color="red"
+          />
+        </div>
       </Section>
 
       {/* Partner commission */}
@@ -789,6 +864,35 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="block text-xs font-medium text-text-secondary mb-1.5">{label}</label>
       {children}
     </div>
+  );
+}
+
+function CheckboxField({
+  label,
+  checked,
+  onChange,
+  color = "brand",
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  color?: "brand" | "green" | "red";
+}) {
+  const accent = color === "green" ? "border-green-500/40 bg-green-500/5" : color === "red" ? "border-red-500/40 bg-red-500/5" : "border-brand-500/40 bg-brand-500/5";
+  return (
+    <label
+      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+        checked ? accent : "border-border-faint hover:bg-bg-secondary/40"
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="w-4 h-4 accent-brand-500"
+      />
+      <span className="text-xs">{label}</span>
+    </label>
   );
 }
 

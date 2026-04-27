@@ -90,6 +90,12 @@ export async function PATCH(
   if ("company" in data) await db`UPDATE partners SET company = ${data.company ?? null} WHERE partner_id = ${partnerId}`;
   if ("status" in data) await db`UPDATE partners SET status = ${String(data.status)} WHERE partner_id = ${partnerId}`;
   if ("commission_rate" in data) await db`UPDATE partners SET commission_rate = ${Number(data.commission_rate)} WHERE partner_id = ${partnerId}`;
+  if ("level" in data) {
+    const lvl = Math.max(1, Math.min(5, Number(data.level)));
+    await db`UPDATE partners SET level = ${lvl} WHERE partner_id = ${partnerId}`;
+    await db`INSERT INTO partner_level_history (partner_id, level, reason) VALUES (${partnerId}, ${lvl}, 'manual override by admin')`;
+  }
+  if ("is_founding" in data) await db`UPDATE partners SET is_founding = ${Boolean(data.is_founding)} WHERE partner_id = ${partnerId}`;
 
   const updated = await db`SELECT * FROM partners WHERE partner_id = ${partnerId} LIMIT 1`;
   return NextResponse.json(updated[0] || {});

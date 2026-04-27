@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
+import { recomputePartnerLevel, bumpPartnerActivity } from "@/lib/partner-stats";
 
 export async function GET(
   req: NextRequest,
@@ -85,6 +86,32 @@ export async function PATCH(
   if ("partner_commission_percent" in data) {
     const pct = Math.max(0, Math.min(100, Number(data.partner_commission_percent)));
     await db`UPDATE projects SET partner_commission_percent = ${pct}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("tier" in data) {
+    const t = ["T1", "T2", "T4"].includes(data.tier) ? data.tier : "T1";
+    await db`UPDATE projects SET tier = ${t}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("contract_signed_at" in data) {
+    await db`UPDATE projects SET contract_signed_at = ${data.contract_signed_at || null}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("delivered_in_30_days" in data) {
+    await db`UPDATE projects SET delivered_in_30_days = ${Boolean(data.delivered_in_30_days)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("has_retention_bonus" in data) {
+    await db`UPDATE projects SET has_retention_bonus = ${Boolean(data.has_retention_bonus)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("has_churn_penalty" in data) {
+    await db`UPDATE projects SET has_churn_penalty = ${Boolean(data.has_churn_penalty)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+
+  // Re-compute partner level if any acceptance-related field changed
+  const project = (await db`SELECT partner_id FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1`) as Record<string, unknown>[];
+  if (project.length > 0 && project[0].partner_id) {
+    const pid = project[0].partner_id as string;
+    if ("contract_signed_at" in data || "tier" in data || "paid_amount" in data) {
+      await bumpPartnerActivity(pid);
+      await recomputePartnerLevel(pid);
+    }
   }
 
   const updated = await db`SELECT * FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1`;

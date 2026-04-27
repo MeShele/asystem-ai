@@ -186,6 +186,42 @@ export async function initProjectTables() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  // Phase 15: Partner levels + multipliers
+  await db`CREATE TABLE IF NOT EXISTS partner_level_history (
+    id SERIAL PRIMARY KEY,
+    partner_id TEXT NOT NULL,
+    level INT NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  // Lazy ALTERs for new columns
+  const projectCols = [
+    { name: "tier", def: "TEXT DEFAULT 'T1'" },
+    { name: "contract_signed_at", def: "DATE" },
+    { name: "delivered_in_30_days", def: "BOOLEAN DEFAULT FALSE" },
+    { name: "has_retention_bonus", def: "BOOLEAN DEFAULT FALSE" },
+    { name: "has_churn_penalty", def: "BOOLEAN DEFAULT FALSE" },
+  ];
+  for (const col of projectCols) {
+    const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = ${col.name}`;
+    if (exists.length === 0) {
+      await getPool().query(`ALTER TABLE projects ADD COLUMN ${col.name} ${col.def}`);
+    }
+  }
+
+  const partnerCols = [
+    { name: "level", def: "INT DEFAULT 1" },
+    { name: "is_founding", def: "BOOLEAN DEFAULT FALSE" },
+    { name: "last_activity_at", def: "DATE" },
+  ];
+  for (const col of partnerCols) {
+    const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partners' AND column_name = ${col.name}`;
+    if (exists.length === 0) {
+      await getPool().query(`ALTER TABLE partners ADD COLUMN ${col.name} ${col.def}`);
+    }
+  }
+
   await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
   await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_developers_project ON project_developers(project_id)`;

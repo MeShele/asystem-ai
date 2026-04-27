@@ -49,6 +49,9 @@ export type Partner = {
   telegram_id: string | null;
   telegram_username: string | null;
   commission_rate: number;
+  level?: number;
+  is_founding?: boolean;
+  last_activity_at?: string | null;
 };
 
 export type DashboardData = {

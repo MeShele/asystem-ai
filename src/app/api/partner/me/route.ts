@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
 import { MILESTONES, getCurrentLevel, getNextLevel, getProgressToNext } from "@/lib/achievements";
+import { getPartnerStats } from "@/lib/partner-stats";
+import { LEVELS, levelMeta, nextLevel, progressToNext, computeCommissionPct } from "@/lib/partner-levels";
 
 export async function GET(req: NextRequest) {
   const partnerId = req.cookies.get("partner_session")?.value;
@@ -13,7 +15,8 @@ export async function GET(req: NextRequest) {
   await initProjectTables();
 
   const partners = await db`
-    SELECT partner_id, name, email, phone, company, ref_code, telegram_id, telegram_username, commission_rate, status, created_at
+    SELECT partner_id, name, email, phone, company, ref_code, telegram_id, telegram_username, commission_rate, status, created_at,
+           level, is_founding, last_activity_at
     FROM partners WHERE partner_id = ${partnerId}
   ` as Record<string, unknown>[];
 
@@ -82,9 +85,24 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const currentLevel = getCurrentLevel(totalEarned);
-  const nextLevel = getNextLevel(totalEarned);
-  const progressPercent = getProgressToNext(totalEarned);
+  // Legacy $-based achievements (we'll deprecate, but keep for backward compat in dashboard until phase 18)
+  const legacyCurrentLevel = getCurrentLevel(totalEarned);
+  const legacyNextLevel = getNextLevel(totalEarned);
+  const legacyProgressPercent = getProgressToNext(totalEarned);
+
+  // NEW: Tier-level system L1-L5
+  const partnerStats = await getPartnerStats(partnerId);
+  const currentTierLevel = Number(partner.level || 1);
+  const tierMeta = levelMeta(currentTierLevel);
+  const nextTierMeta = nextLevel(currentTierLevel);
+  const tierProgress = progressToNext(partnerStats, currentTierLevel);
+  const baseCommission = computeCommissionPct({
+    level: currentTierLevel,
+    isFounding: Boolean(partner.is_founding),
+    deliveredIn30Days: false,
+    hasRetentionBonus: false,
+    hasChurnPenalty: false,
+  });
 
   return NextResponse.json({
     partner,
@@ -97,9 +115,19 @@ export async function GET(req: NextRequest) {
     },
     achievements: existingAchievements,
     milestones: MILESTONES,
-    currentLevel,
-    nextLevel,
-    progressPercent,
+    currentLevel: legacyCurrentLevel,
+    nextLevel: legacyNextLevel,
+    progressPercent: legacyProgressPercent,
     monthlyEarnings,
+    // NEW partner level system
+    tierSystem: {
+      levels: LEVELS,
+      currentLevel: currentTierLevel,
+      currentMeta: tierMeta,
+      nextMeta: nextTierMeta,
+      progress: tierProgress,
+      baseCommission,
+      acceptanceStats: partnerStats,
+    },
   });
 }

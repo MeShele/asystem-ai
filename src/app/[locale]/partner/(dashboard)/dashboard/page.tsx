@@ -46,6 +46,32 @@ interface AchievementData {
   paid: boolean;
 }
 
+interface TierLevel {
+  level: number;
+  title: string;
+  icon: string;
+  base_pct: number;
+  color: string;
+  requirement: string;
+}
+
+interface TierSystem {
+  levels: TierLevel[];
+  currentLevel: number;
+  currentMeta: TierLevel;
+  nextMeta: TierLevel | null;
+  progress: { percent: number; hint: string };
+  baseCommission: { base: number; bonuses: { label: string; pct: number }[]; total: number };
+  acceptanceStats: {
+    totalDeals: number;
+    dealsLast90Days: number;
+    dealsLast6Months: number;
+    totalRevenue: number;
+    hasT2Project: boolean;
+    totalEarned: number;
+  };
+}
+
 interface ExtendedDashboardData extends DashboardData {
   achievements: AchievementData[];
   milestones: MilestoneData[];
@@ -53,6 +79,7 @@ interface ExtendedDashboardData extends DashboardData {
   nextLevel: MilestoneData | null;
   progressPercent: number;
   monthlyEarnings: { month: string; earned: number }[];
+  tierSystem: TierSystem;
 }
 
 export default function PartnerDashboardPage() {
@@ -94,7 +121,8 @@ export default function PartnerDashboardPage() {
     );
   }
 
-  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings } = data;
+  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings, tierSystem } = data;
+  const { currentMeta, nextMeta, progress: tierProgress, baseCommission, acceptanceStats } = tierSystem;
   const currentLocale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] || "ru" : "ru";
   const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${currentLocale}/client/request?ref=${partner.ref_code}`;
   const achievedKeys = new Set(achievements.map((a) => a.milestone_key));
@@ -107,20 +135,26 @@ export default function PartnerDashboardPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl">
-      {/* ─── Premium Welcome ─── */}
+      {/* ─── Premium Welcome with current level badge ─── */}
       <motion.div
-        className="mb-8 relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-r from-brand-500/[0.06] to-brand-700/[0.04] p-6 lg:p-8"
+        className="mb-6 relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-r from-brand-500/[0.06] to-brand-700/[0.04] p-6 lg:p-8"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-brand-500/[0.06] blur-[100px] pointer-events-none" />
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            {currentLevel && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 border border-brand-500/20 text-brand-500 text-xs font-semibold">
-                <span>{currentLevel.icon}</span>
-                {currentLevel.title}
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-500 text-xs font-semibold">
+              <span>{currentMeta.icon}</span>
+              L{currentMeta.level} · {currentMeta.title}
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-500 text-xs font-bold">
+              {baseCommission.total}% комиссия
+            </span>
+            {partner.is_founding && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-semibold">
+                ⭐ Founding partner +5%
               </span>
             )}
           </div>
@@ -128,11 +162,74 @@ export default function PartnerDashboardPage() {
             Добро пожаловать, {partner.name}
           </h1>
           <p className="text-text-secondary text-sm">
-            {nextLevel
-              ? `До уровня ${nextLevel.title} ${nextLevel.icon} осталось $${(nextLevel.amount - stats.totalEarned).toLocaleString()}`
-              : "Вы достигли максимального уровня — Legend 🔥"
-            }
+            {nextMeta
+              ? `До уровня ${nextMeta.icon} L${nextMeta.level} «${nextMeta.title}»: ${tierProgress.hint}`
+              : "Вы достигли максимального уровня — L5 Стратегический 👑"}
           </p>
+        </div>
+      </motion.div>
+
+      {/* ─── Levels Ladder L1-L5 ─── */}
+      <motion.div
+        className="rounded-xl border border-border-faint bg-surface p-5 mb-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18 }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold">Лестница уровней</h3>
+          <span className="text-xs text-text-muted">
+            Сделок: {acceptanceStats.totalDeals} · Выручка: ${acceptanceStats.totalRevenue.toLocaleString("ru-RU")}
+          </span>
+        </div>
+        <div className="grid grid-cols-5 gap-2 mb-4">
+          {tierSystem.levels.map((lvl) => {
+            const isCurrent = lvl.level === currentMeta.level;
+            const isPassed = lvl.level < currentMeta.level;
+            return (
+              <div
+                key={lvl.level}
+                className={`relative p-3 rounded-lg border text-center transition-all ${
+                  isCurrent
+                    ? "border-brand-500 bg-brand-500/10 scale-105"
+                    : isPassed
+                    ? "border-green-500/30 bg-green-500/5"
+                    : "border-border-faint bg-bg-secondary/40 opacity-60"
+                }`}
+              >
+                <div className="text-2xl mb-1">{isPassed ? "✅" : lvl.icon}</div>
+                <div className="text-[10px] font-mono text-text-muted">L{lvl.level}</div>
+                <div className="text-xs font-semibold truncate">{lvl.title}</div>
+                <div className={`text-sm font-bold mt-1 ${isCurrent ? "text-brand-500" : isPassed ? "text-green-500" : "text-text-muted"}`}>
+                  {lvl.base_pct}%
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {nextMeta && (
+          <>
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-text-muted">Прогресс до L{nextMeta.level}</span>
+              <span className="font-mono font-semibold text-brand-500">{Math.round(tierProgress.percent)}%</span>
+            </div>
+            <div className="h-2 bg-bg-secondary rounded-full overflow-hidden mb-2">
+              <motion.div
+                className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${tierProgress.percent}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-[11px] text-text-muted">{tierProgress.hint}</p>
+          </>
+        )}
+        {/* Multipliers reference */}
+        <div className="mt-4 pt-4 border-t border-border-faint grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="text-[11px] p-2 rounded bg-green-500/5 text-green-500">+10% быстрая сдача</div>
+          <div className="text-[11px] p-2 rounded bg-green-500/5 text-green-500">+5% retention 12 мес</div>
+          <div className="text-[11px] p-2 rounded bg-amber-500/5 text-amber-500">⭐ +5% founding</div>
+          <div className="text-[11px] p-2 rounded bg-red-500/5 text-red-500">−5% churn (60 дн)</div>
         </div>
       </motion.div>
 

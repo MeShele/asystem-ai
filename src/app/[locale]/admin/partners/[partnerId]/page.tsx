@@ -29,6 +29,9 @@ interface Partner {
   status: string;
   telegram_username: string | null;
   created_at: string;
+  level: number;
+  is_founding: boolean;
+  last_activity_at: string | null;
 }
 
 interface Stats {
@@ -70,6 +73,8 @@ export default function AdminPartnerDetailPage({
     company: "",
     status: "active",
     commission_rate: 0.15,
+    level: 1,
+    is_founding: false,
   });
 
   const load = () => {
@@ -88,6 +93,8 @@ export default function AdminPartnerDetailPage({
             company: p.company || "",
             status: p.status || "active",
             commission_rate: Number(p.commission_rate ?? 0.15),
+            level: Number(p.level || 1),
+            is_founding: Boolean(p.is_founding),
           });
         }
         setLoading(false);
@@ -107,7 +114,9 @@ export default function AdminPartnerDetailPage({
       form.phone !== (partner.phone || "") ||
       form.company !== (partner.company || "") ||
       form.status !== partner.status ||
-      Number(form.commission_rate) !== Number(partner.commission_rate)
+      Number(form.commission_rate) !== Number(partner.commission_rate) ||
+      form.level !== Number(partner.level || 1) ||
+      form.is_founding !== Boolean(partner.is_founding)
     );
   }, [form, partner]);
 
@@ -124,6 +133,8 @@ export default function AdminPartnerDetailPage({
         company: form.company || null,
         status: form.status,
         commission_rate: Number(form.commission_rate),
+        level: form.level,
+        is_founding: form.is_founding,
       }),
     });
     setSaving(false);
@@ -278,6 +289,31 @@ export default function AdminPartnerDetailPage({
                 ))}
               </select>
             </Field>
+            <Field label="Уровень партнёра (manual override)">
+              <select
+                value={form.level}
+                onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              >
+                <option value={1}>L1 🌱 Введённый — 15%</option>
+                <option value={2}>L2 🚀 Активный — 20%</option>
+                <option value={3}>L3 ⭐ Эксклюзив — 25%</option>
+                <option value={4}>L4 🏆 Лидер ниши — 30%</option>
+                <option value={5}>L5 👑 Стратегический — 40%</option>
+              </select>
+              <p className="text-[11px] text-text-muted mt-1">
+                Авто-расчёт по acceptance работает при изменении проектов. Здесь можно вручную повысить/понизить.
+              </p>
+            </Field>
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.is_founding}
+                onChange={(e) => setForm({ ...form, is_founding: e.target.checked })}
+                className="w-4 h-4 accent-amber-500"
+              />
+              <span className="text-xs">⭐ Founding partner — пожизненный бонус +5% к комиссии</span>
+            </label>
             <Field label="Базовая комиссия (legacy, доли)">
               <input
                 type="number"
