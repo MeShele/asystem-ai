@@ -15,6 +15,7 @@ import {
   Wallet,
   Calendar,
 } from "lucide-react";
+import { ProjectComments } from "@/components/shared/project-comments";
 
 interface Developer {
   id?: number;
@@ -466,6 +467,9 @@ export default function PartnerProjectDetailPage({
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <ProjectComments projectId={project.project_id} />
     </div>
   );
 }

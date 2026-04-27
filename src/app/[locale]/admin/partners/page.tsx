@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "@/i18n/navigation";
-import { Search, UserPlus, Mail, Phone, RefreshCcw } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, RefreshCcw, Link as LinkIcon } from "lucide-react";
+import { InviteModal } from "@/components/shared/invite-modal";
 
 interface Partner {
   partner_id: string;
@@ -25,6 +26,7 @@ export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [search, setSearch] = useState("");
   const [resetting, setResetting] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
 
   const load = () => {
     fetch("/api/partners")
@@ -77,16 +79,26 @@ export default function PartnersPage() {
             {partners.length} всего · {partners.filter((p) => p.status === "active").length} активных
           </p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Поиск..."
-            className="pl-9 pr-4 py-2 text-sm bg-surface border border-border-faint rounded-lg text-text-primary placeholder:text-text-muted focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none w-48 lg:w-64 transition-all"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск..."
+              className="pl-9 pr-4 py-2 text-sm bg-surface border border-border-faint rounded-lg text-text-primary placeholder:text-text-muted focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none w-48 lg:w-64 transition-all"
+            />
+          </div>
+          <button
+            onClick={() => setShowInvite(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-medium transition-colors"
+          >
+            <LinkIcon className="w-4 h-4" />
+            Invite-ссылка
+          </button>
         </div>
       </div>
+      {showInvite && <InviteModal role="partner" onClose={() => setShowInvite(false)} />}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

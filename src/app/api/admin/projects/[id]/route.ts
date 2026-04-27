@@ -15,9 +15,11 @@ export async function GET(
   await initProjectTables();
 
   const projects = (await db`
-    SELECT p.*, pt.name AS partner_name, pt.company AS partner_company, pt.telegram_id AS partner_telegram_id
+    SELECT p.*, pt.name AS partner_name, pt.company AS partner_company, pt.telegram_id AS partner_telegram_id,
+           c.name AS client_name, c.email AS client_email, c.phone AS client_phone
     FROM projects p
     LEFT JOIN partners pt ON pt.partner_id = p.partner_id
+    LEFT JOIN clients c ON c.client_id = p.client_id
     WHERE p.project_id = ${id} OR p.id::text = ${id}
     LIMIT 1
   `) as Record<string, unknown>[];
@@ -102,6 +104,9 @@ export async function PATCH(
   }
   if ("has_churn_penalty" in data) {
     await db`UPDATE projects SET has_churn_penalty = ${Boolean(data.has_churn_penalty)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("client_id" in data) {
+    await db`UPDATE projects SET client_id = ${data.client_id ?? null}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
 
   // Re-compute partner level if any acceptance-related field changed

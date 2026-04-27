@@ -248,12 +248,54 @@ export async function initProjectTables() {
     }
   }
 
+  // Phase 17: invites + clients + project comments
+  await db`CREATE TABLE IF NOT EXISTS invites (
+    id SERIAL PRIMARY KEY,
+    token TEXT UNIQUE NOT NULL,
+    role TEXT NOT NULL,
+    project_id TEXT,
+    email TEXT,
+    name TEXT,
+    used_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE TABLE IF NOT EXISTS clients (
+    id SERIAL PRIMARY KEY,
+    client_id TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    password_hash TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE TABLE IF NOT EXISTS project_comments (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    author_role TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    author_name TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  const projClientCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'client_id'`;
+  if (projClientCol.length === 0) {
+    await getPool().query(`ALTER TABLE projects ADD COLUMN client_id TEXT`);
+  }
+
   await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
   await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_developers_project ON project_developers(project_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_developers_developer ON project_developers(developer_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_partner_payouts_project ON partner_payouts(project_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_partner_payouts_partner ON partner_payouts(partner_id, paid_at DESC)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_invites_token ON invites(token)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_project_comments_project ON project_comments(project_id, created_at DESC)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client_id)`;
 
   // Lazy migration: ensure partner_commission_percent column exists on legacy DBs
   await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'partner_commission_percent'`.then(async (rows) => {

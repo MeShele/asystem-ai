@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { ImageUpload } from "@/components/shared/image-upload";
+import { ProjectComments } from "@/components/shared/project-comments";
+import { InviteModal } from "@/components/shared/invite-modal";
 
 interface Developer {
   id: number;
@@ -39,6 +41,9 @@ interface ProjectDetail {
   partner_id: string | null;
   partner_name?: string | null;
   partner_company?: string | null;
+  client_id: string | null;
+  client_name?: string | null;
+  client_email?: string | null;
   progress_percent: number;
   status: string;
   partner_commission_percent: number;
@@ -48,6 +53,12 @@ interface ProjectDetail {
   has_retention_bonus: boolean;
   has_churn_penalty: boolean;
   created_at: string;
+}
+
+interface ClientLite {
+  client_id: string;
+  name: string;
+  email: string;
 }
 
 interface Stage {
@@ -96,11 +107,13 @@ export default function AdminProjectDetailPage({
   const [linkedDevelopers, setLinkedDevelopers] = useState<Developer[]>([]);
   const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [allClients, setAllClients] = useState<ClientLite[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddDev, setShowAddDev] = useState(false);
   const [showAddPayout, setShowAddPayout] = useState(false);
+  const [showClientInvite, setShowClientInvite] = useState(false);
 
   // Editable form state
   const [form, setForm] = useState({
@@ -110,6 +123,7 @@ export default function AdminProjectDetailPage({
     totalPrice: "0",
     paidAmount: "0",
     partnerId: "",
+    clientId: "",
     progressPercent: 0,
     status: "planning",
     partnerCommissionPercent: 0,
@@ -138,6 +152,7 @@ export default function AdminProjectDetailPage({
             totalPrice: String(p.total_price ?? 0),
             paidAmount: String(p.paid_amount ?? 0),
             partnerId: p.partner_id || "",
+            clientId: p.client_id || "",
             progressPercent: Number(p.progress_percent || 0),
             status: p.status || "planning",
             partnerCommissionPercent: Number(p.partner_commission_percent || 0),
@@ -171,6 +186,10 @@ export default function AdminProjectDetailPage({
       .then((r) => r.json())
       .then((data) => setAllDevelopers(Array.isArray(data) ? data : []))
       .catch(() => setAllDevelopers([]));
+    fetch("/api/admin/clients-list")
+      .then((r) => r.json())
+      .then((data) => setAllClients(Array.isArray(data) ? data : []))
+      .catch(() => setAllClients([]));
   }, [load, loadPayouts]);
 
   const stagesDirty = useMemo(() => {
@@ -200,6 +219,7 @@ export default function AdminProjectDetailPage({
       Number(form.totalPrice) !== Number(project.total_price) ||
       Number(form.paidAmount) !== Number(project.paid_amount) ||
       form.partnerId !== (project.partner_id || "") ||
+      form.clientId !== (project.client_id || "") ||
       form.progressPercent !== Number(project.progress_percent || 0) ||
       form.status !== project.status ||
       form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0) ||
@@ -226,6 +246,7 @@ export default function AdminProjectDetailPage({
           total_price: Number(form.totalPrice),
           paid_amount: Number(form.paidAmount),
           partner_id: form.partnerId || null,
+          client_id: form.clientId || null,
           progress_percent: Number(form.progressPercent),
           status: form.status,
           partner_commission_percent: Number(form.partnerCommissionPercent),
@@ -485,6 +506,30 @@ export default function AdminProjectDetailPage({
               ))}
             </select>
           </Field>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+          <Field label="Клиент">
+            <select
+              value={form.clientId}
+              onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            >
+              <option value="">— Без клиента —</option>
+              {allClients.map((c) => (
+                <option key={c.client_id} value={c.client_id}>
+                  {c.name} · {c.email}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <button
+            type="button"
+            onClick={() => setShowClientInvite(true)}
+            className="px-3 py-2 text-xs rounded-lg border border-border-faint hover:bg-bg-secondary flex items-center gap-1 self-end"
+          >
+            🔗 Пригласить нового клиента
+          </button>
         </div>
 
         {project.partner_name && (
@@ -829,6 +874,17 @@ export default function AdminProjectDetailPage({
           </div>
         )}
       </Section>
+
+      {/* Comments */}
+      <ProjectComments projectId={project.project_id} />
+
+      {showClientInvite && (
+        <InviteModal
+          role="client"
+          projectId={project.project_id}
+          onClose={() => setShowClientInvite(false)}
+        />
+      )}
     </div>
   );
 }

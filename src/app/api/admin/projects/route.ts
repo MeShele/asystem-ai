@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
-import { recomputePartnerLevel, bumpPartnerActivity } from "@/lib/partner-stats";
+import { recomputePartnerLevel, bumpPartnerActivity, isPartnerChurned } from "@/lib/partner-stats";
 import { computeCommissionPct } from "@/lib/partner-levels";
 
 export async function GET(req: NextRequest) {
@@ -42,6 +42,12 @@ export async function POST(req: NextRequest) {
   const tier = ["T1", "T2", "T4"].includes(data.tier) ? data.tier : "T1";
   const contractSignedAt = data.contract_signed_at || null;
 
+  // Auto-detect churn (60+ days inactivity) BEFORE bumping activity
+  let autoChurn = false;
+  if (partnerId) {
+    autoChurn = await isPartnerChurned(partnerId);
+  }
+
   // Auto-compute commission % from partner's level (if partner attached)
   let partnerCommissionPercent = Math.max(0, Math.min(100, Number(data.partner_commission_percent || 0)));
   if (partnerId && !data.partner_commission_percent) {
@@ -52,15 +58,17 @@ export async function POST(req: NextRequest) {
         isFounding: Boolean(partners[0].is_founding),
         deliveredIn30Days: false,
         hasRetentionBonus: false,
-        hasChurnPenalty: false,
+        hasChurnPenalty: autoChurn,
       });
       partnerCommissionPercent = calc.total;
     }
   }
 
+  const clientIdField = data.client_id || null;
+
   const inserted = await db`
-    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status, partner_commission_percent, tier, contract_signed_at)
-    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status}, ${partnerCommissionPercent}, ${tier}, ${contractSignedAt})
+    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status, partner_commission_percent, tier, contract_signed_at, client_id, has_churn_penalty)
+    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status}, ${partnerCommissionPercent}, ${tier}, ${contractSignedAt}, ${clientIdField}, ${autoChurn})
     RETURNING *
   `;
 

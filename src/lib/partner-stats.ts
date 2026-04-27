@@ -75,3 +75,18 @@ export async function bumpPartnerActivity(partnerId: string) {
   const db = getDb();
   await db`UPDATE partners SET last_activity_at = CURRENT_DATE WHERE partner_id = ${partnerId}`;
 }
+
+/**
+ * Returns true if partner has been inactive for >= 60 days.
+ * Used to auto-flag has_churn_penalty on a new project.
+ */
+export async function isPartnerChurned(partnerId: string): Promise<boolean> {
+  const db = getDb();
+  const rows = (await db`SELECT last_activity_at FROM partners WHERE partner_id = ${partnerId} LIMIT 1`) as Row[];
+  if (rows.length === 0) return false;
+  const last = rows[0].last_activity_at as string | null;
+  if (!last) return false; // никогда не был активен — не churn, это первый проект
+  const lastTime = new Date(last as string).getTime();
+  const days = (Date.now() - lastTime) / (1000 * 60 * 60 * 24);
+  return days >= 60;
+}
