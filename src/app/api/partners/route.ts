@@ -15,13 +15,19 @@ export async function GET(req: NextRequest) {
     const rows = await db`
       SELECT
         p.partner_id, p.name, p.email, p.phone, p.company,
-        p.ref_code, p.commission_rate, p.status, p.telegram_username,
+        p.ref_code, p.commission_rate, p.status, p.telegram_username, p.telegram_id,
         p.created_at, p.level, p.is_founding, p.last_activity_at,
+        p.referrer_partner_id,
+        ref.name AS referrer_name,
         (SELECT COUNT(*) FROM projects pr WHERE pr.partner_id = p.partner_id) AS total_clients,
         (SELECT COALESCE(SUM(amount), 0) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id AND pp.status = 'paid') AS total_earned,
         (SELECT COUNT(*) FROM partner_payouts pp WHERE pp.partner_id = p.partner_id AND pp.status = 'requested')
-          + (SELECT COUNT(*) FROM partner_milestone_claims mc WHERE mc.partner_id = p.partner_id AND mc.status = 'requested') AS pending_count
+          + (SELECT COUNT(*) FROM partner_milestone_claims mc WHERE mc.partner_id = p.partner_id AND mc.status = 'requested') AS pending_count,
+        (SELECT COUNT(*) FROM partners sub WHERE sub.referrer_partner_id = p.partner_id) AS subs_count,
+        (SELECT COALESCE(SUM(override_amount), 0) FROM partner_overrides ov WHERE ov.referrer_partner_id = p.partner_id) AS override_total,
+        (SELECT COALESCE(SUM(override_amount), 0) FROM partner_overrides ov WHERE ov.referrer_partner_id = p.partner_id AND ov.status = 'pending') AS override_pending
       FROM partners p
+      LEFT JOIN partners ref ON ref.partner_id = p.referrer_partner_id
       ORDER BY p.created_at DESC
     `;
 

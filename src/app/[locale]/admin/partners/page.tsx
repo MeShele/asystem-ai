@@ -16,9 +16,17 @@ interface Partner {
   commission_rate: number;
   status: string;
   telegram_username: string;
+  telegram_id?: string | null;
   total_clients: number;
   total_earned: number;
   created_at: string;
+  level?: number;
+  is_founding?: boolean;
+  referrer_partner_id?: string | null;
+  referrer_name?: string | null;
+  subs_count?: number;
+  override_total?: number;
+  override_pending?: number;
 }
 
 export default function PartnersPage() {
@@ -101,16 +109,25 @@ export default function PartnersPage() {
       {showInvite && <InviteModal role="partner" onClose={() => setShowInvite(false)} />}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         {[
           { label: "Всего", value: partners.length, color: "text-brand-500" },
           { label: "Активных", value: partners.filter((p) => p.status === "active").length, color: "text-green-500" },
           { label: "Клиентов", value: partners.reduce((sum, p) => sum + Number(p.total_clients || 0), 0), color: "text-blue-500" },
-          { label: "Выплачено партнёрам", value: `$${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString("ru-RU")}`, color: "text-green-500" },
+          {
+            label: "Выплачено",
+            value: `$${partners.reduce((sum, p) => sum + Number(p.total_earned || 0), 0).toLocaleString("ru-RU")}`,
+            color: "text-green-500",
+          },
+          {
+            label: "Override pending",
+            value: `$${partners.reduce((sum, p) => sum + Number(p.override_pending || 0), 0).toLocaleString("ru-RU")}`,
+            color: "text-amber-500",
+          },
         ].map((s) => (
-          <div key={s.label} className="p-4 rounded-xl border border-border-faint bg-surface">
-            <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-text-muted mt-0.5">{s.label}</div>
+          <div key={s.label} className="p-3 rounded-xl border border-border-faint bg-surface">
+            <div className={`text-xl font-bold ${s.color} font-mono tabular-nums`}>{s.value}</div>
+            <div className="text-[10px] uppercase tracking-wide text-text-muted mt-0.5">{s.label}</div>
           </div>
         ))}
       </div>
@@ -142,18 +159,28 @@ export default function PartnersPage() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="font-medium text-sm">{partner.name}</span>
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${status.color}`}>
                         {status.label}
                       </span>
-                      {partner.telegram_username && (
+                      {partner.level && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/10 text-purple-500 font-mono">
+                          L{partner.level}
+                        </span>
+                      )}
+                      {partner.is_founding && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500">
+                          founding
+                        </span>
+                      )}
+                      {partner.telegram_id && (
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-500">
-                          @{partner.telegram_username}
+                          {partner.telegram_username ? `@${partner.telegram_username}` : "TG"}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-text-muted flex items-center gap-2">
+                    <div className="text-xs text-text-muted flex items-center gap-2 flex-wrap">
                       <span className="font-mono">{partner.partner_id}</span>
                       <span>·</span>
                       <span>ref: {partner.ref_code}</span>
@@ -161,6 +188,12 @@ export default function PartnersPage() {
                         <>
                           <span>·</span>
                           <span>{partner.company}</span>
+                        </>
+                      )}
+                      {partner.referrer_name && (
+                        <>
+                          <span>·</span>
+                          <span className="text-purple-500">от: {partner.referrer_name}</span>
                         </>
                       )}
                     </div>
@@ -173,9 +206,28 @@ export default function PartnersPage() {
                       <div className="text-text-muted">клиентов</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-bold text-sm text-green-500">${Number(partner.total_earned).toLocaleString("ru-RU")}</div>
+                      <div className="font-bold text-sm text-green-500 font-mono tabular-nums">${Number(partner.total_earned).toLocaleString("ru-RU")}</div>
                       <div className="text-text-muted">выплачено</div>
                     </div>
+                    {Number(partner.subs_count || 0) > 0 && (
+                      <div className="text-center">
+                        <div className="font-bold text-sm text-purple-500 font-mono">{partner.subs_count}</div>
+                        <div className="text-text-muted">sub-partner{Number(partner.subs_count) === 1 ? "" : "s"}</div>
+                      </div>
+                    )}
+                    {Number(partner.override_total || 0) > 0 && (
+                      <div className="text-center">
+                        <div className="font-bold text-sm text-purple-600 font-mono tabular-nums">
+                          ${Number(partner.override_total).toLocaleString("ru-RU")}
+                        </div>
+                        <div className="text-text-muted">
+                          override
+                          {Number(partner.override_pending || 0) > 0 && (
+                            <span className="text-amber-500"> ({Number(partner.override_pending).toLocaleString("ru-RU")})</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="text-center">
                       <div className="font-bold text-sm">{Math.round(Number(partner.commission_rate) * 100)}%</div>
                       <div className="text-text-muted">комиссия</div>

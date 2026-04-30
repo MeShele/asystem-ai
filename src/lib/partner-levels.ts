@@ -50,13 +50,39 @@ export const MILESTONE_REWARDS = [
   { threshold: 20000, reward: 2000, key: "20k", title: "Двадцатка", icon: "💎" },
 ] as const;
 
+/**
+ * Override-комиссия для пригласившего партнёра.
+ * Берётся от КОМИССИИ sub-partner (его заработка), не от total_price проекта.
+ * Платит студия, а не sub-partner — это инвестиция в реферальный рост сети.
+ */
+export const SUB_PARTNER_OVERRIDE_PCT: Record<number, number> = {
+  1: 3, // sub на L1 → referrer +3% от его комиссии
+  2: 4,
+  3: 5,
+  4: 6,
+  5: 8,
+};
+
+export function getOverridePct(subLevel: number): number {
+  return SUB_PARTNER_OVERRIDE_PCT[subLevel] || 3;
+}
+
 export interface PartnerStats {
   totalDeals: number; // contract_signed_at IS NOT NULL
+  dealsLast60Days: number; // для retention-бонуса (3 сделки за 60 дней)
   dealsLast90Days: number;
   dealsLast6Months: number;
   totalRevenue: number; // SUM of paid_amount across all signed projects
   hasT2Project: boolean; // any project with tier=T2
   totalEarned: number; // SUM of partner_payouts (status=paid)
+}
+
+/**
+ * Условие удержания (retention): 3 сделки за 60 дней → авто-продление эксклюзива
+ * на 12 месяцев + бонус +5% к комиссии следующих сделок.
+ */
+export function qualifiesForRetentionBonus(stats: PartnerStats): boolean {
+  return stats.dealsLast60Days >= 3;
 }
 
 /**

@@ -162,7 +162,7 @@ function CreateProjectModal({
   const [totalPrice, setTotalPrice] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [partnerId, setPartnerId] = useState("");
-  const [partnerPct, setPartnerPct] = useState("");
+  const [tier, setTier] = useState("S");
   const [status, setStatus] = useState("planning");
   const [submitting, setSubmitting] = useState(false);
 
@@ -179,7 +179,7 @@ function CreateProjectModal({
         total_price: Number(totalPrice) || 0,
         paid_amount: Number(paidAmount) || 0,
         partner_id: partnerId || null,
-        partner_commission_percent: Math.max(0, Math.min(100, Number(partnerPct) || 0)),
+        tier,
         status,
       }),
     });
@@ -260,18 +260,22 @@ function CreateProjectModal({
                 ))}
               </select>
             </Field>
-            <Field label="% партнёра">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={partnerPct}
-                onChange={(e) => setPartnerPct(e.target.value)}
-                placeholder="0"
-                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary placeholder:text-text-muted focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
-              />
+            <Field label="Тир">
+              <select
+                value={tier}
+                onChange={(e) => setTier(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg text-text-primary focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none"
+              >
+                <option value="S">S · MVP ($500–5K, 1–2 нед)</option>
+                <option value="M">M · Кастом ($5K–30K, 2–6 нед)</option>
+                <option value="L">L · Полная упаковка ($30K–100K, 1–3 мес)</option>
+                <option value="XL">XL · Enterprise ($100K+, 3+ мес)</option>
+              </select>
             </Field>
           </div>
+          <p className="text-[11px] text-text-muted">
+            Процент партнёра вычислится автоматически из его текущего уровня.
+          </p>
 
           <Field label="Статус">
             <select

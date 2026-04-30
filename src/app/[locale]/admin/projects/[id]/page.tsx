@@ -21,6 +21,7 @@ import Image from "next/image";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { ProjectComments } from "@/components/shared/project-comments";
 import { InviteModal } from "@/components/shared/invite-modal";
+import { LiveProgressBar } from "@/components/shared/live-progress-bar";
 
 interface Developer {
   id: number;
@@ -49,6 +50,7 @@ interface ProjectDetail {
   partner_commission_percent: number;
   tier: string;
   contract_signed_at: string | null;
+  contract_type?: string | null;
   delivered_in_30_days: boolean;
   has_retention_bonus: boolean;
   has_churn_penalty: boolean;
@@ -59,6 +61,12 @@ interface ClientLite {
   client_id: string;
   name: string;
   email: string;
+}
+
+interface CommissionBreakdown {
+  base: number;
+  bonuses: { label: string; pct: number }[];
+  total: number;
 }
 
 interface Stage {
@@ -109,6 +117,7 @@ export default function AdminProjectDetailPage({
   const [partners, setPartners] = useState<Partner[]>([]);
   const [allClients, setAllClients] = useState<ClientLite[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [commissionBreakdown, setCommissionBreakdown] = useState<CommissionBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddDev, setShowAddDev] = useState(false);
@@ -127,8 +136,9 @@ export default function AdminProjectDetailPage({
     progressPercent: 0,
     status: "planning",
     partnerCommissionPercent: 0,
-    tier: "T1",
+    tier: "S",
     contractSignedAt: "",
+    contractType: "fix",
     deliveredIn30Days: false,
     hasRetentionBonus: false,
     hasChurnPenalty: false,
@@ -144,6 +154,7 @@ export default function AdminProjectDetailPage({
         setStages(ss);
         setOriginalStages(ss);
         setLinkedDevelopers(Array.isArray(data.developers) ? data.developers : []);
+        setCommissionBreakdown(data.commissionBreakdown || null);
         if (p) {
           setForm({
             name: p.name || "",
@@ -156,8 +167,16 @@ export default function AdminProjectDetailPage({
             progressPercent: Number(p.progress_percent || 0),
             status: p.status || "planning",
             partnerCommissionPercent: Number(p.partner_commission_percent || 0),
-            tier: p.tier || "T1",
+            tier: (() => {
+              const raw = p.tier || "S";
+              // Backward compat: T1 → S, T2 → L
+              if (raw === "T1") return "S";
+              if (raw === "T2") return "L";
+              if (raw === "T4") return "L";
+              return raw;
+            })(),
             contractSignedAt: p.contract_signed_at ? String(p.contract_signed_at).slice(0, 10) : "",
+            contractType: p.contract_type || "fix",
             deliveredIn30Days: Boolean(p.delivered_in_30_days),
             hasRetentionBonus: Boolean(p.has_retention_bonus),
             hasChurnPenalty: Boolean(p.has_churn_penalty),
@@ -222,12 +241,11 @@ export default function AdminProjectDetailPage({
       form.clientId !== (project.client_id || "") ||
       form.progressPercent !== Number(project.progress_percent || 0) ||
       form.status !== project.status ||
-      form.partnerCommissionPercent !== Number(project.partner_commission_percent || 0) ||
-      form.tier !== (project.tier || "T1") ||
+      form.tier !== (project.tier === "T1" ? "S" : project.tier === "T2" || project.tier === "T4" ? "L" : project.tier || "S") ||
       form.contractSignedAt !== origContractDate ||
+      form.contractType !== (project.contract_type || "fix") ||
       form.deliveredIn30Days !== Boolean(project.delivered_in_30_days) ||
-      form.hasRetentionBonus !== Boolean(project.has_retention_bonus) ||
-      form.hasChurnPenalty !== Boolean(project.has_churn_penalty);
+      form.hasRetentionBonus !== Boolean(project.has_retention_bonus);
     return fieldsDirty || stagesDirty;
   }, [form, project, stagesDirty]);
 
@@ -249,12 +267,11 @@ export default function AdminProjectDetailPage({
           client_id: form.clientId || null,
           progress_percent: Number(form.progressPercent),
           status: form.status,
-          partner_commission_percent: Number(form.partnerCommissionPercent),
           tier: form.tier,
           contract_signed_at: form.contractSignedAt || null,
+          contract_type: form.contractType,
           delivered_in_30_days: form.deliveredIn30Days,
           has_retention_bonus: form.hasRetentionBonus,
-          has_churn_penalty: form.hasChurnPenalty,
         }),
       });
 
@@ -442,7 +459,7 @@ export default function AdminProjectDetailPage({
       </div>
 
       {/* Main */}
-      <Section title="Основное">
+      <Section title="Основное" accent="brand">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <ImageUpload
             label="Логотип проекта"
@@ -453,7 +470,7 @@ export default function AdminProjectDetailPage({
             <select
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              className={FIELD_INPUT_CLASS}
             >
               {statusOptions.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -470,7 +487,7 @@ export default function AdminProjectDetailPage({
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={4}
             placeholder="Подробное описание проекта"
-            className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none resize-none"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border-faint rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 outline-none resize-none transition-all"
           />
         </Field>
 
@@ -480,7 +497,7 @@ export default function AdminProjectDetailPage({
               type="number"
               value={form.totalPrice}
               onChange={(e) => setForm({ ...form, totalPrice: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              className={`${FIELD_INPUT_CLASS} font-mono tabular-nums`}
             />
           </Field>
           <Field label="Оплачено, $">
@@ -488,14 +505,14 @@ export default function AdminProjectDetailPage({
               type="number"
               value={form.paidAmount}
               onChange={(e) => setForm({ ...form, paidAmount: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              className={`${FIELD_INPUT_CLASS} font-mono tabular-nums`}
             />
           </Field>
           <Field label="Партнёр">
             <select
               value={form.partnerId}
               onChange={(e) => setForm({ ...form, partnerId: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              className={FIELD_INPUT_CLASS}
             >
               <option value="">— Без партнёра —</option>
               {partners.map((p) => (
@@ -513,7 +530,7 @@ export default function AdminProjectDetailPage({
             <select
               value={form.clientId}
               onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              className={FIELD_INPUT_CLASS}
             >
               <option value="">— Без клиента —</option>
               {allClients.map((c) => (
@@ -526,9 +543,9 @@ export default function AdminProjectDetailPage({
           <button
             type="button"
             onClick={() => setShowClientInvite(true)}
-            className="px-3 py-2 text-xs rounded-lg border border-border-faint hover:bg-bg-secondary flex items-center gap-1 self-end"
+            className="h-10 px-3 text-xs rounded-lg border border-border-faint bg-surface hover:bg-bg-secondary/40 hover:border-brand-500/40 flex items-center gap-1.5 transition-all"
           >
-            🔗 Пригласить нового клиента
+            <Plus className="w-3.5 h-3.5" /> Пригласить клиента
           </button>
         </div>
 
@@ -543,87 +560,104 @@ export default function AdminProjectDetailPage({
         )}
       </Section>
 
-      {/* Tier + contract */}
-      <Section title="Тип проекта и договор" subtitle="Тир определяет acceptance criteria для уровня партнёра. Дата договора фиксирует «сделку» в зачёт уровня.">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Тир проекта">
-            <select
-              value={form.tier}
-              onChange={(e) => setForm({ ...form, tier: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-            >
-              <option value="T1">T1 — MVP ($500–2 000, 1–2 нед)</option>
-              <option value="T2">T2 — Полная упаковка ($30–100K, 1–2 мес)</option>
-              <option value="T4">T4 — Equity / токены</option>
-            </select>
-          </Field>
-          <Field label="Дата подписания договора">
-            <input
-              type="date"
-              value={form.contractSignedAt}
-              onChange={(e) => setForm({ ...form, contractSignedAt: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-            />
-          </Field>
-        </div>
+      {/* Class + contract */}
+      <Section
+        title="Класс проекта и договор"
+        subtitle="Класс — вес проекта по бюджету. L и XL ($30K+) засчитываются как T2 в acceptance L3-уровня партнёра."
+        accent="purple"
+      >
+        <Field label="Класс проекта">
+          <TierPicker value={form.tier} onChange={(v) => setForm({ ...form, tier: v })} />
+        </Field>
+
+        <Field label="Тип контракта">
+          <ContractTypePicker value={form.contractType} onChange={(v) => setForm({ ...form, contractType: v })} />
+        </Field>
+
+        <Field label="Подписание договора">
+          <ContractSignBlock
+            value={form.contractSignedAt}
+            onChange={(v) => setForm({ ...form, contractSignedAt: v })}
+          />
+        </Field>
       </Section>
 
       {/* Multipliers */}
-      <Section title="Множители комиссии" subtitle="Применяются поверх базовой ставки уровня. Сохраняются вместе с проектом.">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <Section
+        title="Множители комиссии"
+        subtitle="Применяются поверх базовой ставки уровня. Включаются при реальном событии. Влияет только на этот проект."
+        accent="amber"
+      >
+        <div className="space-y-2">
           <CheckboxField
-            label="+10% быстрая сдача (<30 дней)"
+            label="Быстрая сделка"
+            hint="Договор подписан за <30 дней с первого контакта партнёра"
             checked={form.deliveredIn30Days}
             onChange={(v) => setForm({ ...form, deliveredIn30Days: v })}
-            color="green"
+            color="brand"
+            pct="+10%"
           />
           <CheckboxField
-            label="+5% retention 12 мес"
+            label="Retention 12 месяцев"
+            hint="Клиент остался — авто-флаг при 3 сделках партнёра за 60 дней"
             checked={form.hasRetentionBonus}
             onChange={(v) => setForm({ ...form, hasRetentionBonus: v })}
             color="green"
+            pct="+5%"
           />
-          <CheckboxField
-            label="−5% churn (60 дн неактивности)"
-            checked={form.hasChurnPenalty}
-            onChange={(v) => setForm({ ...form, hasChurnPenalty: v })}
-            color="red"
-          />
+        </div>
+        <div className="mt-3 p-3 rounded-lg bg-bg-secondary/40 border border-border-faint/60">
+          <p className="text-[11px] text-text-muted leading-relaxed">
+            <span className="font-semibold text-text-secondary">Штраф −5%</span> за неактивность партнёра применяется автоматически через понижение уровня (60+ дней без сделок → уровень −1). Отдельного флага на проекте не нужно.
+          </p>
         </div>
       </Section>
 
-      {/* Partner commission */}
-      <Section title="Вознаграждение партнёра">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <Field label="Процент партнёра">
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={form.partnerCommissionPercent}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    partnerCommissionPercent: Math.max(0, Math.min(100, Number(e.target.value))),
-                  })
-                }
-                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-              />
-              <Percent className="w-4 h-4 text-text-muted flex-shrink-0" />
-            </div>
-          </Field>
-          <div className="md:col-span-2 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-            <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">
-              Партнёр получит со всего проекта
-            </div>
-            <div className="text-xl font-semibold text-green-500">
-              ${partnerCommissionAmount.toLocaleString("ru-RU")}
-              <span className="text-sm text-text-muted font-normal ml-2">
-                = ${total.toLocaleString("ru-RU")} × {form.partnerCommissionPercent}%
-              </span>
-            </div>
+      {/* Partner commission — auto-calculated, read-only with breakdown */}
+      <Section
+        title="Вознаграждение партнёра"
+        subtitle="Считается автоматически: уровень партнёра + множители + founding-бонус. Сохраняется при изменении уровня или флагов."
+      >
+        <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] uppercase tracking-wider text-text-muted">Партнёр получит со всего проекта</div>
+            <span className="px-2 py-0.5 rounded-full bg-green-500/15 text-green-500 text-xs font-mono font-semibold">
+              {form.partnerCommissionPercent}%
+            </span>
           </div>
+          <div className="text-2xl font-bold text-green-500 mb-1">
+            ${partnerCommissionAmount.toLocaleString("ru-RU")}
+          </div>
+          <div className="text-xs text-text-muted">
+            ${total.toLocaleString("ru-RU")} × {form.partnerCommissionPercent}%
+          </div>
+
+          {/* Breakdown */}
+          {commissionBreakdown && (
+            <div className="mt-4 pt-4 border-t border-green-500/20">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-2">Из чего складывается:</div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-secondary">Базовая ставка по уровню</span>
+                  <span className="font-mono font-semibold">{commissionBreakdown.base}%</span>
+                </div>
+                {commissionBreakdown.bonuses.map((b, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className={b.pct > 0 ? "text-green-500" : "text-red-500"}>
+                      {b.pct > 0 ? "+ " : ""}{b.label}
+                    </span>
+                    <span className={`font-mono font-semibold ${b.pct > 0 ? "text-green-500" : "text-red-500"}`}>
+                      {b.pct > 0 ? "+" : ""}{b.pct}%
+                    </span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-2 mt-2 border-t border-green-500/20 text-sm font-semibold">
+                  <span>Итого</span>
+                  <span className="font-mono text-green-500">{commissionBreakdown.total}%</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Section>
 
@@ -748,12 +782,13 @@ export default function AdminProjectDetailPage({
             <span className="text-sm text-text-muted">%</span>
           </div>
         </div>
-        <div className="mt-3 h-3 bg-bg-secondary rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full transition-all duration-300"
-            style={{ width: `${form.progressPercent}%` }}
-          />
-        </div>
+        <LiveProgressBar
+          value={form.progressPercent}
+          tone={form.status === "completed" ? "green" : "brand"}
+          live={form.status !== "completed" && form.status !== "cancelled"}
+          height="h-3"
+          className="mt-3"
+        />
       </Section>
 
       {/* Stages */}
@@ -894,18 +929,27 @@ function Section({
   subtitle,
   action,
   children,
+  accent,
 }: {
   title: string;
   subtitle?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
+  /** Цветной accent на левой границе для выделения секции */
+  accent?: "brand" | "amber" | "green" | "purple";
 }) {
+  const accentClass: Record<string, string> = {
+    brand: "border-l-4 border-l-brand-500",
+    amber: "border-l-4 border-l-amber-500",
+    green: "border-l-4 border-l-green-500",
+    purple: "border-l-4 border-l-purple-500",
+  };
   return (
-    <div className="rounded-xl border border-border-faint bg-surface p-5 mb-5">
+    <div className={`rounded-xl border border-border-faint bg-surface p-5 mb-4 ${accent ? accentClass[accent] : ""}`}>
       <div className="flex items-start justify-between mb-4 gap-3">
         <div>
-          <h3 className="text-sm font-semibold">{title}</h3>
-          {subtitle && <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>}
+          <h3 className="text-sm font-bold tracking-tight">{title}</h3>
+          {subtitle && <p className="text-xs text-text-muted mt-1 leading-relaxed">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -914,41 +958,289 @@ function Section({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const FIELD_INPUT_CLASS =
+  "w-full h-10 px-3 text-sm bg-surface border border-border-faint rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 outline-none transition-all";
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-text-secondary mb-1.5">{label}</label>
+      <label className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-text-muted mb-1.5">{label}</label>
       {children}
+      {hint && <p className="text-[11px] text-text-muted mt-1">{hint}</p>}
     </div>
   );
 }
 
 function CheckboxField({
   label,
+  hint,
   checked,
   onChange,
   color = "brand",
+  pct,
 }: {
   label: string;
+  hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
-  color?: "brand" | "green" | "red";
+  color?: "brand" | "green" | "red" | "amber";
+  pct?: string;
 }) {
-  const accent = color === "green" ? "border-green-500/40 bg-green-500/5" : color === "red" ? "border-red-500/40 bg-red-500/5" : "border-brand-500/40 bg-brand-500/5";
+  const toneText: Record<string, string> = {
+    brand: "text-brand-500",
+    green: "text-green-500",
+    red: "text-red-500",
+    amber: "text-amber-500",
+  };
+  const toneBorder: Record<string, string> = {
+    brand: "border-brand-500/40 bg-brand-500/[0.04]",
+    green: "border-green-500/40 bg-green-500/[0.04]",
+    red: "border-red-500/40 bg-red-500/[0.04]",
+    amber: "border-amber-500/40 bg-amber-500/[0.04]",
+  };
+
   return (
     <label
-      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
-        checked ? accent : "border-border-faint hover:bg-bg-secondary/40"
+      className={`group flex items-center justify-between gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+        checked ? toneBorder[color] : "border-border-faint bg-surface hover:border-text-muted/30 hover:bg-bg-secondary/20"
       }`}
     >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="w-4 h-4 accent-brand-500"
-      />
-      <span className="text-xs">{label}</span>
+      <div className="flex items-center gap-3 min-w-0">
+        <div
+          className={`w-5 h-5 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+            checked
+              ? `${toneText[color]} bg-current`
+              : "bg-surface border border-border-muted/40 group-hover:border-text-muted/40"
+          }`}
+        >
+          {checked && (
+            <svg viewBox="0 0 12 12" className="w-3 h-3 text-white" fill="none">
+              <path d="M2 6.5L5 9.5L10 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-medium leading-tight">{label}</div>
+          {hint && <div className="text-[11px] text-text-muted mt-0.5 leading-snug">{hint}</div>}
+        </div>
+      </div>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
+      {pct && (
+        <span className={`font-mono font-bold text-sm tabular-nums flex-shrink-0 ${checked ? toneText[color] : "text-text-muted"}`}>
+          {pct}
+        </span>
+      )}
     </label>
+  );
+}
+
+/**
+ * Класс проекта по бюджету (вес).
+ * - S: MVP/прототип ($500–5K, 1–2 нед) → как T1 в документах
+ * - M: кастомизация ($5K–30K, 2–6 нед) → новая категория
+ * - L: полная упаковка ($30K–100K, 1–3 мес) → как T2 в документах, засчитывается в L3
+ * - XL: enterprise ($100K+, 3+ мес) → топовые контракты, тоже L3
+ */
+const TIER_OPTIONS = [
+  {
+    value: "S",
+    title: "S",
+    label: "MVP",
+    range: "$500–5K",
+    duration: "1–2 нед",
+    description: "Прототип, лендинг, рабочий MVP",
+    tone: "blue" as const,
+  },
+  {
+    value: "M",
+    title: "M",
+    label: "Кастом",
+    range: "$5K–30K",
+    duration: "2–6 нед",
+    description: "Кастомизация, доработки, средние фичи",
+    tone: "brand" as const,
+  },
+  {
+    value: "L",
+    title: "L",
+    label: "Полная упаковка",
+    range: "$30K–100K",
+    duration: "1–3 мес",
+    description: "Архитектура, дизайн, разработка, запуск",
+    tone: "purple" as const,
+  },
+  {
+    value: "XL",
+    title: "XL",
+    label: "Enterprise",
+    range: "$100K+",
+    duration: "3+ мес",
+    description: "Стратегические контракты, продукт под ключ",
+    tone: "amber" as const,
+  },
+] as const;
+
+const TONE_CLASSES_TIER: Record<string, { ring: string; bg: string; text: string; chip: string }> = {
+  blue: { ring: "border-blue-500", bg: "bg-blue-500/[0.05]", text: "text-blue-500", chip: "bg-blue-500/15 text-blue-500" },
+  brand: { ring: "border-brand-500", bg: "bg-brand-500/[0.05]", text: "text-brand-500", chip: "bg-brand-500/15 text-brand-500" },
+  purple: { ring: "border-purple-500", bg: "bg-purple-500/[0.05]", text: "text-purple-500", chip: "bg-purple-500/15 text-purple-500" },
+  amber: { ring: "border-amber-500", bg: "bg-amber-500/[0.05]", text: "text-amber-500", chip: "bg-amber-500/15 text-amber-500" },
+};
+
+function TierPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      {TIER_OPTIONS.map((t) => {
+        const isSelected = value === t.value;
+        const tone = TONE_CLASSES_TIER[t.tone];
+        return (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => onChange(t.value)}
+            className={`relative text-left p-3 rounded-xl border transition-all ${
+              isSelected
+                ? `${tone.ring} ${tone.bg} shadow-sm`
+                : "border-border-faint bg-surface hover:border-text-muted/30 hover:bg-bg-secondary/20"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className={`inline-flex items-center justify-center min-w-[28px] px-1.5 h-6 rounded-md text-[11px] font-bold font-mono ${tone.chip}`}>
+                {t.title}
+              </span>
+              {isSelected && (
+                <div className={`w-4 h-4 rounded-full ${tone.text} bg-current flex items-center justify-center`}>
+                  <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-white" fill="none">
+                    <path d="M2 6.5L5 9.5L10 3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="text-sm font-bold mb-0.5">{t.label}</div>
+            <div className="text-[11px] mb-1 flex items-center gap-1.5">
+              <span className={`font-mono font-semibold ${tone.text}`}>{t.range}</span>
+              <span className="text-text-muted">·</span>
+              <span className="text-text-muted">{t.duration}</span>
+            </div>
+            <p className="text-[11px] text-text-muted leading-snug">{t.description}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const CONTRACT_TYPES = [
+  { value: "fix", label: "Fix-price", hint: "Фиксированная сумма за scope" },
+  { value: "hourly", label: "Time & material", hint: "Почасовая оплата" },
+  { value: "retainer", label: "Retainer", hint: "Ежемесячная подписка" },
+  { value: "equity", label: "Equity / токены", hint: "Доля или токены вместо денег" },
+] as const;
+
+function ContractTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      {CONTRACT_TYPES.map((c) => {
+        const isSelected = value === c.value;
+        return (
+          <button
+            key={c.value}
+            type="button"
+            onClick={() => onChange(c.value)}
+            className={`relative text-left p-3 rounded-xl border transition-all ${
+              isSelected
+                ? "border-brand-500 bg-brand-500/[0.05] shadow-sm"
+                : "border-border-faint bg-surface hover:border-text-muted/30 hover:bg-bg-secondary/20"
+            }`}
+          >
+            {isSelected && (
+              <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
+                <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-white" fill="none">
+                  <path d="M2 6.5L5 9.5L10 3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            )}
+            <div className="text-sm font-bold mb-1 pr-6">{c.label}</div>
+            <p className="text-[11px] text-text-muted leading-snug">{c.hint}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Большой визуальный блок «Сделка засчитана» с переключателем.
+ * Когда дата заполнена — зелёный «Засчитана», иначе серый «Не засчитана» + кнопка проставить сегодня.
+ */
+function ContractSignBlock({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const isSigned = !!value;
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className={`rounded-xl border-2 transition-all ${
+      isSigned
+        ? "border-green-500/40 bg-green-500/[0.04]"
+        : "border-dashed border-amber-500/40 bg-amber-500/[0.03]"
+    }`}>
+      <div className="p-4 flex items-start gap-4 flex-wrap">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+          isSigned ? "bg-green-500/15" : "bg-amber-500/15"
+        }`}>
+          {isSigned ? (
+            <svg viewBox="0 0 24 24" className="w-6 h-6 text-green-500" fill="none">
+              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-6 h-6 text-amber-500" fill="none">
+              <path d="M12 8v4M12 16h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-[200px]">
+          <div className={`text-sm font-bold mb-0.5 ${isSigned ? "text-green-600" : "text-amber-600"}`}>
+            {isSigned ? "Сделка засчитана" : "Сделка не засчитана"}
+          </div>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            {isSigned
+              ? "Идёт в acceptance уровня партнёра и в окно retention (3 сделки/60 дней)."
+              : "Не учитывается в уровне партнёра. Подтвердите подписание договора чтобы засчитать."}
+          </p>
+        </div>
+
+        <div className="flex-shrink-0 flex items-center gap-2">
+          {!isSigned && (
+            <button
+              type="button"
+              onClick={() => onChange(today)}
+              className="px-3 py-2 text-xs font-semibold rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center gap-1.5"
+            >
+              <svg viewBox="0 0 12 12" className="w-3 h-3" fill="none">
+                <path d="M2 6.5L5 9.5L10 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Подтвердить сегодня
+            </button>
+          )}
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 px-2 text-xs bg-surface border border-border-faint rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 outline-none transition-all max-w-[150px]"
+          />
+          {isSigned && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="text-[11px] text-text-muted hover:text-red-500 transition-colors px-2"
+              title="Снять подтверждение"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1120,14 +1412,14 @@ function StageRow({
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="h-1 bg-bg-secondary rounded-full overflow-hidden mb-2">
-        <div
-          className={`h-full rounded-full transition-all ${
-            stage.completed ? "bg-green-500" : "bg-brand-500"
-          }`}
-          style={{ width: `${stage.percent}%` }}
-        />
-      </div>
+      <LiveProgressBar
+        value={stage.percent}
+        tone={stage.completed ? "green" : "brand"}
+        live={!stage.completed}
+        variant="solid"
+        height="h-1"
+        className="mb-2"
+      />
       <textarea
         value={stage.comment || ""}
         onChange={(e) => onUpdate({ comment: e.target.value || null })}

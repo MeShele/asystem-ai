@@ -453,3 +453,57 @@ html { font-feature-settings: "cv11"; }
 .dark .noise-overlay {
   opacity: 0.05;
 }
+
+/* Live progress bar — wave/shimmer animations */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes flow-stripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 24px 0; }
+}
+
+.live-bar-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 70%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.live-bar-stripes {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.18) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.18) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 24px 24px;
+  animation: flow-stripes 1.4s linear infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.live-pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

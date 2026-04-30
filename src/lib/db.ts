@@ -195,6 +195,24 @@ export async function initProjectTables() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  // Phase 19: Sub-partner overrides — менторская комиссия за приглашённого партнёра
+  await db`CREATE TABLE IF NOT EXISTS partner_overrides (
+    id SERIAL PRIMARY KEY,
+    referrer_partner_id TEXT NOT NULL,
+    sub_partner_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    sub_commission_amount NUMERIC NOT NULL,
+    override_pct INT NOT NULL,
+    override_amount NUMERIC NOT NULL,
+    sub_level INT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    paid_at DATE,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_partner_overrides_referrer ON partner_overrides(referrer_partner_id, created_at DESC)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_partner_overrides_sub ON partner_overrides(sub_partner_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_partner_overrides_project ON partner_overrides(project_id)`;
+
   // Phase 16: Milestone reward claims ($5K→$500, $10K→$1000, $20K→$2000)
   await db`CREATE TABLE IF NOT EXISTS partner_milestone_claims (
     id SERIAL PRIMARY KEY,
@@ -213,6 +231,7 @@ export async function initProjectTables() {
   const payoutCols = [
     { name: "status", def: "TEXT DEFAULT 'paid'" },
     { name: "requested_at", def: "TIMESTAMP" },
+    { name: "rejection_comment", def: "TEXT" },
   ];
   for (const col of payoutCols) {
     const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partner_payouts' AND column_name = ${col.name}`;
@@ -221,10 +240,22 @@ export async function initProjectTables() {
     }
   }
 
+  // Same for milestone claims
+  const msCols = [
+    { name: "rejection_comment", def: "TEXT" },
+  ];
+  for (const col of msCols) {
+    const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partner_milestone_claims' AND column_name = ${col.name}`;
+    if (exists.length === 0) {
+      await getPool().query(`ALTER TABLE partner_milestone_claims ADD COLUMN ${col.name} ${col.def}`);
+    }
+  }
+
   // Lazy ALTERs for new columns
   const projectCols = [
-    { name: "tier", def: "TEXT DEFAULT 'T1'" },
+    { name: "tier", def: "TEXT DEFAULT 'S'" },
     { name: "contract_signed_at", def: "DATE" },
+    { name: "contract_type", def: "TEXT DEFAULT 'fix'" },
     { name: "delivered_in_30_days", def: "BOOLEAN DEFAULT FALSE" },
     { name: "has_retention_bonus", def: "BOOLEAN DEFAULT FALSE" },
     { name: "has_churn_penalty", def: "BOOLEAN DEFAULT FALSE" },
@@ -236,10 +267,17 @@ export async function initProjectTables() {
     }
   }
 
+  // One-time migration: старые tier-значения T1/T2 → новая шкала S/M/L/XL
+  // T1 (MVP $500–2K) → S, T2 (полная упаковка $30K+) → L
+  await db`UPDATE projects SET tier = 'S' WHERE tier = 'T1'`;
+  await db`UPDATE projects SET tier = 'L' WHERE tier = 'T2'`;
+
   const partnerCols = [
     { name: "level", def: "INT DEFAULT 1" },
     { name: "is_founding", def: "BOOLEAN DEFAULT FALSE" },
     { name: "last_activity_at", def: "DATE" },
+    { name: "exclusivity_until", def: "DATE" },
+    { name: "referrer_partner_id", def: "TEXT" }, // кто пригласил этого партнёра (1 уровень)
   ];
   for (const col of partnerCols) {
     const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'partners' AND column_name = ${col.name}`;
@@ -285,6 +323,87 @@ export async function initProjectTables() {
   if (projClientCol.length === 0) {
     await getPool().query(`ALTER TABLE projects ADD COLUMN client_id TEXT`);
   }
+
+  // Telegram pairing codes — для привязки telegram_id к partner_id
+  await db`CREATE TABLE IF NOT EXISTS telegram_pairing_codes (
+    id SERIAL PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    partner_id TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_pairing_code ON telegram_pairing_codes(code)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_pairing_partner ON telegram_pairing_codes(partner_id, expires_at DESC)`;
+
+  // Notifications — единая шина уведомлений для партнёров/клиентов/админа
+  await db`CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_role TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    link TEXT,
+    payload JSONB,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_role, user_id, read_at, created_at DESC)`;
+
+  // Project reviews — рейтинг + отзыв клиента после завершения проекта
+  await db`CREATE TABLE IF NOT EXISTS project_reviews (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT UNIQUE NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    text TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_project_reviews_project ON project_reviews(project_id)`;
+
+  // Lazy ALTER на invites — partner_id для отслеживания кто пригласил
+  const inviteCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'invites' AND column_name = 'partner_id'`;
+  if (inviteCol.length === 0) {
+    await getPool().query(`ALTER TABLE invites ADD COLUMN partner_id TEXT`);
+  }
+
+  // Lazy ALTER на clients — статус и phone (для leads + duplicate-check)
+  const clientCols = [
+    { name: "status", def: "TEXT DEFAULT 'lead'" }, // lead → active → churned
+    { name: "phone", def: "TEXT" },
+    { name: "partner_id", def: "TEXT" },
+  ];
+  for (const col of clientCols) {
+    const exists = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = ${col.name}`;
+    if (exists.length === 0) {
+      await getPool().query(`ALTER TABLE clients ADD COLUMN ${col.name} ${col.def}`);
+    }
+  }
+  await db`CREATE INDEX IF NOT EXISTS idx_clients_partner ON clients(partner_id, status)`;
+
+  // asystem_requests.assigned_partner_id (lazy) — для распределения входящих заявок
+  const reqExists = await db`SELECT 1 FROM information_schema.tables WHERE table_name = 'asystem_requests'`;
+  if (reqExists.length > 0) {
+    const reqCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'asystem_requests' AND column_name = 'assigned_partner_id'`;
+    if (reqCol.length === 0) {
+      await getPool().query(`ALTER TABLE asystem_requests ADD COLUMN assigned_partner_id TEXT`);
+    }
+  }
+
+  // Knowledge base — документы для партнёров (грузит админ)
+  await db`CREATE TABLE IF NOT EXISTS knowledge_docs (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    file_url TEXT NOT NULL,
+    file_name TEXT,
+    file_size BIGINT DEFAULT 0,
+    mime_type TEXT,
+    category TEXT DEFAULT 'general',
+    pinned BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_knowledge_pinned ON knowledge_docs(pinned DESC, created_at DESC)`;
 
   await db`CREATE INDEX IF NOT EXISTS idx_project_stages_project ON project_stages(project_id, order_index)`;
   await db`CREATE INDEX IF NOT EXISTS idx_projects_partner ON projects(partner_id)`;

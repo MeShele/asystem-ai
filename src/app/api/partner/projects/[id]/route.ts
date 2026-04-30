@@ -40,11 +40,25 @@ export async function GET(
   `;
 
   const payouts = await db`
-    SELECT id, amount, paid_at, comment, status, requested_at, created_at
+    SELECT id, amount, paid_at, comment, status, requested_at, rejection_comment, created_at
     FROM partner_payouts
     WHERE project_id = ${project.project_id as string} AND partner_id = ${partnerId}
     ORDER BY (CASE WHEN status = 'requested' THEN 0 ELSE 1 END), paid_at DESC, id DESC
   `;
 
-  return NextResponse.json({ project, stages, developers, payouts });
+  // Commission breakdown (read-only for partner)
+  const partners = (await db`SELECT level, is_founding FROM partners WHERE partner_id = ${partnerId} LIMIT 1`) as Record<string, unknown>[];
+  let commissionBreakdown = null;
+  if (partners.length > 0) {
+    const { computeCommissionPct } = await import("@/lib/partner-levels");
+    commissionBreakdown = computeCommissionPct({
+      level: Number(partners[0].level || 1),
+      isFounding: Boolean(partners[0].is_founding),
+      deliveredIn30Days: Boolean(project.delivered_in_30_days),
+      hasRetentionBonus: Boolean(project.has_retention_bonus),
+      hasChurnPenalty: Boolean(project.has_churn_penalty),
+    });
+  }
+
+  return NextResponse.json({ project, stages, developers, payouts, commissionBreakdown });
 }

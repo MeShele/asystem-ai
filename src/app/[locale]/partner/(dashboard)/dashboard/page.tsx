@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "@/i18n/navigation";
-import { Users, DollarSign, Plus, Trophy, Lock, CheckCircle2, TrendingUp, FolderKanban, Wallet, ArrowRight } from "lucide-react";
+import { Users, DollarSign, Plus, Trophy, FolderKanban, Wallet, ArrowRight, BookOpen } from "lucide-react";
 import type { DashboardData } from "@/types/partner";
 import { CreateProjectModal } from "@/components/partner/create-project-modal";
+import { EarningsCalculator } from "@/components/partner/earnings-calculator";
+import { LiveProgressBar } from "@/components/shared/live-progress-bar";
 import dynamic from "next/dynamic";
 
 interface ProjectLite {
@@ -29,6 +31,7 @@ interface TeamMember {
 }
 
 const EarningsChart = dynamic(() => import("@/components/partner/earnings-chart").then((m) => m.EarningsChart), { ssr: false });
+const ForecastChart = dynamic(() => import("@/components/partner/forecast-chart").then((m) => m.ForecastChart), { ssr: false });
 
 interface MilestoneData {
   key: string;
@@ -64,20 +67,23 @@ interface TierSystem {
   baseCommission: { base: number; bonuses: { label: string; pct: number }[]; total: number };
   acceptanceStats: {
     totalDeals: number;
+    dealsLast60Days: number;
     dealsLast90Days: number;
     dealsLast6Months: number;
     totalRevenue: number;
     hasT2Project: boolean;
     totalEarned: number;
   };
+  daysSinceActivity: number | null;
 }
 
 interface MilestoneClaim {
   milestone_key: string;
-  status: "requested" | "paid";
+  status: "requested" | "paid" | "rejected";
   amount: number | string;
   paid_at: string | null;
   requested_at: string | null;
+  rejection_comment: string | null;
 }
 
 interface ExtendedDashboardData extends DashboardData {
@@ -131,33 +137,11 @@ export default function PartnerDashboardPage() {
     );
   }
 
-  const { partner, stats, currentLevel, nextLevel, progressPercent, milestones, achievements, monthlyEarnings, tierSystem, milestoneClaims = [] } = data;
-  const { currentMeta, nextMeta, progress: tierProgress, baseCommission, acceptanceStats } = tierSystem;
+  const { partner, stats, monthlyEarnings, tierSystem } = data;
+  const { currentMeta, nextMeta, progress: tierProgress, baseCommission } = tierSystem;
 
-  // Mini-rewards (10% of earnings at $5K/$10K/$20K)
-  const MINI_REWARDS = [
-    { key: "5k", threshold: 5000, reward: 500, icon: "🎯", title: "Первая пятёрка" },
-    { key: "10k", threshold: 10000, reward: 1000, icon: "🔥", title: "Десятка" },
-    { key: "20k", threshold: 20000, reward: 2000, icon: "💎", title: "Двадцатка" },
-  ];
-
-  const claimMilestone = async (key: string) => {
-    if (!confirm("Запросить награду? Админ получит уведомление и оплатит.")) return;
-    const res = await fetch("/api/partner/milestones/claim", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ milestone_key: key }),
-    });
-    if (res.ok) {
-      window.location.reload();
-    } else {
-      const err = await res.json().catch(() => ({}));
-      alert(err.error || "Не удалось запросить награду");
-    }
-  };
   const currentLocale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] || "ru" : "ru";
   const refLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${currentLocale}/client/request?ref=${partner.ref_code}`;
-  const achievedKeys = new Set(achievements.map((a) => a.milestone_key));
 
   async function copyRef() {
     await navigator.clipboard.writeText(refLink);
@@ -167,6 +151,11 @@ export default function PartnerDashboardPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl">
+      {/* ─── Activity counter banner (only for L3+ or visible warning) ─── */}
+      {tierSystem.daysSinceActivity !== null && tierSystem.daysSinceActivity > 0 && (
+        <ActivityBanner days={tierSystem.daysSinceActivity} level={tierSystem.currentLevel} />
+      )}
+
       {/* ─── Premium Welcome with current level badge ─── */}
       <motion.div
         className="mb-6 relative overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-r from-brand-500/[0.06] to-brand-700/[0.04] p-6 lg:p-8"
@@ -201,69 +190,44 @@ export default function PartnerDashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── Levels Ladder L1-L5 ─── */}
-      <motion.div
-        className="rounded-xl border border-border-faint bg-surface p-5 mb-6"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18 }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold">Лестница уровней</h3>
-          <span className="text-xs text-text-muted">
-            Сделок: {acceptanceStats.totalDeals} · Выручка: ${acceptanceStats.totalRevenue.toLocaleString("ru-RU")}
-          </span>
-        </div>
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {tierSystem.levels.map((lvl) => {
-            const isCurrent = lvl.level === currentMeta.level;
-            const isPassed = lvl.level < currentMeta.level;
-            return (
-              <div
-                key={lvl.level}
-                className={`relative p-3 rounded-lg border text-center transition-all ${
-                  isCurrent
-                    ? "border-brand-500 bg-brand-500/10 scale-105"
-                    : isPassed
-                    ? "border-green-500/30 bg-green-500/5"
-                    : "border-border-faint bg-bg-secondary/40 opacity-60"
-                }`}
-              >
-                <div className="text-2xl mb-1">{isPassed ? "✅" : lvl.icon}</div>
-                <div className="text-[10px] font-mono text-text-muted">L{lvl.level}</div>
-                <div className="text-xs font-semibold truncate">{lvl.title}</div>
-                <div className={`text-sm font-bold mt-1 ${isCurrent ? "text-brand-500" : isPassed ? "text-green-500" : "text-text-muted"}`}>
-                  {lvl.base_pct}%
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {nextMeta && (
-          <>
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-text-muted">Прогресс до L{nextMeta.level}</span>
-              <span className="font-mono font-semibold text-brand-500">{Math.round(tierProgress.percent)}%</span>
-            </div>
-            <div className="h-2 bg-bg-secondary rounded-full overflow-hidden mb-2">
-              <motion.div
-                className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${tierProgress.percent}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-              />
-            </div>
-            <p className="text-[11px] text-text-muted">{tierProgress.hint}</p>
-          </>
-        )}
-        {/* Multipliers reference */}
-        <div className="mt-4 pt-4 border-t border-border-faint grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <div className="text-[11px] p-2 rounded bg-green-500/5 text-green-500">+10% быстрая сдача</div>
-          <div className="text-[11px] p-2 rounded bg-green-500/5 text-green-500">+5% retention 12 мес</div>
-          <div className="text-[11px] p-2 rounded bg-amber-500/5 text-amber-500">⭐ +5% founding</div>
-          <div className="text-[11px] p-2 rounded bg-red-500/5 text-red-500">−5% churn (60 дн)</div>
-        </div>
-      </motion.div>
+      {/* ─── Earnings Calculator (главное мотивационное место) ─── */}
+      <EarningsCalculator
+        levels={tierSystem.levels}
+        currentLevel={tierSystem.currentLevel}
+        isFounding={Boolean(partner.is_founding)}
+        retentionQualified={tierSystem.acceptanceStats.dealsLast60Days >= 3}
+        partnerId={partner.partner_id}
+      />
+
+      {/* Quick links на детальные разделы */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <button
+          onClick={() => router.push("/partner/achievements")}
+          className="flex items-center gap-3 p-4 rounded-xl border border-border-faint bg-surface hover:border-amber-500/40 hover:bg-amber-500/[0.03] transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+            <Trophy className="w-5 h-5 text-amber-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold">Достижения и уровни</div>
+            <div className="text-[11px] text-text-muted">Лестница L1–L5, мини-награды, прогресс</div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
+        </button>
+        <button
+          onClick={() => router.push("/partner/knowledge")}
+          className="flex items-center gap-3 p-4 rounded-xl border border-border-faint bg-surface hover:border-brand-500/40 hover:bg-brand-500/[0.03] transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+            <BookOpen className="w-5 h-5 text-brand-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold">База знаний</div>
+            <div className="text-[11px] text-text-muted">Презентации, шаблоны, FAQ программы</div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all" />
+        </button>
+      </div>
 
       {/* ─── KPI Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -285,12 +249,12 @@ export default function PartnerDashboardPage() {
             sub: "завершено / всего",
           },
           {
-            label: "Текущий уровень",
-            value: currentLevel ? currentLevel.title : "Новичок",
+            label: "Уровень",
+            value: `${currentMeta.title} · ${baseCommission.total}%`,
             icon: Trophy,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
-            sub: currentLevel ? `бонус +$${currentLevel.bonus.toLocaleString()}` : "заработайте $1,000",
+            sub: `L${currentMeta.level} · база ${currentMeta.base_pct}%`,
           },
         ].map((stat, i) => {
           const Icon = stat.icon;
@@ -318,45 +282,7 @@ export default function PartnerDashboardPage() {
         })}
       </div>
 
-      {/* ─── Progress to Next Level ─── */}
-      {nextLevel && (
-        <motion.div
-          className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-brand-500" />
-              <span className="text-sm font-semibold">Прогресс до {nextLevel.title} {nextLevel.icon}</span>
-            </div>
-            <span className="text-sm font-bold text-brand-500">{progressPercent}%</span>
-          </div>
-          <div className="relative h-3 rounded-full bg-bg-secondary overflow-hidden">
-            <motion.div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-500 to-brand-400"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-            />
-            {/* Shimmer */}
-            <div
-              className="absolute inset-y-0 left-0 rounded-full opacity-30"
-              style={{
-                width: `${progressPercent}%`,
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-                animation: "shimmer-sweep 2s ease-in-out infinite",
-              }}
-            />
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-text-muted">
-            <span>${stats.totalEarned.toLocaleString()}</span>
-            <span>Бонус: +${nextLevel.bonus.toLocaleString()}</span>
-            <span>${nextLevel.amount.toLocaleString()}</span>
-          </div>
-        </motion.div>
-      )}
+      {/* Прогресс по уровням и наградам — на странице /partner/achievements */}
 
       {/* ─── Financial overview ─── */}
       {projects.length > 0 && (
@@ -428,8 +354,8 @@ export default function PartnerDashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full" style={{ width: `${p.progress_percent}%` }} />
+                    <div className="flex-1">
+                      <LiveProgressBar value={p.progress_percent} tone={p.status === "completed" ? "green" : "brand"} live={p.status !== "completed" && p.status !== "cancelled"} height="h-1.5" />
                     </div>
                     <span className="text-[11px] font-mono text-text-muted w-10 text-right">{p.progress_percent}%</span>
                   </div>
@@ -482,103 +408,19 @@ export default function PartnerDashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
       >
-        <div className="text-sm font-semibold mb-4">Заработок по месяцам</div>
-        <div className="h-[250px]">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-sm font-semibold">Заработок по месяцам</div>
+            <p className="text-[11px] text-text-muted mt-0.5">Только фактические выплаты со статусом «Оплачено» — последние 6 месяцев</p>
+          </div>
+        </div>
+        <div className="h-[320px]">
           <EarningsChart data={monthlyEarnings} />
         </div>
       </motion.div>
 
-      {/* ─── Mini-rewards (10% bonus from earned thresholds) ─── */}
-      <motion.div
-        className="mb-6"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <Trophy className="w-5 h-5 text-amber-500" />
-          <h2 className="text-lg font-bold">Мини-награды</h2>
-        </div>
-        <p className="text-xs text-text-muted mb-4">
-          Когда ваш заработок достигает порога — можно запросить бонус (10% от суммы)
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {MINI_REWARDS.map((m, i) => {
-            const claim = milestoneClaims.find((c) => c.milestone_key === m.key);
-            const eligible = stats.totalEarned >= m.threshold;
-            const status = claim?.status; // 'requested' | 'paid' | undefined
-            const progressPct = Math.min(100, (stats.totalEarned / m.threshold) * 100);
-
-            return (
-              <motion.div
-                key={m.key}
-                className={`relative p-4 rounded-xl border transition-all ${
-                  status === "paid"
-                    ? "border-green-500/40 bg-green-500/5"
-                    : status === "requested"
-                    ? "border-orange-500/40 bg-orange-500/5"
-                    : eligible
-                    ? "border-amber-500/40 bg-amber-500/5"
-                    : "border-border-faint bg-surface opacity-70"
-                }`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.3 + i * 0.04 }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-3xl">
-                    {status === "paid" ? "✅" : eligible || status === "requested" ? m.icon : "🔒"}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-text-muted">Бонус</div>
-                    <div className="text-lg font-bold text-amber-500">+${m.reward}</div>
-                  </div>
-                </div>
-                <div className="text-sm font-semibold mb-0.5">{m.title}</div>
-                <div className="text-xs text-text-muted mb-2">
-                  За заработок ${m.threshold.toLocaleString("ru-RU")}
-                </div>
-
-                {/* Progress */}
-                {!eligible && (
-                  <>
-                    <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden mb-2">
-                      <div
-                        className="h-full bg-amber-500 rounded-full transition-all"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                    <div className="text-[10px] text-text-muted">
-                      ${stats.totalEarned.toLocaleString("ru-RU")} / ${m.threshold.toLocaleString("ru-RU")}
-                    </div>
-                  </>
-                )}
-
-                {/* Action / status */}
-                {status === "paid" && claim?.paid_at && (
-                  <div className="mt-2 text-[11px] text-green-500 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Получено · {new Date(claim.paid_at).toLocaleDateString("ru-RU")}
-                  </div>
-                )}
-                {status === "requested" && (
-                  <div className="mt-2 text-[11px] text-orange-500 flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> В обработке у админа
-                  </div>
-                )}
-                {!status && eligible && (
-                  <button
-                    onClick={() => claimMilestone(m.key)}
-                    className="mt-2 w-full px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold transition-colors"
-                  >
-                    💰 Забрать награду
-                  </button>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
+      {/* ─── Forecast chart ─── */}
+      <ForecastChart />
 
       {/* ─── Ref link ─── */}
       <motion.div
@@ -618,6 +460,63 @@ export default function PartnerDashboardPage() {
         />
       )}
     </div>
+  );
+}
+
+function ActivityBanner({ days, level }: { days: number; level: number }) {
+  const max = 60;
+  const remaining = Math.max(0, max - days);
+  const pct = Math.min(100, (days / max) * 100);
+
+  let tone: "green" | "yellow" | "red" = "green";
+  let title = "";
+  let subtitle = "";
+
+  if (days < 30) {
+    tone = "green";
+    title = `Активный ритм — ${days} ${days === 1 ? "день" : "дней"} с последней сделки`;
+    subtitle = level > 1
+      ? `На уровне L${level}. Продолжайте приводить клиентов — следующий уровень даст больше %.`
+      : "Каждая новая сделка приближает вас к L2 (20%). Продолжайте.";
+  } else if (days < 50) {
+    tone = "yellow";
+    title = `${days} дней без новой сделки · ещё ${remaining} ${remaining === 1 ? "день" : "дней"} до штрафа`;
+    subtitle = level > 1
+      ? `Если 60 дней без сделок — уровень понизится с L${level} до L${level - 1} (−5% к будущим проектам).`
+      : "Чем чаще сделки — тем выше уровень и базовая комиссия.";
+  } else if (days < 60) {
+    tone = "red";
+    title = `⚠️ ${days} дней без сделки · только ${remaining} ${remaining === 1 ? "день" : "дней"} до понижения уровня`;
+    subtitle = level > 1
+      ? `Срочно проведите сделку! Иначе уровень упадёт с L${level} до L${level - 1} и будущие проекты потеряют 5%.`
+      : "Без сделок ваш уровень не растёт.";
+  } else {
+    tone = "red";
+    title = `${days} дней без активности — уровень будет понижен`;
+    subtitle = level > 1
+      ? `При следующем входе уровень автоматически опустится с L${level} до L${level - 1}. Старые проекты остаются на своих %, новые получат пониженную ставку.`
+      : "Вы на L1. Дальше понижать некуда — но без сделок не вырасти.";
+  }
+
+  const bg = tone === "green" ? "border-green-500/30 bg-green-500/[0.04]" : tone === "yellow" ? "border-yellow-500/40 bg-yellow-500/5" : "border-red-500/40 bg-red-500/5";
+  const text = tone === "green" ? "text-green-600" : tone === "yellow" ? "text-yellow-600" : "text-red-500";
+  const barTone: "green" | "yellow" | "red" = tone;
+
+  return (
+    <motion.div
+      className={`mb-4 p-4 rounded-xl border ${bg}`}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className={`text-sm font-semibold ${text}`}>{title}</div>
+        <div className={`text-[11px] font-mono ${text}`}>
+          {days} / {max} дней
+        </div>
+      </div>
+      <LiveProgressBar value={pct} tone={barTone} variant="solid" height="h-1.5" className="mb-2" />
+      <p className="text-xs text-text-secondary">{subtitle}</p>
+    </motion.div>
   );
 }
 

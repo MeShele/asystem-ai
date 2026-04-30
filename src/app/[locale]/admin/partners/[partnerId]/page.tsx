@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, useMemo } from "react";
+import { useEffect, useState, use, useMemo, useCallback } from "react";
 import { useRouter } from "@/i18n/navigation";
 import {
   ArrowLeft,
@@ -43,6 +43,7 @@ interface Stats {
   totalCommission: number;
   totalPayouts: number;
   remainingCommission: number;
+  foundingCount: number;
 }
 
 const statusOptions = [
@@ -305,15 +306,37 @@ export default function AdminPartnerDetailPage({
                 Авто-расчёт по acceptance работает при изменении проектов. Здесь можно вручную повысить/понизить.
               </p>
             </Field>
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.is_founding}
-                onChange={(e) => setForm({ ...form, is_founding: e.target.checked })}
-                className="w-4 h-4 accent-amber-500"
-              />
-              <span className="text-xs">⭐ Founding partner — пожизненный бонус +5% к комиссии</span>
-            </label>
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_founding}
+                  onChange={(e) => setForm({ ...form, is_founding: e.target.checked })}
+                  className="w-4 h-4 mt-0.5 accent-amber-500 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold">⭐ Founding partner</span>
+                    {stats && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-mono font-semibold">
+                        в системе: {stats.foundingCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-text-muted mt-1.5">
+                    Статус для тех, кто согласился работать в самом начале программы. Включает:
+                  </p>
+                  <ul className="text-[11px] text-text-secondary mt-1 space-y-0.5">
+                    <li>• <span className="text-amber-600">+5%</span> к комиссии пожизненно</li>
+                    <li>• Case-study rights — публикация опыта первым</li>
+                    <li>• 6-мес гарантия возврата prepaid fees при 0 deals</li>
+                  </ul>
+                  <p className="text-[10px] text-text-muted mt-1.5 italic">
+                    Авто-флаг ставится при регистрации первым 5 партнёрам. Сейчас {stats?.foundingCount ?? 0} {(stats?.foundingCount ?? 0) === 1 ? "партнёр" : "партнёров"} с этим статусом. Можно вручную изменить здесь.
+                  </p>
+                </div>
+              </label>
+            </div>
             <Field label="Базовая комиссия (legacy, доли)">
               <input
                 type="number"
@@ -377,6 +400,233 @@ export default function AdminPartnerDetailPage({
                 onClick={() => router.push(`/admin/projects/${p.project_id}`)}
               />
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Sub-partners network */}
+      <NetworkSection partnerId={partnerId} />
+    </div>
+  );
+}
+
+interface NetworkSubPartner {
+  partner_id: string;
+  name: string;
+  email: string;
+  level: number;
+  is_founding: boolean;
+  last_activity_at: string | null;
+  created_at: string;
+  status: string;
+  deals_count: number;
+  revenue: number | string;
+  earned: number | string;
+  my_override: number | string;
+}
+
+interface NetworkOverride {
+  id: number;
+  project_id: string;
+  project_name: string | null;
+  sub_partner_id: string;
+  sub_partner_name: string | null;
+  sub_commission_amount: number | string;
+  override_pct: number;
+  override_amount: number | string;
+  sub_level: number;
+  status: "pending" | "paid";
+  paid_at: string | null;
+  created_at: string;
+}
+
+interface NetworkData {
+  referrer: { partner_id: string; name: string } | null;
+  subPartners: NetworkSubPartner[];
+  overrides: NetworkOverride[];
+  totals: { paid: number; pending: number; total: number };
+}
+
+function NetworkSection({ partnerId }: { partnerId: string }) {
+  const router = useRouter();
+  const [data, setData] = useState<NetworkData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState<number | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    fetch(`/api/admin/partners/${partnerId}/network`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .finally(() => setLoading(false));
+  }, [partnerId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const payOverride = async (id: number) => {
+    if (!confirm("Отметить как выплачено? Партнёр получит уведомление.")) return;
+    setPaying(id);
+    try {
+      const res = await fetch(`/api/admin/overrides/${id}/pay`, { method: "POST" });
+      if (res.ok) {
+        await load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Ошибка");
+      }
+    } finally {
+      setPaying(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-border-faint bg-surface p-5">
+        <div className="text-sm text-text-muted">Загрузка сети...</div>
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Referrer (если есть) */}
+      {data.referrer && (
+        <div className="rounded-xl border border-purple-500/25 bg-purple-500/[0.04] p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-purple-500">
+                {data.referrer.name?.charAt(0).toUpperCase() || "?"}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] uppercase tracking-wider text-purple-500 font-semibold">Этого партнёра пригласил</div>
+              <button
+                onClick={() => router.push(`/admin/partners/${data.referrer!.partner_id}`)}
+                className="text-sm font-semibold hover:text-purple-500 transition-colors"
+              >
+                {data.referrer.name}
+              </button>
+            </div>
+            <button
+              onClick={() => router.push(`/admin/partners/${data.referrer!.partner_id}`)}
+              className="text-xs text-purple-500 hover:text-purple-600 transition-colors"
+            >
+              открыть →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Network section */}
+      <div className="rounded-xl border border-border-faint bg-surface p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Sub-partners ({data.subPartners.length})</h3>
+            {data.totals.pending > 0 && (
+              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-medium">
+                ${data.totals.pending.toLocaleString("ru-RU")} к выплате
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-text-muted">
+            <span>выплачено: <span className="font-mono font-semibold text-green-600">${data.totals.paid.toLocaleString("ru-RU")}</span></span>
+            <span>·</span>
+            <span>всего: <span className="font-mono font-semibold">${data.totals.total.toLocaleString("ru-RU")}</span></span>
+          </div>
+        </div>
+
+        {data.subPartners.length === 0 ? (
+          <div className="p-6 rounded-lg border border-dashed border-border-faint text-center">
+            <p className="text-xs text-text-muted">У партнёра пока нет sub-partners</p>
+          </div>
+        ) : (
+          <div className="space-y-2 mb-4">
+            {data.subPartners.map((s) => {
+              const isActive =
+                s.last_activity_at &&
+                Date.now() - new Date(s.last_activity_at).getTime() <= 90 * 24 * 3600 * 1000 &&
+                s.deals_count > 0;
+              return (
+                <button
+                  key={s.partner_id}
+                  onClick={() => router.push(`/admin/partners/${s.partner_id}`)}
+                  className="w-full text-left p-3 rounded-lg border border-border-faint bg-bg-secondary/30 hover:bg-bg-secondary/60 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-sm font-semibold truncate">{s.name}</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500">L{s.level}</span>
+                      {s.is_founding && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500">founding</span>
+                      )}
+                      {isActive ? (
+                        <span className="text-[10px] inline-flex items-center gap-1 text-green-600">
+                          <span className="w-1 h-1 rounded-full bg-green-500" /> активен
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-text-muted">спит</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] flex-shrink-0">
+                      <span className="text-text-muted">{s.deals_count} {s.deals_count === 1 ? "сделка" : "сделок"}</span>
+                      <span className="font-mono text-green-600">${Number(s.earned).toLocaleString("ru-RU")} → партнёру</span>
+                      <span className="font-mono font-bold text-purple-500">+${Number(s.my_override).toLocaleString("ru-RU")} override</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Override history */}
+        {data.overrides.length > 0 && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted mb-2 mt-4">
+              Override-начисления
+            </div>
+            <div className="space-y-1.5">
+              {data.overrides.map((o) => {
+                const isPending = o.status === "pending";
+                return (
+                  <div
+                    key={o.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border ${
+                      isPending ? "border-amber-500/30 bg-amber-500/[0.04]" : "border-border-faint bg-surface"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">
+                        {o.project_name || o.project_id} ·{" "}
+                        <span className="text-text-secondary">{o.sub_partner_name}</span>
+                      </div>
+                      <div className="text-[10px] text-text-muted">
+                        {o.override_pct}% от ${Number(o.sub_commission_amount).toLocaleString("ru-RU")} · L{o.sub_level} ·{" "}
+                        {new Date(o.created_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className={`text-sm font-mono font-bold ${isPending ? "text-amber-600" : "text-green-600"}`}>
+                        +${Number(o.override_amount).toLocaleString("ru-RU")}
+                      </div>
+                      <div className="text-[10px] text-text-muted">{isPending ? "ожидает" : "выплачено"}</div>
+                    </div>
+                    {isPending && (
+                      <button
+                        onClick={() => payOverride(o.id)}
+                        disabled={paying === o.id}
+                        className="px-2.5 py-1 rounded-md bg-green-500 hover:bg-green-600 text-white text-[11px] font-semibold transition-colors disabled:opacity-50 flex-shrink-0"
+                      >
+                        {paying === o.id ? "..." : "Выплатить"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

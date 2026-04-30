@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Link, useRouter } from "@/i18n/navigation";
+import { LiveProgressBar } from "@/components/shared/live-progress-bar";
 import {
   Inbox,
   Clock,
@@ -240,8 +241,13 @@ export default function AdminDashboard() {
                 return (
                   <div key={s.key} className="flex items-center gap-3">
                     <div className={`text-xs ${s.color} font-medium w-32 truncate`}>{s.label}</div>
-                    <div className="flex-1 h-2 bg-bg-secondary rounded-full overflow-hidden">
-                      <div className={`h-full ${s.bar} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+                    <div className="flex-1">
+                      <LiveProgressBar
+                        value={pct}
+                        tone={s.key === "completed" ? "green" : s.key === "active" || s.key === "review" ? "brand" : s.key === "cancelled" ? "red" : s.key === "paused" ? "yellow" : "purple"}
+                        variant="solid"
+                        live={s.key !== "completed" && s.key !== "cancelled"}
+                      />
                     </div>
                     <div className="text-xs font-mono text-text-secondary w-10 text-right">{s.count}</div>
                   </div>
@@ -351,9 +357,12 @@ export default function AdminDashboard() {
                     <span className="text-sm font-medium truncate">{p.name}</span>
                     <span className="text-[11px] font-mono text-brand-500 flex-shrink-0">{p.progress_percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full" style={{ width: `${p.progress_percent}%` }} />
-                  </div>
+                  <LiveProgressBar
+                    value={p.progress_percent}
+                    tone={p.status === "completed" ? "green" : "brand"}
+                    live={p.status !== "completed" && p.status !== "cancelled"}
+                    height="h-1.5"
+                  />
                 </button>
               ))}
             </div>

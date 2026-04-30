@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, FolderKanban, Check, Lock, Users } from "lucide-react";
 import { ProjectComments } from "@/components/shared/project-comments";
+import { LiveProgressBar } from "@/components/shared/live-progress-bar";
 
 interface Developer {
   id: number;
@@ -134,9 +135,7 @@ export default function ClientProjectDetailPage({
         <div className="p-4 rounded-xl border border-border-faint bg-surface">
           <div className="text-xs text-text-muted mb-1">Оплачено</div>
           <div className="text-xl font-semibold text-green-500">${paid.toLocaleString("ru-RU")}</div>
-          <div className="mt-2 h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full" style={{ width: `${paidPct}%` }} />
-          </div>
+          <LiveProgressBar value={paidPct} tone="green" variant="solid" height="h-1.5" className="mt-2" />
         </div>
         <div className="p-4 rounded-xl border border-border-faint bg-surface">
           <div className="text-xs text-text-muted mb-1">Остаток</div>
@@ -150,14 +149,12 @@ export default function ClientProjectDetailPage({
           <h3 className="text-sm font-semibold">Общий прогресс</h3>
           <span className="font-mono text-xl font-bold text-brand-500">{project.progress_percent}%</span>
         </div>
-        <div className="h-3 bg-bg-secondary rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${project.progress_percent}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-        </div>
+        <LiveProgressBar
+          value={project.progress_percent}
+          tone={project.status === "completed" ? "green" : "brand"}
+          live={project.status !== "completed" && project.status !== "cancelled"}
+          height="h-3"
+        />
       </div>
 
       {/* Stages */}
@@ -191,14 +188,12 @@ export default function ClientProjectDetailPage({
                     </div>
                     <span className="font-mono text-sm font-semibold text-text-secondary flex-shrink-0">{s.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        s.completed ? "bg-gradient-to-r from-green-500 to-green-400" : "bg-gradient-to-r from-brand-500 to-brand-400"
-                      }`}
-                      style={{ width: `${s.percent}%` }}
-                    />
-                  </div>
+                  <LiveProgressBar
+                    value={s.percent}
+                    tone={s.completed ? "green" : "brand"}
+                    live={!s.completed}
+                    height="h-1.5"
+                  />
                   {isActive && s.comment && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}

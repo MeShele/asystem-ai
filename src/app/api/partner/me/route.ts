@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
 import { MILESTONES, getCurrentLevel, getNextLevel, getProgressToNext } from "@/lib/achievements";
-import { getPartnerStats } from "@/lib/partner-stats";
+import { notify } from "@/lib/notify";
+import { getPartnerStats, getDaysSinceLastActivity, enforceExclusivityRule } from "@/lib/partner-stats";
 import { LEVELS, levelMeta, nextLevel, progressToNext, computeCommissionPct } from "@/lib/partner-levels";
 
 export async function GET(req: NextRequest) {
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 
   // Milestone claims status
   const milestoneClaims = await db`
-    SELECT milestone_key, status, amount, paid_at, requested_at
+    SELECT milestone_key, status, amount, paid_at, requested_at, rejection_comment
     FROM partner_milestone_claims
     WHERE partner_id = ${partnerId}
   ` as Record<string, unknown>[];
@@ -90,6 +91,16 @@ export async function GET(req: NextRequest) {
         VALUES (${partnerId}, ${milestone.key}, ${milestone.amount}, ${milestone.bonus})
         ON CONFLICT (partner_id, milestone_key) DO NOTHING
       `;
+      // Уведомление: новая мини-награда разблокирована
+      await notify({
+        userRole: "partner",
+        userId: partnerId,
+        kind: "milestone_unlocked",
+        title: `Открыта награда «${milestone.title || milestone.key}»`,
+        body: `Заработали $${milestone.amount.toLocaleString("ru-RU")} — заберите бонус $${milestone.bonus.toLocaleString("ru-RU")}.`,
+        link: `/partner/achievements`,
+        payload: { milestoneKey: milestone.key, bonus: milestone.bonus },
+      });
       existingAchievements.push({
         milestone_key: milestone.key,
         milestone_amount: milestone.amount,
@@ -106,8 +117,20 @@ export async function GET(req: NextRequest) {
   const legacyNextLevel = getNextLevel(totalEarned);
   const legacyProgressPercent = getProgressToNext(totalEarned);
 
+  // Enforce exclusivity rule (may downgrade L3+ → L1 if inactive 60+ days with <3 deals)
+  await enforceExclusivityRule(partnerId);
+
+  // Re-read partner level after potential downgrade
+  const refreshed = await db`SELECT level, is_founding, last_activity_at FROM partners WHERE partner_id = ${partnerId} LIMIT 1` as Record<string, unknown>[];
+  if (refreshed.length > 0) {
+    partner.level = refreshed[0].level;
+    partner.is_founding = refreshed[0].is_founding;
+    partner.last_activity_at = refreshed[0].last_activity_at;
+  }
+
   // NEW: Tier-level system L1-L5
   const partnerStats = await getPartnerStats(partnerId);
+  const daysSinceActivity = await getDaysSinceLastActivity(partnerId);
   const currentTierLevel = Number(partner.level || 1);
   const tierMeta = levelMeta(currentTierLevel);
   const nextTierMeta = nextLevel(currentTierLevel);
@@ -119,6 +142,34 @@ export async function GET(req: NextRequest) {
     hasRetentionBonus: false,
     hasChurnPenalty: false,
   });
+
+  // Network summary — sub-partners + override
+  const networkRow = (await db`
+    SELECT
+      (SELECT COUNT(*)::int FROM partners WHERE referrer_partner_id = ${partnerId}) AS total_subs,
+      (SELECT COUNT(*)::int FROM partners
+        WHERE referrer_partner_id = ${partnerId}
+          AND last_activity_at >= (CURRENT_DATE - INTERVAL '90 days')
+          AND EXISTS (SELECT 1 FROM projects WHERE partner_id = partners.partner_id AND contract_signed_at IS NOT NULL)
+      ) AS active_subs,
+      (SELECT COALESCE(SUM(override_amount), 0) FROM partner_overrides WHERE referrer_partner_id = ${partnerId}) AS override_total,
+      (SELECT COALESCE(SUM(override_amount), 0) FROM partner_overrides WHERE referrer_partner_id = ${partnerId} AND status = 'paid') AS override_paid,
+      (SELECT COALESCE(SUM(t.revenue), 0) FROM (
+        SELECT COALESCE(SUM(p.total_price), 0) AS revenue
+        FROM partners sub
+        LEFT JOIN projects p ON p.partner_id = sub.partner_id AND p.contract_signed_at IS NOT NULL
+        WHERE sub.referrer_partner_id = ${partnerId}
+        GROUP BY sub.partner_id
+      ) t) AS sub_revenue
+  `) as Record<string, unknown>[];
+
+  const network = {
+    totalSubs: Number(networkRow[0]?.total_subs || 0),
+    activeSubs: Number(networkRow[0]?.active_subs || 0),
+    overrideTotal: Number(networkRow[0]?.override_total || 0),
+    overridePaid: Number(networkRow[0]?.override_paid || 0),
+    subRevenue: Number(networkRow[0]?.sub_revenue || 0),
+  };
 
   return NextResponse.json({
     partner,
@@ -144,9 +195,12 @@ export async function GET(req: NextRequest) {
       progress: tierProgress,
       baseCommission,
       acceptanceStats: partnerStats,
+      daysSinceActivity, // null if never active, otherwise N days
     },
     // Phase 16: pending and milestones
     pendingPayouts,
     milestoneClaims,
+    // Phase 19: sub-partner network
+    network,
   });
 }

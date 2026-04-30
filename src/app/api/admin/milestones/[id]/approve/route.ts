@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initProjectTables } from "@/lib/db";
+import { notify } from "@/lib/notify";
+
+type Row = Record<string, unknown>;
 
 // Approve milestone reward claim → status 'paid', paid_at = today
 export async function POST(
@@ -14,6 +17,19 @@ export async function POST(
   await initProjectTables();
 
   await db`UPDATE partner_milestone_claims SET status = 'paid', paid_at = CURRENT_DATE WHERE id = ${id}`;
-  const rows = await db`SELECT * FROM partner_milestone_claims WHERE id = ${id} LIMIT 1`;
-  return NextResponse.json(rows[0] || {});
+  const rows = await db`SELECT * FROM partner_milestone_claims WHERE id = ${id} LIMIT 1` as Row[];
+  const r = rows[0];
+  if (r?.partner_id) {
+    const amt = Number(r.amount || 0);
+    await notify({
+      userRole: "partner",
+      userId: String(r.partner_id),
+      kind: "milestone_paid",
+      title: `Награда $${amt.toLocaleString("ru-RU")} выплачена`,
+      body: `Mини-награда «${r.milestone_key}» зачислена.`,
+      link: `/partner/payouts`,
+      payload: { milestoneId: id },
+    });
+  }
+  return NextResponse.json(r || {});
 }

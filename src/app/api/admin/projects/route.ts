@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
-import { recomputePartnerLevel, bumpPartnerActivity, isPartnerChurned } from "@/lib/partner-stats";
+import { recomputePartnerLevel, bumpPartnerActivity, enforceExclusivityRule, checkRetentionQualified, autoRenewExclusivity } from "@/lib/partner-stats";
 import { computeCommissionPct } from "@/lib/partner-levels";
+import { notify } from "@/lib/notify";
+import { createOverrideIfApplicable } from "@/lib/partner-overrides";
 
 export async function GET(req: NextRequest) {
   const session = req.cookies.get("admin_session")?.value;
@@ -39,26 +41,31 @@ export async function POST(req: NextRequest) {
   const paidAmount = Number(data.paid_amount || 0);
   const partnerId = data.partner_id || null;
   const status = data.status || "planning";
-  const tier = ["T1", "T2", "T4"].includes(data.tier) ? data.tier : "T1";
+  const tier = ["S", "M", "L", "XL"].includes(data.tier) ? data.tier : "S";
+  const contractType = ["fix", "hourly", "retainer", "equity"].includes(data.contract_type) ? data.contract_type : "fix";
   const contractSignedAt = data.contract_signed_at || null;
 
-  // Auto-detect churn (60+ days inactivity) BEFORE bumping activity
-  let autoChurn = false;
+  // Enforce L3+ exclusivity rule (3 deals/60 days) BEFORE creating new project — может понизить уровень
   if (partnerId) {
-    autoChurn = await isPartnerChurned(partnerId);
+    await enforceExclusivityRule(partnerId);
   }
 
-  // Auto-compute commission % from partner's level (if partner attached)
-  let partnerCommissionPercent = Math.max(0, Math.min(100, Number(data.partner_commission_percent || 0)));
-  if (partnerId && !data.partner_commission_percent) {
+  // Retention: 3 сделки за 60 дней → авто-флаг +5% и продление эксклюзива
+  const autoRetention = partnerId ? await checkRetentionQualified(partnerId) : false;
+  const hasRetentionBonus = autoRetention || Boolean(data.has_retention_bonus);
+
+  // Commission ALWAYS computed from partner's current level + multipliers
+  // Retention — auto от условия (3 сделки/60 дн), быстрая сдача — manual флаг.
+  let partnerCommissionPercent = 0;
+  if (partnerId) {
     const partners = (await db`SELECT level, is_founding FROM partners WHERE partner_id = ${partnerId} LIMIT 1`) as Record<string, unknown>[];
     if (partners.length > 0) {
       const calc = computeCommissionPct({
         level: Number(partners[0].level || 1),
         isFounding: Boolean(partners[0].is_founding),
-        deliveredIn30Days: false,
-        hasRetentionBonus: false,
-        hasChurnPenalty: autoChurn,
+        deliveredIn30Days: Boolean(data.delivered_in_30_days),
+        hasRetentionBonus,
+        hasChurnPenalty: Boolean(data.has_churn_penalty),
       });
       partnerCommissionPercent = calc.total;
     }
@@ -67,14 +74,62 @@ export async function POST(req: NextRequest) {
   const clientIdField = data.client_id || null;
 
   const inserted = await db`
-    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status, partner_commission_percent, tier, contract_signed_at, client_id, has_churn_penalty)
-    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status}, ${partnerCommissionPercent}, ${tier}, ${contractSignedAt}, ${clientIdField}, ${autoChurn})
+    INSERT INTO projects (project_id, name, description, logo_url, total_price, paid_amount, partner_id, status, partner_commission_percent, tier, contract_signed_at, contract_type, client_id, has_churn_penalty, delivered_in_30_days, has_retention_bonus)
+    VALUES (${projectId}, ${name}, ${description}, ${logoUrl}, ${totalPrice}, ${paidAmount}, ${partnerId}, ${status}, ${partnerCommissionPercent}, ${tier}, ${contractSignedAt}, ${contractType}, ${clientIdField}, ${Boolean(data.has_churn_penalty)}, ${Boolean(data.delivered_in_30_days)}, ${hasRetentionBonus})
     RETURNING *
   `;
 
+
   if (partnerId) {
     await bumpPartnerActivity(partnerId);
-    await recomputePartnerLevel(partnerId);
+    const oldLevelRow = await db`SELECT level FROM partners WHERE partner_id = ${partnerId} LIMIT 1` as Record<string, unknown>[];
+    const oldLevel = Number(oldLevelRow[0]?.level || 1);
+    const newLevel = await recomputePartnerLevel(partnerId);
+    await autoRenewExclusivity(partnerId);
+
+    // Уведомление партнёру: новый проект + комиссия
+    await notify({
+      userRole: "partner",
+      userId: partnerId,
+      kind: "project_created",
+      title: `Новый проект: ${name}`,
+      body: `Ваша комиссия: ${partnerCommissionPercent}% ($${Math.round((totalPrice * partnerCommissionPercent) / 100).toLocaleString("ru-RU")})`,
+      link: `/partner/projects/${projectId}`,
+      payload: { projectId },
+    });
+
+    // Если уровень вырос/упал в результате создания
+    if (newLevel > oldLevel) {
+      await notify({
+        userRole: "partner",
+        userId: partnerId,
+        kind: "level_up",
+        title: `🎉 Повышение до L${newLevel}!`,
+        body: `Новая базовая ставка применяется ко всем будущим проектам.`,
+        link: `/partner/achievements`,
+        payload: { from: oldLevel, to: newLevel },
+      });
+    }
+
+    // Sub-partner override: если у партнёра есть referrer и тот активен — начисляем
+    const subCommission = Math.round((totalPrice * partnerCommissionPercent) / 100);
+    const overrideResult = await createOverrideIfApplicable({
+      subPartnerId: partnerId,
+      projectId,
+      subCommissionAmount: subCommission,
+      subLevel: newLevel,
+    });
+    if (overrideResult.created && overrideResult.override) {
+      await notify({
+        userRole: "partner",
+        userId: overrideResult.override.referrer_partner_id,
+        kind: "milestone_paid",
+        title: `+$${overrideResult.override.override_amount.toLocaleString("ru-RU")} override с твоей сети`,
+        body: `Sub-partner закрыл сделку — твоя менторская комиссия ${overrideResult.override.override_pct}% начислена.`,
+        link: `/partner/network`,
+        payload: { projectId, subPartnerId: partnerId },
+      });
+    }
   }
 
   return NextResponse.json(inserted[0]);

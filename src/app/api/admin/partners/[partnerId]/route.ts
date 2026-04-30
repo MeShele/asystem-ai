@@ -56,6 +56,10 @@ export async function GET(
   `) as Record<string, unknown>[];
   const totalPayouts = Number(payoutsRow[0]?.total || 0);
 
+  // Total founding partners across system (for the hint in UI)
+  const foundingRow = (await db`SELECT COUNT(*) AS c FROM partners WHERE is_founding = TRUE`) as Record<string, unknown>[];
+  const foundingCount = Number(foundingRow[0]?.c || 0);
+
   return NextResponse.json({
     partner,
     projects,
@@ -68,6 +72,7 @@ export async function GET(
       totalCommission,
       totalPayouts,
       remainingCommission: Math.max(0, totalCommission - totalPayouts),
+      foundingCount,
     },
   });
 }
@@ -94,8 +99,12 @@ export async function PATCH(
     const lvl = Math.max(1, Math.min(5, Number(data.level)));
     await db`UPDATE partners SET level = ${lvl} WHERE partner_id = ${partnerId}`;
     await db`INSERT INTO partner_level_history (partner_id, level, reason) VALUES (${partnerId}, ${lvl}, 'manual override by admin')`;
+    // Старые проекты остаются на своих %. Новые получат новый.
   }
-  if ("is_founding" in data) await db`UPDATE partners SET is_founding = ${Boolean(data.is_founding)} WHERE partner_id = ${partnerId}`;
+  if ("is_founding" in data) {
+    await db`UPDATE partners SET is_founding = ${Boolean(data.is_founding)} WHERE partner_id = ${partnerId}`;
+    // Founding влияет на новые проекты. Старые остаются.
+  }
 
   const updated = await db`SELECT * FROM partners WHERE partner_id = ${partnerId} LIMIT 1`;
   return NextResponse.json(updated[0] || {});

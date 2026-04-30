@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
-import { recomputePartnerLevel, bumpPartnerActivity } from "@/lib/partner-stats";
+import { recomputePartnerLevel, bumpPartnerActivity, recomputeSingleProjectCommission } from "@/lib/partner-stats";
+import { createOverrideIfApplicable } from "@/lib/partner-overrides";
+import { notify } from "@/lib/notify";
 
 export async function GET(
   req: NextRequest,
@@ -43,7 +45,23 @@ export async function GET(
     ORDER BY pd.created_at ASC
   `;
 
-  return NextResponse.json({ project, stages, developers });
+  // Commission breakdown for transparency
+  let commissionBreakdown = null;
+  if (project.partner_id) {
+    const partners = (await db`SELECT level, is_founding FROM partners WHERE partner_id = ${project.partner_id as string} LIMIT 1`) as Record<string, unknown>[];
+    if (partners.length > 0) {
+      const { computeCommissionPct } = await import("@/lib/partner-levels");
+      commissionBreakdown = computeCommissionPct({
+        level: Number(partners[0].level || 1),
+        isFounding: Boolean(partners[0].is_founding),
+        deliveredIn30Days: Boolean(project.delivered_in_30_days),
+        hasRetentionBonus: Boolean(project.has_retention_bonus),
+        hasChurnPenalty: Boolean(project.has_churn_penalty),
+      });
+    }
+  }
+
+  return NextResponse.json({ project, stages, developers, commissionBreakdown });
 }
 
 export async function PATCH(
@@ -57,6 +75,15 @@ export async function PATCH(
   const data = await req.json();
   const db = getDb();
   await initProjectTables();
+
+  // Снимок состояния ДО апдейта — нужен чтобы понимать "впервые привязали партнёра / подтвердили контракт"
+  const beforeRows = (await db`
+    SELECT partner_id, contract_signed_at, total_price, partner_commission_percent
+    FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1
+  `) as Record<string, unknown>[];
+  const before = beforeRows[0] || {};
+  const hadPartner = Boolean(before.partner_id);
+  const hadContract = Boolean(before.contract_signed_at);
 
   if ("name" in data) {
     await db`UPDATE projects SET name = ${String(data.name)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
@@ -85,16 +112,17 @@ export async function PATCH(
   if ("developers" in data) {
     await db`UPDATE projects SET developers = ${JSON.stringify(data.developers)}::jsonb, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
-  if ("partner_commission_percent" in data) {
-    const pct = Math.max(0, Math.min(100, Number(data.partner_commission_percent)));
-    await db`UPDATE projects SET partner_commission_percent = ${pct}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
-  }
+  // partner_commission_percent больше не принимается ручным значением — всегда auto-recompute ниже
   if ("tier" in data) {
-    const t = ["T1", "T2", "T4"].includes(data.tier) ? data.tier : "T1";
+    const t = ["S", "M", "L", "XL"].includes(data.tier) ? data.tier : "S";
     await db`UPDATE projects SET tier = ${t}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
   if ("contract_signed_at" in data) {
     await db`UPDATE projects SET contract_signed_at = ${data.contract_signed_at || null}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+  if ("contract_type" in data) {
+    const ct = ["fix", "hourly", "retainer", "equity"].includes(data.contract_type) ? data.contract_type : "fix";
+    await db`UPDATE projects SET contract_type = ${ct}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
   if ("delivered_in_30_days" in data) {
     await db`UPDATE projects SET delivered_in_30_days = ${Boolean(data.delivered_in_30_days)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
@@ -109,13 +137,49 @@ export async function PATCH(
     await db`UPDATE projects SET client_id = ${data.client_id ?? null}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
 
-  // Re-compute partner level if any acceptance-related field changed
-  const project = (await db`SELECT partner_id FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1`) as Record<string, unknown>[];
+  const project = (await db`SELECT partner_id, project_id, total_price, partner_commission_percent, contract_signed_at, name FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1`) as Record<string, unknown>[];
   if (project.length > 0 && project[0].partner_id) {
     const pid = project[0].partner_id as string;
+    const projId = project[0].project_id as string;
+    // Активность партнёра bump при контракте/оплате/тире — это влияет на уровень
     if ("contract_signed_at" in data || "tier" in data || "paid_amount" in data) {
       await bumpPartnerActivity(pid);
       await recomputePartnerLevel(pid);
+    }
+    // Если флаги множителей изменились — пересчёт ТОЛЬКО этого проекта
+    if ("delivered_in_30_days" in data || "has_retention_bonus" in data || "has_churn_penalty" in data) {
+      await recomputeSingleProjectCommission(projId);
+    }
+
+    // Sub-partner override: триггерим если впервые привязали партнёра ИЛИ впервые подтвердили контракт
+    const partnerJustAttached = !hadPartner && Boolean(project[0].partner_id);
+    const contractJustSigned = !hadContract && Boolean(project[0].contract_signed_at);
+    if (partnerJustAttached || contractJustSigned) {
+      // Берём свежие данные после recompute
+      const fresh = (await db`SELECT total_price, partner_commission_percent, name FROM projects WHERE project_id = ${projId} LIMIT 1`) as Record<string, unknown>[];
+      const totalPrice = Number(fresh[0]?.total_price || 0);
+      const pct = Number(fresh[0]?.partner_commission_percent || 0);
+      const subCommission = Math.round((totalPrice * pct) / 100);
+      const partnerLevelRow = (await db`SELECT level FROM partners WHERE partner_id = ${pid} LIMIT 1`) as Record<string, unknown>[];
+      const newLevel = Number(partnerLevelRow[0]?.level || 1);
+
+      const overrideResult = await createOverrideIfApplicable({
+        subPartnerId: pid,
+        projectId: projId,
+        subCommissionAmount: subCommission,
+        subLevel: newLevel,
+      });
+      if (overrideResult.created && overrideResult.override) {
+        await notify({
+          userRole: "partner",
+          userId: overrideResult.override.referrer_partner_id,
+          kind: "milestone_paid",
+          title: `+$${overrideResult.override.override_amount.toLocaleString("ru-RU")} override с твоей сети`,
+          body: `Sub-partner закрыл сделку — твоя менторская комиссия ${overrideResult.override.override_pct}% начислена.`,
+          link: `/partner/network`,
+          payload: { projectId: projId, subPartnerId: pid },
+        });
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initProjectTables } from "@/lib/db";
+import { notifyAdmins } from "@/lib/notify";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   const db = getDb();
   await initProjectTables();
 
-  // Optional invite token
+  // Optional invite token (только client-invite от админа, проект уже создан)
   let inviteId: number | null = null;
   let inviteProjectId: string | null = null;
   if (data.invite_token) {
@@ -62,6 +63,15 @@ export async function POST(req: NextRequest) {
   if (inviteProjectId) {
     await db`UPDATE projects SET client_id = ${clientId} WHERE project_id = ${inviteProjectId}`;
   }
+
+  // Уведомление админу
+  await notifyAdmins({
+    kind: "lead_assigned",
+    title: `Новый клиент: ${String(data.name).trim()}`,
+    body: inviteProjectId ? `По invite в проект ${inviteProjectId}` : "Самостоятельная регистрация",
+    link: `/admin/clients`,
+    payload: { clientId, projectId: inviteProjectId },
+  });
 
   // Auto-login: set cookie
   const res = NextResponse.json({ success: true, clientId });

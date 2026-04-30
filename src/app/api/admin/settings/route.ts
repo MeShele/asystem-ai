@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest) {
 
   const allowedKeys = [
     "ai_provider", "ai_api_key", "ai_model",
-    "telegram_bot_token", "telegram_chat_id", "telegram_group_id",
+    "telegram_bot_token", "telegram_bot_username", "telegram_chat_id", "telegram_group_id",
     "company_name", "company_email", "company_phone",
     "resend_api_key",
   ];

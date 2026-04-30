@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FolderKanban, Building2 } from "lucide-react";
+import { LiveProgressBar } from "./live-progress-bar";
 
 export interface ProjectCardData {
   id: number;
@@ -139,12 +140,7 @@ export function ProjectCard({
           <span className="text-text-muted">Прогресс</span>
           <span className="font-mono font-semibold text-text-primary">{progress}%</span>
         </div>
-        <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-brand-500 to-green-500 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <LiveProgressBar value={progress} tone={project.status === "completed" ? "green" : "brand"} live={project.status !== "completed" && project.status !== "cancelled"} />
       </div>
     </motion.div>
   );

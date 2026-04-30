@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
+import { notifyAdmins } from "@/lib/notify";
 
 // Partner requests payout for a specific project (commission portion not yet covered by paid payouts)
 export async function POST(req: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   const pct = Number(project.partner_commission_percent || 0);
   const fullCommission = Math.round((total * pct) / 100);
 
-  // Already paid + requested
+  // Already paid + requested (rejected не блокируют — партнёр может перезапросить)
   const sumRow = (await db`
     SELECT
       COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) AS paid_sum,
@@ -52,5 +53,17 @@ export async function POST(req: NextRequest) {
     VALUES (${projectId}, ${partnerId}, ${amount}, CURRENT_DATE, 'requested', NOW(), ${data.comment ?? null})
     RETURNING *
   `;
+
+  // Уведомление админу о новом запросе на выплату
+  const partnerInfo = (await db`SELECT name FROM partners WHERE partner_id = ${partnerId} LIMIT 1`) as Record<string, unknown>[];
+  const partnerName = String(partnerInfo[0]?.name || partnerId);
+  await notifyAdmins({
+    kind: "payout_paid", // используем как general payout-event tone
+    title: `Запрос выплаты $${amount.toLocaleString("ru-RU")}`,
+    body: `${partnerName} → проект ${projectId}`,
+    link: `/admin/payouts`,
+    payload: { projectId, partnerId, amount },
+  });
+
   return NextResponse.json(inserted[0]);
 }

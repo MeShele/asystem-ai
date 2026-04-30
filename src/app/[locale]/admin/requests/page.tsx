@@ -27,6 +27,15 @@ interface Request {
   description?: string;
   status?: string;
   created_at: string;
+  assigned_partner_id?: string | null;
+  partner_id?: string | null;
+}
+
+interface PartnerLite {
+  partner_id: string;
+  name: string;
+  company?: string | null;
+  level?: number;
 }
 
 const columns = [
@@ -65,13 +74,32 @@ export default function RequestsPage() {
   const [view, setView] = useState<"kanban" | "table">("kanban");
   const [search, setSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [partners, setPartners] = useState<PartnerLite[]>([]);
 
   useEffect(() => {
     fetch('/api/requests')
       .then(r => r.json())
       .then(data => setRequests(Array.isArray(data) ? data.map((req: Request) => ({ ...req, status: req.status || "new" })) : []))
       .catch(() => setRequests([]));
+    fetch('/api/partners')
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setPartners(Array.isArray(d) ? d : []))
+      .catch(() => setPartners([]));
   }, []);
+
+  async function assignPartner(requestId: string, partnerId: string | null) {
+    const res = await fetch(`/api/admin/requests/${requestId}/assign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ partner_id: partnerId }),
+    });
+    if (res.ok) {
+      setRequests((prev) => prev.map((r) => (r.request_id === requestId ? { ...r, assigned_partner_id: partnerId } : r)));
+      if (selectedRequest?.request_id === requestId) {
+        setSelectedRequest({ ...selectedRequest, assigned_partner_id: partnerId });
+      }
+    }
+  }
 
   function updateStatus(requestId: string, newStatus: string) {
     const updated = requests.map((r) =>
@@ -336,6 +364,35 @@ export default function RequestsPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Assign to partner */}
+                <div>
+                  <label className="text-xs text-text-muted block mb-2">Назначить партнёру</label>
+                  <select
+                    value={selectedRequest.assigned_partner_id || selectedRequest.partner_id || ""}
+                    onChange={(e) => assignPartner(selectedRequest.request_id, e.target.value || null)}
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border-faint rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 outline-none"
+                  >
+                    <option value="">— Без партнёра —</option>
+                    {partners.map((p) => (
+                      <option key={p.partner_id} value={p.partner_id}>
+                        {p.name}{p.company ? ` · ${p.company}` : ""}{p.level ? ` · L${p.level}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {(selectedRequest.partner_id || selectedRequest.assigned_partner_id) && (
+                    <p className="text-[11px] text-text-muted mt-1.5 leading-relaxed">
+                      {selectedRequest.partner_id && (
+                        <span className="text-amber-600">Заявка пришла по реф-коду партнёра</span>
+                      )}
+                      {selectedRequest.assigned_partner_id && (
+                        <span className="text-green-600">
+                          {selectedRequest.partner_id ? " · назначена админом" : "Назначена админом, партнёр получит уведомление"}
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 {/* Service info */}

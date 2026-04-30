@@ -10,6 +10,7 @@ interface Settings {
   company_email?: string;
   company_phone?: string;
   telegram_bot_token?: string;
+  telegram_bot_username?: string;
   telegram_chat_id?: string;
   telegram_group_id?: string;
   resend_api_key?: string;
@@ -113,6 +114,7 @@ export default function SettingsPage() {
     desc: "Telegram-бот и email-уведомления",
     fields: [
       { key: "telegram_bot_token" as const, label: "Telegram Bot Token", placeholder: "bot123456:ABC...", type: "password" },
+      { key: "telegram_bot_username" as const, label: "Telegram Bot Username (без @)", placeholder: "asystem_bot", type: "text" },
       { key: "telegram_chat_id" as const, label: "Telegram Chat ID (уведомления админу)", placeholder: "-1001234567890", type: "text" },
       { key: "telegram_group_id" as const, label: "Telegram Group ID (топики проектов)", placeholder: "-1001234567890", type: "text" },
       { key: "resend_api_key" as const, label: "Resend API Key", placeholder: "re_...", type: "password" },
@@ -167,6 +169,9 @@ export default function SettingsPage() {
             </div>
           );
         })}
+
+        {/* Telegram Webhook */}
+        <TelegramWebhookBlock />
 
         {/* AI Settings */}
         <div className="rounded-xl border border-border-faint bg-surface p-6">
@@ -274,6 +279,174 @@ export default function SettingsPage() {
           <span>{saving ? "Сохранение..." : "Сохранить настройки"}</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+interface WebhookInfo {
+  url?: string;
+  pending_update_count?: number;
+  last_error_message?: string;
+  last_error_date?: number;
+}
+
+interface BotInfo {
+  username?: string;
+  first_name?: string;
+}
+
+function TelegramWebhookBlock() {
+  const [info, setInfo] = useState<{ webhook: WebhookInfo | null; bot: BotInfo | null } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState(false);
+  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/telegram/webhook");
+      if (res.ok) {
+        const d = await res.json();
+        setInfo(d);
+      } else {
+        setInfo(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const register = async () => {
+    setActing(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/telegram/webhook", { method: "POST" });
+      const data = await res.json();
+      if (data.result?.ok) {
+        setMsg({ type: "success", text: `Webhook зарегистрирован: ${data.webhookUrl}` });
+        await load();
+      } else {
+        setMsg({ type: "error", text: data.result?.description || data.error || "Ошибка регистрации" });
+      }
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!confirm("Удалить webhook? Бот перестанет получать сообщения.")) return;
+    setActing(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/telegram/webhook", { method: "DELETE" });
+      const data = await res.json();
+      if (data.result?.ok) {
+        setMsg({ type: "success", text: "Webhook удалён" });
+        await load();
+      } else {
+        setMsg({ type: "error", text: data.result?.description || "Ошибка удаления" });
+      }
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const webhook = info?.webhook;
+  const bot = info?.bot;
+  const isRegistered = Boolean(webhook?.url);
+
+  return (
+    <div className="rounded-xl border border-border-faint bg-surface p-5 lg:p-6">
+      <div className="flex items-center gap-3 mb-1">
+        <Bot className="w-5 h-5 text-brand-500" />
+        <h2 className="font-semibold">Telegram Webhook</h2>
+      </div>
+      <p className="text-text-muted text-xs mb-4">
+        Без webhook бот не будет реагировать на команды (включая /start CODE для привязки партнёров).
+      </p>
+
+      {loading ? (
+        <div className="text-text-muted text-sm">Проверка...</div>
+      ) : !info || !info.bot ? (
+        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/[0.04] text-xs text-amber-700">
+          Bot token не задан или невалидный. Сохраните токен выше и перезагрузите страницу.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Bot info */}
+          <div className="p-3 rounded-lg border border-border-faint bg-bg-secondary/30">
+            <div className="text-[10px] uppercase tracking-wider text-text-muted">Текущий бот</div>
+            <div className="text-sm font-semibold">
+              {bot?.first_name} <span className="text-text-muted font-mono text-xs">@{bot?.username}</span>
+            </div>
+          </div>
+
+          {/* Webhook status */}
+          <div className={`p-3 rounded-lg border ${isRegistered ? "border-green-500/30 bg-green-500/[0.04]" : "border-amber-500/30 bg-amber-500/[0.04]"}`}>
+            <div className="flex items-center gap-2 mb-1">
+              {isRegistered ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <AlertCircle className="w-4 h-4 text-amber-500" />}
+              <span className={`text-sm font-semibold ${isRegistered ? "text-green-700" : "text-amber-700"}`}>
+                {isRegistered ? "Webhook зарегистрирован" : "Webhook не установлен"}
+              </span>
+            </div>
+            {webhook?.url && (
+              <div className="text-[11px] text-text-muted font-mono truncate">{webhook.url}</div>
+            )}
+            {webhook?.last_error_message && (
+              <div className="text-[11px] text-red-500 mt-1">
+                Последняя ошибка: {webhook.last_error_message}
+              </div>
+            )}
+            {(webhook?.pending_update_count ?? 0) > 0 && (
+              <div className="text-[11px] text-text-muted mt-1">
+                Pending updates: {webhook?.pending_update_count}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={register}
+              disabled={acting}
+              className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            >
+              {acting ? "..." : isRegistered ? "Перерегистрировать" : "Зарегистрировать webhook"}
+            </button>
+            {isRegistered && (
+              <button
+                onClick={remove}
+                disabled={acting}
+                className="px-4 py-2 rounded-lg border border-border-faint hover:border-red-500/40 text-red-500 text-sm transition-colors disabled:opacity-50"
+              >
+                Удалить
+              </button>
+            )}
+          </div>
+
+          {msg && (
+            <div className={`p-2.5 rounded-lg text-xs ${
+              msg.type === "success" ? "border border-green-500/30 bg-green-500/[0.04] text-green-700" : "border border-red-500/30 bg-red-500/[0.04] text-red-700"
+            }`}>
+              {msg.text}
+            </div>
+          )}
+
+          {/* Quick guide */}
+          <details className="text-xs text-text-muted">
+            <summary className="cursor-pointer hover:text-text-primary py-1 select-none">📖 Подсказка по @BotFather</summary>
+            <div className="mt-2 p-3 rounded-lg bg-bg-secondary/30 leading-relaxed space-y-1.5">
+              <div><strong>1. Mini App:</strong> @BotFather → <code>/newapp</code> → выбери бота → Web App URL: <code className="font-mono text-[10px]">{typeof window !== "undefined" ? window.location.origin : ""}/ru/tg</code></div>
+              <div><strong>2. Кнопка меню:</strong> @BotFather → <code>/setmenubutton</code> → текст: «🚀 Кабинет» → URL тот же что выше</div>
+              <div><strong>3. Webhook:</strong> жми кнопку выше — он будет указывать на <code className="font-mono text-[10px]">{typeof window !== "undefined" ? window.location.origin : ""}/api/tg/webhook</code></div>
+            </div>
+          </details>
+        </div>
+      )}
     </div>
   );
 }

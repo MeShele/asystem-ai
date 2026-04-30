@@ -16,6 +16,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { ProjectComments } from "@/components/shared/project-comments";
+import { LiveProgressBar } from "@/components/shared/live-progress-bar";
 
 interface Developer {
   id?: number;
@@ -35,6 +36,7 @@ interface ProjectDetail {
   progress_percent: number;
   status: string;
   partner_commission_percent: number;
+  contract_signed_at?: string | null;
   created_at: string;
 }
 
@@ -52,8 +54,15 @@ interface Payout {
   amount: number | string;
   paid_at: string;
   comment: string | null;
-  status: "requested" | "paid";
+  status: "requested" | "paid" | "rejected";
   requested_at: string | null;
+  rejection_comment: string | null;
+}
+
+interface CommissionBreakdown {
+  base: number;
+  bonuses: { label: string; pct: number }[];
+  total: number;
 }
 
 const statusMeta: Record<string, { label: string; color: string }> = {
@@ -76,6 +85,7 @@ export default function PartnerProjectDetailPage({
   const [stages, setStages] = useState<Stage[]>([]);
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [breakdown, setBreakdown] = useState<CommissionBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<number | null>(null);
 
@@ -87,6 +97,7 @@ export default function PartnerProjectDetailPage({
         setStages(Array.isArray(data.stages) ? data.stages : []);
         setDevelopers(Array.isArray(data.developers) ? data.developers : []);
         setPayouts(Array.isArray(data.payouts) ? data.payouts : []);
+        setBreakdown(data.commissionBreakdown || null);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -178,10 +189,13 @@ export default function PartnerProjectDetailPage({
           </div>
         </div>
         {project.description && (
-          <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
+          <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line mb-4">
             {project.description}
           </p>
         )}
+
+        {/* Бейдж засчитанной сделки */}
+        <ContractStatusBadge signedAt={project.contract_signed_at || null} />
       </div>
 
       {/* Money */}
@@ -193,9 +207,7 @@ export default function PartnerProjectDetailPage({
         <div className="p-4 rounded-xl border border-border-faint bg-surface">
           <div className="text-xs text-text-muted mb-1">Оплачено</div>
           <div className="text-xl font-semibold text-green-500">${paid.toLocaleString("ru-RU")}</div>
-          <div className="mt-2 h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full" style={{ width: `${paidPct}%` }} />
-          </div>
+          <LiveProgressBar value={paidPct} tone="green" variant="solid" height="h-1.5" className="mt-2" />
         </div>
         <div className="p-4 rounded-xl border border-border-faint bg-surface">
           <div className="text-xs text-text-muted mb-1">Остаток</div>
@@ -252,6 +264,32 @@ export default function PartnerProjectDetailPage({
               )}
             </div>
           </div>
+
+          {/* Breakdown — из чего складывается % */}
+          {breakdown && (
+            <div className="mt-4 pt-3 border-t border-green-500/20">
+              <div className="text-[11px] uppercase tracking-wider text-text-muted mb-2">
+                Из чего складывается {breakdown.total}%:
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="px-2 py-1.5 rounded bg-bg-secondary/40 text-[11px]">
+                  <span className="text-text-muted">База уровня:</span>{" "}
+                  <span className="font-mono font-semibold">{breakdown.base}%</span>
+                </div>
+                {breakdown.bonuses.map((b, i) => (
+                  <div
+                    key={i}
+                    className={`px-2 py-1.5 rounded text-[11px] ${b.pct > 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}
+                  >
+                    {b.label}:{" "}
+                    <span className="font-mono font-semibold">
+                      {b.pct > 0 ? "+" : ""}{b.pct}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -265,26 +303,39 @@ export default function PartnerProjectDetailPage({
           <div className="space-y-2">
             {payouts.map((p) => {
               const isPending = p.status === "requested";
+              const isRejected = p.status === "rejected";
+              const tone = isPending ? "orange" : isRejected ? "red" : "green";
+              const toneBorder = tone === "orange" ? "border-orange-500/30 bg-orange-500/5" : tone === "red" ? "border-red-500/30 bg-red-500/5" : "border-border-faint";
+              const toneIcon = tone === "orange" ? "bg-orange-500/10 text-orange-500" : tone === "red" ? "bg-red-500/10 text-red-500" : "bg-green-500/10 text-green-500";
+              const toneText = tone === "orange" ? "text-orange-500" : tone === "red" ? "text-red-500" : "text-green-500";
+              const label = isPending ? "В обработке" : isRejected ? "Отклонено" : "Получено";
               return (
-                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-lg border ${isPending ? "border-orange-500/30 bg-orange-500/5" : "border-border-faint"}`}>
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPending ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"}`}>
+                <div key={p.id} className={`flex items-start gap-3 p-3 rounded-lg border ${toneBorder}`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${toneIcon}`}>
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-semibold ${isPending ? "text-orange-500" : "text-green-500"}`}>
-                        {isPending ? "" : "+"}${Number(p.amount).toLocaleString("ru-RU")}
+                      <span className={`text-sm font-semibold ${toneText}`}>
+                        {!isPending && !isRejected ? "+" : ""}${Number(p.amount).toLocaleString("ru-RU")}
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${isPending ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"}`}>
-                        {isPending ? "В обработке" : "Получено"}
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${toneIcon}`}>
+                        {label}
                       </span>
                     </div>
                     {p.comment && <div className="text-xs text-text-muted truncate mt-0.5">{p.comment}</div>}
+                    {isRejected && p.rejection_comment && (
+                      <div className="text-xs text-red-500 mt-1">
+                        <span className="font-medium">Причина: </span>{p.rejection_comment}
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
                     <Calendar className="w-3 h-3" />
                     {isPending && p.requested_at
                       ? `запрошено ${new Date(p.requested_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}`
+                      : isRejected && p.requested_at
+                      ? `${new Date(p.requested_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}`
                       : new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
                   </div>
                 </div>
@@ -302,23 +353,12 @@ export default function PartnerProjectDetailPage({
             {project.progress_percent}%
           </span>
         </div>
-        <div className="relative h-3 bg-bg-secondary rounded-full overflow-hidden">
-          <motion.div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-brand-500 to-green-500 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${project.progress_percent}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-          <div
-            className="absolute inset-y-0 left-0 rounded-full opacity-30"
-            style={{
-              width: `${project.progress_percent}%`,
-              background:
-                "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-              animation: "shimmer-sweep 2s ease-in-out infinite",
-            }}
-          />
-        </div>
+        <LiveProgressBar
+          value={project.progress_percent}
+          tone={project.status === "completed" ? "green" : "brand"}
+          live={project.status !== "completed" && project.status !== "cancelled"}
+          height="h-3"
+        />
       </div>
 
       {/* Stages — interactive timeline */}
@@ -393,18 +433,12 @@ export default function PartnerProjectDetailPage({
                       {s.percent}%
                     </span>
                   </div>
-                  <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${s.percent}%` }}
-                      transition={{ duration: 0.8, delay: i * 0.05, ease: "easeOut" }}
-                      className={`h-full rounded-full ${
-                        s.completed
-                          ? "bg-gradient-to-r from-green-500 to-green-400"
-                          : "bg-gradient-to-r from-brand-500 to-brand-400"
-                      }`}
-                    />
-                  </div>
+                  <LiveProgressBar
+                    value={s.percent}
+                    tone={s.completed ? "green" : "brand"}
+                    live={!s.completed}
+                    height="h-1.5"
+                  />
                   {isActive && s.comment && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
@@ -470,6 +504,40 @@ export default function PartnerProjectDetailPage({
 
       {/* Comments */}
       <ProjectComments projectId={project.project_id} />
+    </div>
+  );
+}
+
+/**
+ * Read-only визуальный бейдж засчитанной сделки. Партнёр не редактирует — только видит статус.
+ */
+function ContractStatusBadge({ signedAt }: { signedAt: string | null }) {
+  const isSigned = !!signedAt;
+  return (
+    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
+      isSigned ? "border-green-500/30 bg-green-500/[0.04]" : "border-amber-500/30 bg-amber-500/[0.04]"
+    }`}>
+      {isSigned ? (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-500 flex-shrink-0" fill="none">
+          <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none">
+          <path d="M12 8v4M12 16h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className={`text-sm font-semibold ${isSigned ? "text-green-600" : "text-amber-600"}`}>
+          {isSigned
+            ? `Сделка засчитана · ${new Date(signedAt as string).toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" })}`
+            : "Сделка ожидает подтверждения"}
+        </div>
+        <div className="text-[11px] text-text-muted">
+          {isSigned
+            ? "Идёт в acceptance уровня и в окно retention (3 сделки/60 дней)."
+            : "Админ ещё не подтвердил подписание договора. Пока не учитывается в уровне."}
+        </div>
+      </div>
     </div>
   );
 }

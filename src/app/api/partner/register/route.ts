@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
 import { notifyAdmin } from "@/lib/telegram";
+import { notify } from "@/lib/notify";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -39,8 +40,25 @@ export async function POST(req: NextRequest) {
   const refCode = crypto.randomBytes(4).toString("hex");
   const passwordHash = crypto.createHash("sha256").update(data.password || "").digest("hex");
 
+  // Auto-founding: первые 5 партнёров получают статус автоматически
+  const FOUNDING_LIMIT = 5;
+  const countRow = (await db`SELECT COUNT(*) AS c FROM partners`) as Record<string, unknown>[];
+  const existingCount = Number(countRow[0]?.c || 0);
+  const isFounding = existingCount < FOUNDING_LIMIT;
+
+  // Sub-partner: capture referrer через ref_code (от приглашающего партнёра)
+  let referrerPartnerId: string | null = null;
+  let referrerName: string | null = null;
+  if (data.ref_code) {
+    const ref = (await db`SELECT partner_id, name FROM partners WHERE ref_code = ${String(data.ref_code)} LIMIT 1`) as Record<string, unknown>[];
+    if (ref.length > 0) {
+      referrerPartnerId = String(ref[0].partner_id);
+      referrerName = String(ref[0].name || "");
+    }
+  }
+
   try {
-    await db`INSERT INTO partners (partner_id, name, email, phone, company, password_hash, ref_code)
+    await db`INSERT INTO partners (partner_id, name, email, phone, company, password_hash, ref_code, is_founding, referrer_partner_id)
       VALUES (
         ${partnerId},
         ${data.name},
@@ -48,16 +66,33 @@ export async function POST(req: NextRequest) {
         ${data.phone || null},
         ${data.company || null},
         ${passwordHash},
-        ${refCode}
+        ${refCode},
+        ${isFounding},
+        ${referrerPartnerId}
       )`;
 
     if (inviteId) {
       await db`UPDATE invites SET used_at = NOW() WHERE id = ${inviteId}`;
     }
 
-    await notifyAdmin(`🤝 Новый партнёр зарегистрирован\nID: ${partnerId}\nИмя: ${data.name}\nEmail: ${data.email}\nRef: ${refCode}`).catch(() => {});
+    const foundingNote = isFounding ? `\n⭐ Founding Partner #${existingCount + 1} (+5% lifetime)` : "";
+    const refNote = referrerPartnerId ? `\n👥 Sub-partner от ${referrerName || referrerPartnerId}` : "";
+    await notifyAdmin(`🤝 Новый партнёр зарегистрирован\nID: ${partnerId}\nИмя: ${data.name}\nEmail: ${data.email}\nRef: ${refCode}${foundingNote}${refNote}`).catch(() => {});
 
-    return NextResponse.json({ success: true, partnerId, refCode });
+    // Уведомление пригласившему партнёру
+    if (referrerPartnerId) {
+      await notify({
+        userRole: "partner",
+        userId: referrerPartnerId,
+        kind: "lead_assigned",
+        title: `Новый партнёр в твоей сети`,
+        body: `${String(data.name).trim()} зарегистрировался по твоей реф-ссылке. Ты будешь получать override с его сделок.`,
+        link: `/partner/network`,
+        payload: { newPartnerId: partnerId },
+      });
+    }
+
+    return NextResponse.json({ success: true, partnerId, refCode, isFounding });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });

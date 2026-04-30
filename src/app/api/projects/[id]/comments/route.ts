@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initProjectTables } from "@/lib/db";
+import { notify, notifyAdmins } from "@/lib/notify";
 
 interface AuthCheck {
   role: "admin" | "partner" | "client";
@@ -78,5 +79,26 @@ export async function POST(
     VALUES (${id}, ${auth.role}, ${auth.id}, ${auth.name}, ${message})
     RETURNING *
   `;
+
+  // Уведомления остальным участникам проекта (кто НЕ автор)
+  const proj = (await db`SELECT name, partner_id, client_id FROM projects WHERE project_id = ${id} LIMIT 1`) as Record<string, unknown>[];
+  if (proj.length > 0) {
+    const projectName = String(proj[0].name || id);
+    const partnerId = proj[0].partner_id ? String(proj[0].partner_id) : null;
+    const clientId = proj[0].client_id ? String(proj[0].client_id) : null;
+    const preview = message.length > 80 ? message.slice(0, 80) + "…" : message;
+    const body = `${auth.name}: ${preview}`;
+
+    if (auth.role !== "partner" && partnerId) {
+      await notify({ userRole: "partner", userId: partnerId, kind: "comment_added", title: `Новый комментарий в «${projectName}»`, body, link: `/partner/projects/${id}`, payload: { projectId: id } });
+    }
+    if (auth.role !== "client" && clientId) {
+      await notify({ userRole: "client", userId: clientId, kind: "comment_added", title: `Новый комментарий в «${projectName}»`, body, link: `/client/projects/${id}`, payload: { projectId: id } });
+    }
+    if (auth.role !== "admin") {
+      await notifyAdmins({ kind: "comment_added", title: `Комментарий в «${projectName}»`, body, link: `/admin/projects/${id}`, payload: { projectId: id } });
+    }
+  }
+
   return NextResponse.json(inserted[0]);
 }
