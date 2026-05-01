@@ -337,33 +337,6 @@ export default function AdminPartnerDetailPage({
                 </div>
               </label>
             </div>
-            <Field label="Базовая комиссия (legacy, доли)">
-              <input
-                type="number"
-                step={0.01}
-                min={0}
-                max={1}
-                value={form.commission_rate}
-                onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
-              />
-            </Field>
-            <Field label="Реферальная ссылка" icon={Send}>
-              <div className="flex gap-2">
-                <input
-                  readOnly
-                  value={`/ru/client/request?ref=${partner.ref_code}`}
-                  className="flex-1 px-3 py-2 text-xs bg-bg-secondary border border-border-faint rounded-lg font-mono"
-                />
-                <button
-                  onClick={copyRefLink}
-                  className="px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-xs flex items-center gap-1"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? "Скопировано" : "Копировать"}
-                </button>
-              </div>
-            </Field>
           </div>
         </Section>
       </div>

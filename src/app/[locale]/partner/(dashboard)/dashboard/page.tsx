@@ -422,26 +422,6 @@ export default function PartnerDashboardPage() {
       {/* ─── Forecast chart ─── */}
       <ForecastChart />
 
-      {/* ─── Ref link ─── */}
-      <motion.div
-        className="p-5 rounded-xl border border-border-faint bg-surface mb-6"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-      >
-        <div className="text-xs text-text-muted mb-2">Ваша реферальная ссылка</div>
-        <div className="flex gap-2">
-          <input
-            value={refLink}
-            readOnly
-            className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border-faint text-sm font-mono text-text-secondary"
-          />
-          <button onClick={copyRef} className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors">
-            {copied ? "✓" : "Копировать"}
-          </button>
-        </div>
-      </motion.div>
-
       {/* ─── Create project CTA ─── */}
       <motion.div className="mb-6" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <button

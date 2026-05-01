@@ -18,13 +18,14 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.includes("/admin");
   const isPartnerPanel = pathname.includes("/partner/") && !pathname.match(/^\/(ru|en|kg)\/partner\/?$/);
+  const isClientPanel = pathname.includes("/client/") && !pathname.match(/^\/(ru|en|kg)\/client\/request\/?$/);
   const isPartnerLanding = /^\/(ru|en|kg)\/partner\/?$/.test(pathname);
   const isStartupsLanding = /^\/(ru|en|kg)\/startups\/?$/.test(pathname);
   const isQuizPage = /^\/(ru|en|kg)\/client\/request\/?$/.test(pathname);
   const isSplash = /^\/(ru|en|kg)?\/?$/.test(pathname);
   const isTelegramMiniApp = /^\/(ru|en|kg)\/tg(\/|$)/.test(pathname);
 
-  if (isAdmin || isPartnerPanel || isSplash || isPartnerLanding || isStartupsLanding || isQuizPage || isTelegramMiniApp) {
+  if (isAdmin || isPartnerPanel || isClientPanel || isSplash || isPartnerLanding || isStartupsLanding || isQuizPage || isTelegramMiniApp) {
     // Home (splash) и admin/partner/startups panels рендерят свой layout
     return <>{children}</>;
   }

@@ -33,7 +33,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const newNote = typeof data.partner_note === "string" ? data.partner_note.slice(0, 2000) : null;
 
   if (newStatus) {
-    await db`UPDATE asystem_requests SET lead_status = ${newStatus} WHERE request_id = ${id}`;
+    // Маппинг lead_status → старое поле status для синхронности с админ-UI
+    const STATUS_MAP: Record<string, string> = {
+      new: "new",
+      contacted: "in_progress",
+      qualified: "in_progress",
+      won: "won",
+      lost: "lost",
+    };
+    const legacyStatus = STATUS_MAP[newStatus] || newStatus;
+    await db`UPDATE asystem_requests SET lead_status = ${newStatus}, status = ${legacyStatus} WHERE request_id = ${id}`;
   }
   if (newNote !== null) {
     await db`UPDATE asystem_requests SET partner_note = ${newNote} WHERE request_id = ${id}`;

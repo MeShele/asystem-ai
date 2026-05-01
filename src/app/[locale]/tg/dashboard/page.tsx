@@ -6,11 +6,13 @@ import { motion } from "framer-motion";
 import { DollarSign, Trophy, FolderKanban, ChevronRight, TrendingUp, Wallet, Target } from "lucide-react";
 import { LevelIcon } from "@/components/shared/level-icon";
 import { LiveProgressBar } from "@/components/shared/live-progress-bar";
+import { EarningsCalculator } from "@/components/partner/earnings-calculator";
 
 interface MeData {
-  partner: { name: string; is_founding: boolean };
+  partner: { partner_id: string; name: string; is_founding: boolean };
   stats: { totalEarned: number; totalClients: number; completedClients?: number };
   tierSystem: {
+    levels: { level: number; title: string; icon: string; base_pct: number }[];
     currentLevel: number;
     currentMeta: { title: string; base_pct: number };
     nextMeta: { level: number; title: string; base_pct: number } | null;
@@ -122,6 +124,19 @@ export default function TgDashboardPage() {
         <MiniKpi icon={TrendingUp} label="Выручка" value={`$${(tierSystem.acceptanceStats.totalRevenue / 1000).toFixed(0)}K`} tone="purple" />
         <MiniKpi icon={DollarSign} label="60 дней" value={`${tierSystem.acceptanceStats.dealsLast60Days}/3`} tone="amber" hint="retention" />
       </motion.div>
+
+      {/* Калькулятор заработка — главная мотивационная плашка */}
+      {tierSystem.levels && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+          <EarningsCalculator
+            levels={tierSystem.levels}
+            currentLevel={tierSystem.currentLevel}
+            isFounding={Boolean(partner.is_founding)}
+            retentionQualified={tierSystem.acceptanceStats.dealsLast60Days >= 3}
+            partnerId={partner.partner_id}
+          />
+        </motion.div>
+      )}
 
       {/* Network — если есть subs */}
       {network && network.totalSubs > 0 && (

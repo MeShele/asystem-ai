@@ -258,7 +258,7 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                   title="Уровень партнёра"
                   right={<span className="text-[10px] text-text-muted">кликни — проверь L4 или L5</span>}
                 >
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="flex gap-1.5 -mx-1 px-1 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-5 sm:gap-2 snap-x snap-mandatory scrollbar-thin">
                     {levels.map((lvl) => {
                       const isCurrent = lvl.level === currentLevel;
                       const isSelected = lvl.level === selectedLevel;
@@ -266,22 +266,21 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                         <button
                           key={lvl.level}
                           onClick={() => setSelectedLevel(lvl.level)}
-                          className={`group relative px-2 py-3 rounded-xl border text-center transition-all duration-200 ${
+                          className={`group shrink-0 w-[19%] min-w-[64px] sm:w-auto sm:min-w-0 snap-start relative px-1.5 py-2 rounded-lg border text-center transition-all duration-200 ${
                             isSelected
-                              ? "border-brand-500 bg-brand-500/[0.06] shadow-md shadow-brand-500/10"
-                              : "border-border-faint bg-surface hover:border-brand-500/30 hover:bg-bg-secondary/40"
+                              ? "border-brand-500 bg-brand-500/10 shadow-sm shadow-brand-500/10"
+                              : "border-border-faint bg-surface hover:border-brand-500/30"
                           }`}
                         >
                           {isCurrent && (
-                            <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center shadow-sm shadow-brand-500/40">
-                              <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                            <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-brand-500 flex items-center justify-center">
+                              <Check className="w-2 h-2 text-white" strokeWidth={3} />
                             </div>
                           )}
-                          <div className="flex justify-center mb-1.5">
-                            <LevelIcon level={lvl.level} size="md" active={isCurrent} />
+                          <div className={`mx-auto mb-1 w-7 h-7 rounded-lg flex items-center justify-center ${isSelected ? "bg-brand-500 text-white" : "bg-brand-500/10 text-brand-500"}`}>
+                            <span className="text-[11px] font-bold font-mono">L{lvl.level}</span>
                           </div>
-                          <div className="text-[9px] font-mono text-text-muted">L{lvl.level}</div>
-                          <div className={`text-xs font-bold mt-0.5 transition-colors ${isSelected ? "text-brand-500" : "text-text-secondary"}`}>
+                          <div className={`text-xs font-bold transition-colors ${isSelected ? "text-brand-500" : "text-text-secondary"}`}>
                             {lvl.base_pct}%
                           </div>
                         </button>
