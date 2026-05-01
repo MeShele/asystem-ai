@@ -14,6 +14,35 @@ import {
   Globe,
   ArrowRight,
 } from "lucide-react";
+import { MobileTopBar } from "@/components/shared/mobile-topbar";
+
+const PARTNER_MOBILE_NAV = [
+  {
+    title: "Partner",
+    items: [
+      { label: "модель", href: "#hero" },
+      { label: "как это работает", href: "#how" },
+      { label: "математика", href: "#math" },
+      { label: "кому подходит", href: "#who" },
+      { label: "условия", href: "#terms" },
+      { label: "faq · 6", href: "#faq" },
+    ],
+  },
+  {
+    title: "Company",
+    items: [
+      { label: "← на главную", href: "/" },
+      { label: "оставить заявку (клиент)", href: "/client/request" },
+    ],
+  },
+  {
+    title: "Contact",
+    items: [
+      { label: "partner@asystem.ai", href: "mailto:partner@asystem.ai", external: true },
+      { label: "Telegram", href: "https://t.me/asystem_ai", external: true },
+    ],
+  },
+];
 
 /* ═══════════════════════════════════════════════════════════
    Партнёрский лендинг — в стиле sidebar+grid главной.
@@ -21,13 +50,16 @@ import {
 
 export function PartnerWall() {
   return (
-    <div
-      className="min-h-screen flex flex-col lg:flex-row"
-      style={{ background: "#fff", color: "#0a0a0a" }}
-    >
-      <PartnerSidebar />
-      <PartnerMain />
-    </div>
+    <>
+      <MobileTopBar groups={PARTNER_MOBILE_NAV} />
+      <div
+        className="min-h-screen flex flex-col lg:flex-row"
+        style={{ background: "#fff", color: "#0a0a0a" }}
+      >
+        <PartnerSidebar />
+        <PartnerMain />
+      </div>
+    </>
   );
 }
 
@@ -36,7 +68,7 @@ export function PartnerWall() {
 function PartnerSidebar() {
   return (
     <aside
-      className="lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto px-6 lg:px-8 py-8 lg:py-12 flex flex-col gap-10"
+      className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-8 lg:py-12 lg:flex-col lg:gap-10"
       style={{ borderRight: "1px solid #e5e5e5", background: "#fff" }}
     >
       <Link href="/" className="inline-flex items-baseline gap-1">

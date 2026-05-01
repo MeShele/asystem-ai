@@ -10,13 +10,45 @@ import {
   PenTool,
   Rocket,
   Server,
+  Gauge,
+  Wallet,
   ShieldCheck,
-  Zap,
-  Clock,
+  Timer,
 } from "lucide-react";
 import { VinylEasterEgg } from "@/components/shared/vinyl-easter-egg";
 import { ServiceModal } from "@/components/shared/service-modal";
 import { TechModal, TECH_STACK, type Tech } from "@/components/shared/tech-modal";
+import { MobileTopBar } from "@/components/shared/mobile-topbar";
+
+const HOME_MOBILE_NAV = [
+  {
+    title: "Works",
+    items: [
+      { label: "клиенты · 4", href: "#clients" },
+      { label: "обещания · 4", href: "#guarantees" },
+      { label: "услуги · 4", href: "#services" },
+      { label: "процесс · 4", href: "#process" },
+      { label: "стек", href: "#stack" },
+      { label: "лаборатория · 8", href: "#lab" },
+      { label: "команда · 16", href: "#team" },
+    ],
+  },
+  {
+    title: "Company",
+    items: [
+      { label: "основателям", href: "/startups" },
+      { label: "заявка", href: "/client/request" },
+    ],
+  },
+  {
+    title: "Contact",
+    items: [
+      { label: "hello@asystem.ai", href: "mailto:hello@asystem.ai", external: true },
+      { label: "Telegram", href: "https://t.me/asystem_ai", external: true },
+      { label: "WhatsApp", href: "https://wa.me/996", external: true },
+    ],
+  },
+];
 import { Icon } from "@iconify/react";
 import { LiquidSpline, type SplineKind } from "./liquid-spline";
 import { LabCanvas, type LabShape } from "./lab-3d";
@@ -307,6 +339,7 @@ export function WorksWall() {
   const activeSection = useActiveSection();
   return (
     <ActiveSectionContext.Provider value={activeSection}>
+      <MobileTopBar groups={HOME_MOBILE_NAV} />
       <div
         className="min-h-screen flex flex-col lg:flex-row"
         style={{ background: "#fff", color: "#0a0a0a" }}
@@ -323,7 +356,7 @@ export function WorksWall() {
 function Sidebar() {
   return (
     <aside
-      className="lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto px-6 lg:px-8 py-8 lg:py-12 flex flex-col gap-10"
+      className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-8 lg:py-12 lg:flex-col lg:gap-10"
       style={{
         borderRight: "1px solid #e5e5e5",
         background: "#fff",
@@ -348,7 +381,7 @@ function Sidebar() {
 
       <SidebarGroup title="Company">
         <SidebarLink href="#team">команда · 16</SidebarLink>
-        <SidebarLink href="/partner">партнёрам</SidebarLink>
+        <SidebarLink href="/startups">основателям</SidebarLink>
         <SidebarLink href="/client/request">заявка</SidebarLink>
       </SidebarGroup>
 
@@ -819,10 +852,10 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
         </div>
 
         <div
-          className="transition-transform duration-500 group-hover:scale-105"
+          className="flex items-center justify-center transition-transform duration-500 group-hover:scale-105"
           style={{
-            maxWidth: "60%",
-            maxHeight: "70%",
+            height: "clamp(72px, 11vw, 110px)",
+            maxWidth: "70%",
           }}
         >
           <Image
@@ -830,8 +863,13 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
             alt={c.name}
             width={c.logoW}
             height={c.logoH}
-            className="object-contain w-full h-auto"
-            style={{ filter: "brightness(0) invert(1)" }}
+            className="object-contain"
+            style={{
+              width: "auto",
+              height: "100%",
+              maxWidth: "100%",
+              filter: "brightness(0) invert(1)",
+            }}
           />
         </div>
 
@@ -977,7 +1015,8 @@ function TeamCell({ member }: { member: (typeof TEAM)[number] }) {
         alt=""
         width={400}
         height={400}
-        loading="eager"
+        loading="lazy"
+        sizes="(min-width: 1024px) 25vw, 50vw"
         className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
         style={{ filter: hovered ? "grayscale(0)" : "grayscale(1) contrast(0.95)" }}
       />
@@ -1013,10 +1052,10 @@ function TeamLabel({ memberKey, visible }: { memberKey: string; visible: boolean
 /* ═══════════════ PEACE OF MIND ═══════════════ */
 
 const GUARANTEES = [
-  { icon: Rocket, value: "4×", label: "БЫСТРЕЕ РЫНКА", sub: "MVP за 3-4 недели — не 3-4 месяца" },
-  { icon: ShieldCheck, value: "0 сом", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "Сначала MVP — потом счёт" },
-  { icon: Zap, value: "FIX", label: "ЛОЯЛЬНЫЕ ЦЕНЫ", sub: "Бишкек-rate, не Москва-rate. Базовая цена известна до старта." },
-  { icon: Clock, value: "24h", label: "ОТВЕТ ПО КП", sub: "Шесть вопросов — и у вас цифры" },
+  { Icon: Gauge,       value: "4×",    label: "БЫСТРЕЕ РЫНКА",  sub: "MVP за 3-4 недели — не 3-4 месяца" },
+  { Icon: Wallet,      value: "0 сом", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "Сначала MVP — потом счёт" },
+  { Icon: ShieldCheck, value: "FIX",   label: "ЛОЯЛЬНЫЕ ЦЕНЫ",  sub: "Бишкек-rate, не Москва-rate. Базовая цена известна до старта." },
+  { Icon: Timer,       value: "24h",   label: "ОТВЕТ ПО КП",    sub: "Шесть вопросов — и у вас цифры" },
 ];
 
 function PeaceOfMind() {
@@ -1095,8 +1134,6 @@ function GuaranteeCell({
   index: number;
   parentRevealed: boolean;
 }) {
-  const Icon = g.icon;
-
   return (
     <motion.div
       initial={{ clipPath: "inset(100% 0 0 0)", opacity: 0 }}
@@ -1109,12 +1146,13 @@ function GuaranteeCell({
       className="p-6 lg:p-8 flex flex-col gap-4 group"
       style={{ background: "#fff" }}
     >
-      <Icon
+      <g.Icon
+        aria-hidden
+        strokeWidth={1}
         className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-3deg]"
-        size={24}
-        strokeWidth={1.5}
-        style={{ color: "#2563EB" }}
+        style={{ width: 28, height: 28, color: "#0a0a0a", opacity: 0.92 }}
       />
+      <span aria-hidden className="block w-8 h-px" style={{ background: "#2563EB" }} />
       <div
         className="font-semibold tracking-tight"
         style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", lineHeight: 1 }}

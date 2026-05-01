@@ -55,7 +55,7 @@ asystem.ai — Независимая AI-first IT-студия из Бишкек
 9. **Team** — 16 фото grayscale → цвет на hover
 10. **FinalCTA** — «Посчитать свой путь» с красной (теперь синей) кнопкой
 11. **SubmitRow** — `28 BLOCKS · ∞`
-12. **Footer wordmark + Easter egg** — гигантский ghost `asystem.ai`, точка `.` = кликабельное **Phosphor Egg duotone**, клик → модалка с **виниловым плеером** (трек «Cashflow Glitch» из Suno AI, vinyl SVG из Phosphor, центральная этикетка со spring rotation, MOOD: ПЕТУШИНЫЙ)
+12. **Footer wordmark + Easter egg** — гигантский ghost `asystem.ai`, точка `.` = кликабельное **Phosphor Egg duotone**, клик → модалка с **виниловым плеером** (трек «Cashflow Glitch» из Suno AI, vinyl SVG из Phosphor, центральная этикетка со spring rotation)
 
 ## Партнёрская страница (`/partner`)
 
@@ -67,6 +67,31 @@ asystem.ai — Независимая AI-first IT-студия из Бишкек
 - TermsSection — таблица «ТЫ — партнёр» / «МЫ — asystem» (5 пар строк)
 - FAQSection — 6 вопросов
 - FinalCTA — «Стать партнёром»
+
+## Страница /startups (актуально на 2026-04-27, v35)
+
+`src/components/startups/startups-wall.tsx` — отдельная страница для основателей. Полная структура и решения — в `memory/project_startups_page.md`.
+
+8 секций (TRACKED_SECTIONS): pain · choice · steps · ai-staff · growth · pillars · faq + Hero + FinalCTA.
+
+**Ключевое:**
+- **Hero** — Spline робот (`SplineScene` оборачивает `@splinetool/react-spline`, scene `kZDDjO5HuC9GJUM2`, CSS `filter: hue-rotate(200deg) saturate(1.6) brightness(1.05)` для Brand Blue)
+- **PathChoice** — fight-card scoreboard: split header «До AI / VS / На AI» + 5-row criterion comparison
+- **GrowthCycle** — `<RadialOrbitalTimeline>` (RAF + DOM-refs, без React state на анимацию, без popup) + MeshGradient blue-mist фон
+- **Stat-banner pattern** везде (Pain, Steps, AIEmployee, Pillars, FinalCTA): min-height 420-560px, ghost step number 140-220px, метрика clamp 72-120px, mono-метка, title
+
+**Удалено и не возвращать:** Cases секция, Hero KPI rail, AI Employee 5 ролей, PathChoice CTA-bar и 3 totals, Growth ∞ итог, expanded popup в orbital, все subtitle, все kicker, все desc под метриками в банкерах, decorative stamps УСТАРЕЛО/АКТИВНО.
+
+## Shared компоненты (новые, для /startups)
+
+- `src/components/shared/count-up.tsx` — спринг-анимация числа от 0 до N при попадании в viewport. Только framer-motion.
+- `src/components/shared/spotlight-layer.tsx` — cursor-tracking radial glow Brand Blue для карточек.
+- `src/components/shared/radial-orbital-timeline.tsx` — орбита для Growth, RAF-driven, статичная.
+- `src/components/shared/spline-scene.tsx` — обёртка `lazy()` Spline с Suspense fallback.
+
+## MCP серверы
+
+`.mcp.json` в корне проекта подключает **motion-studio-mcp** (motion.dev). Активируется после рестарта Claude Code → инструменты `mcp__motion__*` появятся в `ToolSearch`. Уже работают: `mcp__reactbits__*`, `mcp__magic__*`, `mcp__context7__*`, `mcp__gemini-image__*`.
 
 ## Sidebar progress + active section
 
@@ -147,3 +172,10 @@ Cloudflare → nginx proximus (116.202.171.29) → Traefik VM 132 → Docker (п
 - 3D-ассеты только из CC0/MIT источников (3dicons.co)
 - Чёрные фоны запрещены (фолбэк — `#fafafa` светлый)
 - Англицизмы-статусы (active/shipped/exploration/concept) убраны из UI — оставить только русский kicker
+
+## Следующее действие
+
+После рестарта Claude Code:
+1. Прочитать `memory/project_startups_page.md` и `memory/feedback_mac_design_iteration.md` — там полный контекст /startups
+2. Проверить `mcp__motion__*` инструменты доступны (через `ToolSearch query "motion"`)
+3. Ждать команду от Mac. Не редактировать /startups без явного запроса — страница в финализированном состоянии (v35).

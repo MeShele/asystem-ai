@@ -19,11 +19,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const isAdmin = pathname.includes("/admin");
   const isPartnerPanel = pathname.includes("/partner/") && !pathname.match(/^\/(ru|en|kg)\/partner\/?$/);
   const isPartnerLanding = /^\/(ru|en|kg)\/partner\/?$/.test(pathname);
+  const isStartupsLanding = /^\/(ru|en|kg)\/startups\/?$/.test(pathname);
   const isQuizPage = /^\/(ru|en|kg)\/client\/request\/?$/.test(pathname);
   const isSplash = /^\/(ru|en|kg)?\/?$/.test(pathname);
 
-  if (isAdmin || isPartnerPanel || isSplash || isPartnerLanding || isQuizPage) {
-    // Home (splash) и admin/partner panels рендерят свой layout
+  if (isAdmin || isPartnerPanel || isSplash || isPartnerLanding || isStartupsLanding || isQuizPage) {
+    // Home (splash) и admin/partner/startups panels рендерят свой layout
     return <>{children}</>;
   }
 

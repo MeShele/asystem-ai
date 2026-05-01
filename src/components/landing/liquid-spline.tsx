@@ -1,56 +1,36 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { Globe2, Bot, Workflow, Smartphone, type LucideIcon } from "lucide-react";
 
-/**
- * Microsoft Fluent Emoji 3D — реальные 3D-рендеры от MS Designer team.
- * MIT-лицензия, без вотермарка, без WebGL.
- * https://github.com/microsoft/fluentui-emoji
- */
-export const SPLINE_SCENES = {
-  globe: "/services/globe.png",
-  robot: "/services/robot.png",
-  gear: "/services/gear.png",
-  phone: "/services/phone.png",
-} as const;
-
-export type SplineKind = keyof typeof SPLINE_SCENES;
-
-const ALT_TEXT: Record<SplineKind, string> = {
-  globe: "Глобус",
-  robot: "Робот",
-  gear: "Шестерёнка",
-  phone: "Мобильный телефон",
+const ICONS: Record<string, { Icon: LucideIcon; alt: string }> = {
+  globe: { Icon: Globe2, alt: "Веб-платформы" },
+  robot: { Icon: Bot, alt: "AI-боты" },
+  gear: { Icon: Workflow, alt: "Автоматизация" },
+  phone: { Icon: Smartphone, alt: "Мобильные приложения" },
 };
 
+export type SplineKind = keyof typeof ICONS;
+export const SPLINE_SCENES = ICONS;
+
 export function LiquidSpline({ kind }: { kind: SplineKind }) {
+  const { Icon } = ICONS[kind];
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <motion.div
+        animate={{ y: [0, -3, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         className="relative"
-        animate={{ y: [0, -6, 0], rotate: [0, 1.5, 0] }}
-        transition={{
-          y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-          rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-        }}
-        style={{
-          // Размер от высоты контейнера — чтобы объект всегда вписывался по короткой стороне
-          height: "82%",
-          aspectRatio: "1 / 1",
-          maxWidth: "70%",
-          // Тинт white-clay → brand-blue + объёмная тень
-          filter:
-            "sepia(1) hue-rotate(195deg) saturate(3.5) brightness(0.9) drop-shadow(0 24px 48px rgba(37, 99, 235, 0.28)) drop-shadow(0 12px 24px rgba(0,0,0,0.10))",
-        }}
       >
-        <Image
-          src={SPLINE_SCENES[kind]}
-          alt={ALT_TEXT[kind]}
-          fill
-          sizes="(max-width: 768px) 40vw, 200px"
-          style={{ objectFit: "contain" }}
-          priority={false}
+        <Icon
+          aria-hidden
+          strokeWidth={1}
+          style={{
+            width: "clamp(56px, 7vw, 88px)",
+            height: "clamp(56px, 7vw, 88px)",
+            color: "#0a0a0a",
+            opacity: 0.92,
+          }}
         />
       </motion.div>
     </div>

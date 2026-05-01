@@ -1,35 +1,56 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import {
+  Calculator,
+  BadgePercent,
+  ScanSearch,
+  Send,
+  Activity,
+  RefreshCw,
+  Terminal,
+  ArrowDownUp,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 
 export type LabShape = string;
 
+const SHAPE_TO_ICON: Record<string, LucideIcon> = {
+  "partner-calc": Calculator,
+  "mvp-no-prepay": BadgePercent,
+  "ai-audit": ScanSearch,
+  "tg-bot": Send,
+  realtime: Activity,
+  "crm-sync": RefreshCw,
+  "ascii-easter": Terminal,
+  inversion: ArrowDownUp,
+};
+
+function pickIcon(path: string): LucideIcon {
+  const m = path.match(/\/lab(?:-v2)?\/([^./]+)/);
+  if (!m) return Sparkles;
+  return SHAPE_TO_ICON[m[1]] ?? Sparkles;
+}
+
 export function LabCanvas({ shape }: { shape: LabShape; color?: string }) {
+  const Icon = pickIcon(shape);
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <motion.div
+        animate={{ y: [0, -3, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         className="relative"
-        animate={{ y: [0, -6, 0], rotate: [0, 1.5, 0] }}
-        transition={{
-          y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-          rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-        }}
-        style={{
-          height: "60%",
-          aspectRatio: "1 / 1",
-          maxWidth: "60%",
-          filter:
-            "sepia(1) hue-rotate(195deg) saturate(3.5) brightness(0.9) drop-shadow(0 18px 36px rgba(37, 99, 235, 0.28)) drop-shadow(0 8px 16px rgba(0,0,0,0.10))",
-        }}
       >
-        <Image
-          src={shape}
-          alt=""
-          fill
-          sizes="(max-width: 768px) 30vw, 160px"
-          style={{ objectFit: "contain" }}
-          priority={false}
+        <Icon
+          aria-hidden
+          strokeWidth={1}
+          style={{
+            width: "clamp(48px, 6vw, 72px)",
+            height: "clamp(48px, 6vw, 72px)",
+            color: "#0a0a0a",
+            opacity: 0.92,
+          }}
         />
       </motion.div>
     </div>
