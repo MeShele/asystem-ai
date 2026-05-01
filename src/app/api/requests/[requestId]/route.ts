@@ -17,8 +17,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Status required" }, { status: 400 });
     }
 
+    // Admin-status → partner.lead_status (TMA читает lead_status; должны быть синхронны)
+    const ADMIN_TO_LEAD: Record<string, string> = {
+      new: "new",
+      review: "contacted",
+      estimate: "qualified",
+      progress: "in_progress",
+      in_progress: "in_progress",
+      completed: "won",
+      won: "won",
+      lost: "lost",
+      closed: "lost",
+    };
+    const leadStatus = ADMIN_TO_LEAD[status] || "new";
+
     const db = getDb();
-    await db`UPDATE asystem_requests SET status = ${status} WHERE request_id = ${requestId}`;
+    await db`UPDATE asystem_requests SET status = ${status}, lead_status = ${leadStatus} WHERE request_id = ${requestId}`;
 
     return NextResponse.json({ success: true });
   } catch (e) {
