@@ -6,7 +6,13 @@ import { motion } from "framer-motion";
 import { DollarSign, Trophy, FolderKanban, ChevronRight, TrendingUp, Wallet, Target } from "lucide-react";
 import { LevelIcon } from "@/components/shared/level-icon";
 import { LiveProgressBar } from "@/components/shared/live-progress-bar";
-import { EarningsCalculator } from "@/components/partner/earnings-calculator";
+import dynamic from "next/dynamic";
+
+// Lazy + ssr:false — компонент использует WebGL/MeshGradient, что может ломаться в Telegram WebView
+const EarningsCalculator = dynamic(
+  () => import("@/components/partner/earnings-calculator").then((m) => m.EarningsCalculator),
+  { ssr: false, loading: () => null }
+);
 
 interface MeData {
   partner: { partner_id: string; name: string; is_founding: boolean };
