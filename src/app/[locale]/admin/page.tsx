@@ -77,9 +77,13 @@ const requestStatusLabels: Record<string, { label: string; color: string }> = {
   review: { label: "На рассмотрении", color: "bg-yellow-500/10 text-yellow-500" },
   estimate: { label: "Оценка отправлена", color: "bg-purple-500/10 text-purple-500" },
   progress: { label: "В работе", color: "bg-brand-500/10 text-brand-500" },
+  in_progress: { label: "В работе", color: "bg-brand-500/10 text-brand-500" },
   completed: { label: "Завершена", color: "bg-green-500/10 text-green-500" },
+  won: { label: "Закрыта (won)", color: "bg-green-500/10 text-green-500" },
+  lost: { label: "Потеряна", color: "bg-red-500/10 text-red-500" },
   closed: { label: "Закрыта", color: "bg-text-muted/10 text-text-muted" },
 };
+const FALLBACK_STATUS = { label: "—", color: "bg-text-muted/10 text-text-muted" };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -304,7 +308,7 @@ export default function AdminDashboard() {
           ) : (
             <div className="space-y-2">
               {requests.slice(0, 5).map((req) => {
-                const status = requestStatusLabels[req.status || "new"];
+                const status = requestStatusLabels[req.status || "new"] || FALLBACK_STATUS;
                 return (
                   <div
                     key={req.request_id}
