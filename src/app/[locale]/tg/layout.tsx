@@ -9,6 +9,7 @@ import {
   Wallet,
   Network,
   Trophy,
+  BookOpen,
 } from "lucide-react";
 
 interface TelegramWebApp {
@@ -19,8 +20,17 @@ interface TelegramWebApp {
   close: () => void;
   themeParams?: Record<string, string>;
   colorScheme?: "light" | "dark";
+  platform?: string;
+  version?: string;
+  isExpanded?: boolean;
+  viewportHeight?: number;
+  viewportStableHeight?: number;
+  contentSafeAreaInset?: { top: number; bottom: number; left: number; right: number };
+  safeAreaInset?: { top: number; bottom: number; left: number; right: number };
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
+  disableVerticalSwipes?: () => void;
+  requestFullscreen?: () => void;
   BackButton?: { show: () => void; hide: () => void; onClick: (cb: () => void) => void };
 }
 
@@ -31,11 +41,12 @@ declare global {
 }
 
 const tgNavItems = [
-  { href: "/tg/dashboard", label: "Дашборд", icon: LayoutDashboard },
+  { href: "/tg/dashboard", label: "Главная", icon: LayoutDashboard },
   { href: "/tg/projects", label: "Проекты", icon: FolderKanban },
   { href: "/tg/network", label: "Сеть", icon: Network },
   { href: "/tg/payouts", label: "Выплаты", icon: Wallet },
   { href: "/tg/achievements", label: "Уровни", icon: Trophy },
+  { href: "/tg/knowledge", label: "Знания", icon: BookOpen },
 ];
 
 type AuthStatus = "loading" | "ok" | "not_linked" | "error";
@@ -85,6 +96,22 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
 
     tg.ready();
     tg.expand();
+    // Запрашиваем fullscreen где доступен (Bot API 8.0+) — иначе TG-кнопки накрывают контент
+    try { tg.requestFullscreen?.(); } catch {}
+    try { tg.disableVerticalSwipes?.(); } catch {}
+
+    // Прокидываем safe-area insets в CSS-переменные (Bot API 8.0+)
+    const applyInsets = () => {
+      const top = tg.contentSafeAreaInset?.top ?? tg.safeAreaInset?.top ?? 0;
+      const bottom = tg.contentSafeAreaInset?.bottom ?? tg.safeAreaInset?.bottom ?? 0;
+      // Минимальный отступ сверху на старых клиентах где safe-area не приходит
+      const fallbackTop = !tg.isExpanded || (tg.platform && /android|ios/i.test(tg.platform)) ? 8 : 0;
+      document.documentElement.style.setProperty("--tg-safe-top", `${Math.max(top, fallbackTop)}px`);
+      document.documentElement.style.setProperty("--tg-safe-bottom", `${bottom}px`);
+    };
+    applyInsets();
+    window.addEventListener("resize", applyInsets);
+
     setTgUser(tg.initDataUnsafe?.user || null);
 
     if (!tg.initData) {
@@ -175,10 +202,22 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {status === "ok" && (
-        <div className="min-h-[100dvh] bg-bg-primary flex flex-col">
-          <main className="flex-1 pb-20">{children}</main>
+        <div
+          className="min-h-[100dvh] bg-bg-primary flex flex-col"
+          style={{
+            paddingTop: "var(--tg-safe-top, env(safe-area-inset-top, 0px))",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          <main className="flex-1 pb-24">{children}</main>
 
-          <nav className="fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur-md border-t border-border-faint flex items-stretch h-16">
+          <nav
+            className="fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur-md border-t border-border-faint flex items-stretch"
+            style={{
+              paddingBottom: "var(--tg-safe-bottom, 0px)",
+              minHeight: "calc(64px + var(--tg-safe-bottom, 0px))",
+            }}
+          >
             {tgNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               const Icon = item.icon;
@@ -186,12 +225,12 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
                 <button
                   key={item.href}
                   onClick={() => router.push(item.href as never)}
-                  className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+                  className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 px-1 transition-colors ${
                     isActive ? "text-brand-500" : "text-text-muted"
                   }`}
                 >
-                  <Icon className="w-5 h-5" strokeWidth={isActive ? 2.4 : 2} />
-                  <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                  <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive ? 2.4 : 2} />
+                  <span className="text-[9px] font-medium leading-none truncate max-w-full">{item.label}</span>
                 </button>
               );
             })}

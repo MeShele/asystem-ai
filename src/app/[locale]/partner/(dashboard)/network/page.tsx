@@ -94,7 +94,7 @@ export default function PartnerNetworkPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
         <div className="flex items-center gap-2 mb-1">
@@ -124,15 +124,15 @@ export default function PartnerNetworkPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             value={refLink}
             readOnly
-            className="flex-1 px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg font-mono text-text-secondary"
+            className="min-w-0 flex-1 px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg font-mono text-text-secondary truncate"
           />
           <button
             onClick={copy}
-            className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors flex items-center gap-1.5"
+            className="shrink-0 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
           >
             {copied ? <CheckCheck className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? "Скопировано" : "Копировать"}

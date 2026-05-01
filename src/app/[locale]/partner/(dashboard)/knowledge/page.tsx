@@ -89,7 +89,7 @@ export default function PartnerKnowledgePage() {
   const rest = docs.filter((d) => !d.pinned);
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <div className="flex items-center gap-2 mb-1">

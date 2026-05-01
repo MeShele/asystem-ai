@@ -135,6 +135,23 @@ html { font-feature-settings: "cv11"; }
     color: var(--color-brand-600);
   }
 
+  /* Тонкий скроллбар для горизонтальных списков (TMA, фильтры) */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-border, #e5e5e5);
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   .fc-container {
     max-width: 1200px;
     margin: 0 auto;

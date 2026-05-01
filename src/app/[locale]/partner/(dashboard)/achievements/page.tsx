@@ -167,7 +167,7 @@ export default function PartnerAchievementsPage() {
   const retentionRemain = Math.max(0, 3 - acceptanceStats.dealsLast60Days);
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
       {/* Header — компактный */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
         <div className="flex items-center gap-2 mb-1">
@@ -292,7 +292,7 @@ export default function PartnerAchievementsPage() {
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">Лестница уровней</h3>
           <span className="text-[11px] text-text-muted font-mono">L1 → L5 · больше сделок = выше %</span>
         </div>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="flex sm:grid sm:grid-cols-5 gap-2 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scrollbar-thin">
           {levels.map((lvl) => {
             const isCurrent = lvl.level === currentLevel;
             const isPassed = lvl.level < currentLevel;
@@ -300,7 +300,7 @@ export default function PartnerAchievementsPage() {
             return (
               <div
                 key={lvl.level}
-                className={`relative p-3 rounded-xl border text-center transition-all ${
+                className={`relative shrink-0 w-[28%] min-w-[120px] sm:w-auto sm:min-w-0 snap-start p-3 rounded-xl border text-center transition-all ${
                   isCurrent
                     ? "border-brand-500 bg-brand-500/[0.06] shadow-md shadow-brand-500/10"
                     : isPassed
