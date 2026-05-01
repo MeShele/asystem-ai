@@ -381,12 +381,21 @@ export async function initProjectTables() {
   }
   await db`CREATE INDEX IF NOT EXISTS idx_clients_partner ON clients(partner_id, status)`;
 
-  // asystem_requests.assigned_partner_id (lazy) — для распределения входящих заявок
+  // asystem_requests.assigned_partner_id + lead_status + partner_note (lazy)
   const reqExists = await db`SELECT 1 FROM information_schema.tables WHERE table_name = 'asystem_requests'`;
   if (reqExists.length > 0) {
     const reqCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'asystem_requests' AND column_name = 'assigned_partner_id'`;
     if (reqCol.length === 0) {
       await getPool().query(`ALTER TABLE asystem_requests ADD COLUMN assigned_partner_id TEXT`);
+    }
+    const leadStatusCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'asystem_requests' AND column_name = 'lead_status'`;
+    if (leadStatusCol.length === 0) {
+      // new | contacted | qualified | won | lost
+      await getPool().query(`ALTER TABLE asystem_requests ADD COLUMN lead_status TEXT DEFAULT 'new'`);
+    }
+    const partnerNoteCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'asystem_requests' AND column_name = 'partner_note'`;
+    if (partnerNoteCol.length === 0) {
+      await getPool().query(`ALTER TABLE asystem_requests ADD COLUMN partner_note TEXT`);
     }
   }
 

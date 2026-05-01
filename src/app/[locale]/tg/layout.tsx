@@ -10,6 +10,7 @@ import {
   Network,
   Trophy,
   BookOpen,
+  Inbox,
 } from "lucide-react";
 
 interface TelegramWebApp {
@@ -42,6 +43,7 @@ declare global {
 
 const tgNavItems = [
   { href: "/tg/dashboard", label: "Главная", icon: LayoutDashboard },
+  { href: "/tg/leads", label: "Лиды", icon: Inbox },
   { href: "/tg/projects", label: "Проекты", icon: FolderKanban },
   { href: "/tg/network", label: "Сеть", icon: Network },
   { href: "/tg/payouts", label: "Выплаты", icon: Wallet },

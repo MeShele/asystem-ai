@@ -13,6 +13,7 @@ import {
   BookOpen,
   Wallet,
   Network,
+  Inbox,
   Menu,
   X,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { href: "/partner/dashboard" as const, label: "Дашборд", icon: LayoutDashboard },
+  { href: "/partner/leads" as const, label: "Лиды", icon: Inbox },
   { href: "/partner/projects" as const, label: "Проекты", icon: FolderKanban },
   { href: "/partner/network" as const, label: "Мои партнёры", icon: Network },
   { href: "/partner/payouts" as const, label: "Выплаты", icon: Wallet },
