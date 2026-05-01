@@ -78,12 +78,13 @@ export async function PATCH(
 
   // Снимок состояния ДО апдейта — нужен чтобы понимать "впервые привязали партнёра / подтвердили контракт"
   const beforeRows = (await db`
-    SELECT partner_id, contract_signed_at, total_price, partner_commission_percent
+    SELECT partner_id, contract_signed_at, total_price, partner_commission_percent, status, client_id, name
     FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1
   `) as Record<string, unknown>[];
   const before = beforeRows[0] || {};
   const hadPartner = Boolean(before.partner_id);
   const hadContract = Boolean(before.contract_signed_at);
+  const oldStatus = before.status ? String(before.status) : null;
 
   if ("name" in data) {
     await db`UPDATE projects SET name = ${String(data.name)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
@@ -108,6 +109,28 @@ export async function PATCH(
   }
   if ("status" in data) {
     await db`UPDATE projects SET status = ${String(data.status)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
+  }
+
+  // Если статус действительно изменился — уведомляем клиента
+  if ("status" in data && oldStatus !== String(data.status)) {
+    const newStatus = String(data.status);
+    const STATUS_RU: Record<string, string> = {
+      planning: "Планирование", active: "В работе", review: "На проверке",
+      completed: "Готов", paused: "Пауза", cancelled: "Отменён",
+    };
+    const statusRu = STATUS_RU[newStatus] || newStatus;
+    const projName = String(before.name || "");
+    const clientId = before.client_id ? String(before.client_id) : null;
+    if (clientId) {
+      await notify({
+        userRole: "client", userId: clientId,
+        kind: "project_status_changed",
+        title: `Статус проекта обновлён: ${statusRu}`,
+        body: `«${projName}» → ${statusRu}`,
+        link: `/client/projects/${id}`,
+        payload: { projectId: id, status: newStatus },
+      });
+    }
   }
   if ("developers" in data) {
     await db`UPDATE projects SET developers = ${JSON.stringify(data.developers)}::jsonb, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;

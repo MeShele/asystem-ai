@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, initPartnerTables } from "@/lib/db";
+import { getDb, initPartnerTables, initProjectTables } from "@/lib/db";
 import { validateTelegramWebAppData } from "@/lib/telegram-auth";
 
 type Row = Record<string, unknown>;
 
 /**
- * POST { initData: string } — валидирует Telegram WebApp initData,
- * находит партнёра по telegram_id, ставит partner_session cookie.
+ * POST { initData: string } — валидирует Telegram WebApp initData.
+ * Сначала ищет партнёра, потом клиента, ставит соответствующую cookie.
  *
- * Если партнёр не найден — возвращает 404 с linked=false.
- * Mini App при этом покажет экран «Доступ закрыт» с ссылкой на сайт.
+ * Если ни тот, ни другой не привязан — 404.
  */
 export async function POST(req: NextRequest) {
   await initPartnerTables();
+  await initProjectTables();
   const db = getDb();
 
-  // Берём bot token из app_settings или env
   const settingsRow = (await db`SELECT value FROM app_settings WHERE key = 'telegram_bot_token' LIMIT 1`) as Row[];
   const botToken = String(settingsRow[0]?.value || process.env.TELEGRAM_BOT_TOKEN || "");
   if (!botToken) {
@@ -34,36 +33,53 @@ export async function POST(req: NextRequest) {
 
   const tgId = String(validation.user.id);
 
-  // Ищем партнёра по telegram_id
-  const rows = (await db`
+  // 1. Партнёр?
+  const partnerRows = (await db`
     SELECT partner_id, name, ref_code FROM partners WHERE telegram_id = ${tgId} LIMIT 1
   `) as Row[];
-
-  if (rows.length === 0) {
-    return NextResponse.json(
-      {
-        linked: false,
-        telegram_user: validation.user,
-        message: "Аккаунт не привязан к Telegram. Привяжите Telegram в настройках на сайте.",
-      },
-      { status: 404 }
-    );
+  if (partnerRows.length > 0) {
+    const partner = partnerRows[0];
+    const partnerId = String(partner.partner_id);
+    const res = NextResponse.json({
+      linked: true,
+      role: "partner",
+      partner: { partner_id: partnerId, name: partner.name, ref_code: partner.ref_code },
+    });
+    res.cookies.set("partner_session", partnerId, {
+      httpOnly: true, secure: true, sameSite: "none",
+      maxAge: 60 * 60 * 24 * 7, path: "/",
+    });
+    // Чистим клиентскую куку на случай если юзер раньше был клиентом
+    res.cookies.set("client_session", "", { maxAge: 0, path: "/" });
+    return res;
   }
 
-  const partner = rows[0];
-  const partnerId = String(partner.partner_id);
+  // 2. Клиент?
+  const clientRows = (await db`
+    SELECT client_id, name, email FROM clients WHERE telegram_id = ${tgId} LIMIT 1
+  `) as Row[];
+  if (clientRows.length > 0) {
+    const client = clientRows[0];
+    const clientId = String(client.client_id);
+    const res = NextResponse.json({
+      linked: true,
+      role: "client",
+      client: { client_id: clientId, name: client.name, email: client.email },
+    });
+    res.cookies.set("client_session", clientId, {
+      httpOnly: true, secure: true, sameSite: "none",
+      maxAge: 60 * 60 * 24 * 30, path: "/",
+    });
+    res.cookies.set("partner_session", "", { maxAge: 0, path: "/" });
+    return res;
+  }
 
-  const res = NextResponse.json({
-    linked: true,
-    partner: { partner_id: partnerId, name: partner.name, ref_code: partner.ref_code },
-  });
-  // 7-day cookie для Telegram Mini App. Не httpOnly — JS внутри Mini App может его прочитать (но это не нужно, всё через API)
-  res.cookies.set("partner_session", partnerId, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none", // важно для iframe-Mini App в Telegram
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
-  return res;
+  return NextResponse.json(
+    {
+      linked: false,
+      telegram_user: validation.user,
+      message: "Аккаунт не привязан к Telegram. Зарегистрируйтесь на сайте и привяжите Telegram в кабинете.",
+    },
+    { status: 404 }
+  );
 }

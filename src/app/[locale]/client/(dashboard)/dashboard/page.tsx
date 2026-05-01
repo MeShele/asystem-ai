@@ -5,6 +5,7 @@ import { useRouter } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import { FolderKanban, Clock, CheckCircle2, Wallet } from "lucide-react";
 import { ProjectCard, type ProjectCardData } from "@/components/shared/project-card";
+import { ClientTelegramBind } from "@/components/shared/client-telegram-bind";
 
 export default function ClientDashboardPage() {
   const router = useRouter();
@@ -41,7 +42,8 @@ export default function ClientDashboardPage() {
   const completed = projects.filter((p) => p.status === "completed").length;
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
+      <ClientTelegramBind />
       <motion.div
         className="mb-6 rounded-2xl border border-brand-500/20 bg-gradient-to-r from-brand-500/[0.06] to-brand-700/[0.04] p-6 lg:p-8"
         initial={{ opacity: 0, y: 15 }}

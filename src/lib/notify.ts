@@ -118,12 +118,17 @@ export async function notify(args: NotifyArgs): Promise<void> {
       )
     `;
 
-    // Telegram-уведомления только для партнёров с привязанным telegram_id
+    // Telegram-уведомления для партнёров и клиентов с привязанным telegram_id
     if (args.userRole === "partner") {
       const rows = (await db`SELECT telegram_id FROM partners WHERE partner_id = ${args.userId} LIMIT 1`) as Row[];
       const tgId = rows[0]?.telegram_id ? String(rows[0].telegram_id) : null;
       if (tgId) {
-        // Не блокируем основной flow — fire-and-forget
+        sendTelegramMessage(tgId, args.title, args.body ?? null, args.link ?? null).catch(() => {});
+      }
+    } else if (args.userRole === "client") {
+      const rows = (await db`SELECT telegram_id FROM clients WHERE client_id = ${args.userId} LIMIT 1`) as Row[];
+      const tgId = rows[0]?.telegram_id ? String(rows[0].telegram_id) : null;
+      if (tgId) {
         sendTelegramMessage(tgId, args.title, args.body ?? null, args.link ?? null).catch(() => {});
       }
     }

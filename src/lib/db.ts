@@ -308,6 +308,13 @@ export async function initProjectTables() {
     password_hash TEXT,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+  // Lazy ALTER: добавляем telegram_id и telegram_username для клиентов
+  const clientTgIdCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = 'telegram_id'`;
+  if (clientTgIdCol.length === 0) {
+    await getPool().query(`ALTER TABLE clients ADD COLUMN telegram_id TEXT`);
+    await getPool().query(`ALTER TABLE clients ADD COLUMN telegram_username TEXT`);
+    await getPool().query(`CREATE INDEX IF NOT EXISTS idx_clients_telegram_id ON clients(telegram_id)`);
+  }
 
   await db`CREATE TABLE IF NOT EXISTS project_comments (
     id SERIAL PRIMARY KEY,
@@ -324,17 +331,24 @@ export async function initProjectTables() {
     await getPool().query(`ALTER TABLE projects ADD COLUMN client_id TEXT`);
   }
 
-  // Telegram pairing codes — для привязки telegram_id к partner_id
+  // Telegram pairing codes — для привязки telegram_id к partner_id ИЛИ client_id
   await db`CREATE TABLE IF NOT EXISTS telegram_pairing_codes (
     id SERIAL PRIMARY KEY,
     code TEXT UNIQUE NOT NULL,
-    partner_id TEXT NOT NULL,
+    partner_id TEXT,
     expires_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+  // Lazy ALTER: разрешаем NULL в partner_id и добавляем client_id
+  const tpcClientCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'telegram_pairing_codes' AND column_name = 'client_id'`;
+  if (tpcClientCol.length === 0) {
+    await getPool().query(`ALTER TABLE telegram_pairing_codes ALTER COLUMN partner_id DROP NOT NULL`);
+    await getPool().query(`ALTER TABLE telegram_pairing_codes ADD COLUMN client_id TEXT`);
+  }
   await db`CREATE INDEX IF NOT EXISTS idx_pairing_code ON telegram_pairing_codes(code)`;
   await db`CREATE INDEX IF NOT EXISTS idx_pairing_partner ON telegram_pairing_codes(partner_id, expires_at DESC)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_pairing_client ON telegram_pairing_codes(client_id, expires_at DESC)`;
 
   // Notifications — единая шина уведомлений для партнёров/клиентов/админа
   await db`CREATE TABLE IF NOT EXISTS notifications (

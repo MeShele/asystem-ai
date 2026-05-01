@@ -11,6 +11,8 @@ import {
   Trophy,
   BookOpen,
   Inbox,
+  Bell,
+  MessageSquare,
 } from "lucide-react";
 
 interface TelegramWebApp {
@@ -41,7 +43,7 @@ declare global {
   }
 }
 
-const tgNavItems = [
+const partnerNavItems = [
   { href: "/tg/dashboard", label: "Главная", icon: LayoutDashboard },
   { href: "/tg/leads", label: "Лиды", icon: Inbox },
   { href: "/tg/projects", label: "Проекты", icon: FolderKanban },
@@ -51,11 +53,19 @@ const tgNavItems = [
   { href: "/tg/knowledge", label: "Знания", icon: BookOpen },
 ];
 
+const clientNavItems = [
+  { href: "/tg/client/dashboard", label: "Главная", icon: LayoutDashboard },
+  { href: "/tg/client/projects", label: "Проекты", icon: FolderKanban },
+  { href: "/tg/client/notifications", label: "Уведомления", icon: Bell },
+];
+
 type AuthStatus = "loading" | "ok" | "not_linked" | "error";
+type Role = "partner" | "client" | null;
 
 export default function TmaLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [role, setRole] = useState<Role>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [tgUser, setTgUser] = useState<{ first_name?: string } | null>(null);
@@ -129,9 +139,12 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
     })
       .then(async (r) => {
         if (r.ok) {
+          const data = await r.json().catch(() => ({}));
+          const detectedRole: Role = data.role === "client" ? "client" : "partner";
+          setRole(detectedRole);
           setStatus("ok");
           if (pathname === "/tg" || pathname === "/tg/") {
-            router.replace("/tg/dashboard");
+            router.replace(detectedRole === "client" ? "/tg/client/dashboard" : "/tg/dashboard");
           }
         } else if (r.status === 404) {
           setStatus("not_linked");
@@ -220,7 +233,7 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
               minHeight: "calc(64px + var(--tg-safe-bottom, 0px))",
             }}
           >
-            {tgNavItems.map((item) => {
+            {(role === "client" ? clientNavItems : partnerNavItems).map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               const Icon = item.icon;
               return (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initProjectTables } from "@/lib/db";
+import { notify } from "@/lib/notify";
 
 export async function GET(
   req: NextRequest,
@@ -45,5 +46,20 @@ export async function POST(
     VALUES (${id}, ${nextOrder}, ${title}, ${Number(data.percent || 0)}, ${data.comment ?? null}, ${Boolean(data.completed)})
     RETURNING *
   `;
+
+  // Notify client if linked
+  const proj = (await db`SELECT name, client_id FROM projects WHERE project_id = ${id} LIMIT 1`) as Record<string, unknown>[];
+  if (proj.length > 0 && proj[0].client_id) {
+    await notify({
+      userRole: "client",
+      userId: String(proj[0].client_id),
+      kind: "stage_updated",
+      title: `Новый этап в проекте`,
+      body: `«${proj[0].name || ""}» → ${title}${data.percent ? ` (${data.percent}%)` : ""}`,
+      link: `/client/projects/${id}`,
+      payload: { projectId: id, stageId: inserted[0].id, title },
+    });
+  }
+
   return NextResponse.json(inserted[0]);
 }

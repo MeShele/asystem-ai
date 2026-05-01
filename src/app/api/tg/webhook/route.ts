@@ -97,19 +97,25 @@ export async function POST(req: NextRequest) {
   }
 
   if (text === "/start") {
-    // Уже привязан?
-    const linked = (await db`SELECT name FROM partners WHERE telegram_id = ${String(tgUserId)} LIMIT 1`) as Row[];
-    if (linked.length > 0) {
+    const linkedPartner = (await db`SELECT name FROM partners WHERE telegram_id = ${String(tgUserId)} LIMIT 1`) as Row[];
+    const linkedClient = (await db`SELECT name FROM clients WHERE telegram_id = ${String(tgUserId)} LIMIT 1`) as Row[];
+    if (linkedPartner.length > 0) {
       await sendMessage(
         token,
         chatId,
-        `👋 Привет, <b>${linked[0].name}</b>!\n\nТвой аккаунт привязан. Открой кабинет через кнопку <b>🚀 Кабинет</b> внизу или жми /cabinet`
+        `👋 Привет, <b>${linkedPartner[0].name}</b>!\n\nПартнёрский кабинет привязан. Открой через кнопку <b>🚀 Кабинет</b> внизу или /cabinet`
+      );
+    } else if (linkedClient.length > 0) {
+      await sendMessage(
+        token,
+        chatId,
+        `👋 Привет, <b>${linkedClient[0].name}</b>!\n\nКлиентский кабинет привязан. Здесь будешь получать обновления по своему проекту. Открой через кнопку <b>🚀 Кабинет</b> внизу или /cabinet`
       );
     } else {
       await sendMessage(
         token,
         chatId,
-        `👋 Привет, ${tgFirstName}!\n\nЯ — бот ASystem партнёрской программы. Чтобы привязать аккаунт:\n\n1. Зарегистрируйся на сайте\n2. В настройках жми «Привязать Telegram»\n3. Перейди по ссылке которую покажет сайт\n\nКогда привяжешь — я буду присылать уведомления о проектах, выплатах и комментариях.`
+        `👋 Привет, ${tgFirstName}!\n\nЯ — бот ASystem AI. Чтобы привязать аккаунт:\n\n1. Зарегистрируйся на сайте (как клиент или партнёр)\n2. В кабинете жми «Привязать Telegram»\n3. Перейди по ссылке которую покажет сайт\n\nПосле привязки буду слать уведомления по проекту, статусам и комментариям.`
       );
     }
     return NextResponse.json({ ok: true });
@@ -125,13 +131,19 @@ export async function POST(req: NextRequest) {
   }
 
   if (text === "/unlink") {
-    const result = await db`
+    const partnerUnlinked = (await db`
       UPDATE partners SET telegram_id = NULL, telegram_username = NULL
       WHERE telegram_id = ${String(tgUserId)}
       RETURNING name
-    ` as Row[];
-    if (result.length > 0) {
-      await sendMessage(token, chatId, `✅ Аккаунт <b>${result[0].name}</b> отвязан. Уведомления больше не приходят.\nЧтобы привязать снова — заходи в настройки на сайте.`);
+    `) as Row[];
+    const clientUnlinked = (await db`
+      UPDATE clients SET telegram_id = NULL, telegram_username = NULL
+      WHERE telegram_id = ${String(tgUserId)}
+      RETURNING name
+    `) as Row[];
+    const names = [...partnerUnlinked, ...clientUnlinked].map((r) => r.name).join(", ");
+    if (names) {
+      await sendMessage(token, chatId, `✅ Отвязано: <b>${names}</b>. Уведомления больше не приходят.\nЧтобы привязать снова — зайди в кабинет на сайте.`);
     } else {
       await sendMessage(token, chatId, `Этот Telegram не привязан ни к одному аккаунту.`);
     }
@@ -158,66 +170,90 @@ async function handleStartCode(
 ) {
   const db = getDb();
 
-  // Найти валидный код
   const codes = (await db`
-    SELECT id, partner_id, expires_at, used_at FROM telegram_pairing_codes WHERE code = ${code} LIMIT 1
+    SELECT id, partner_id, client_id, expires_at, used_at FROM telegram_pairing_codes WHERE code = ${code} LIMIT 1
   `) as Row[];
 
   if (codes.length === 0) {
-    await sendMessage(token, chatId, `❌ Код не найден или истёк.\n\nЗайди в настройки на сайте → «Привязать Telegram» → получишь свежий код.`);
+    await sendMessage(token, chatId, `❌ Код не найден или истёк.\n\nЗайди в кабинет на сайте → «Привязать Telegram» → получишь свежий код.`);
     return NextResponse.json({ ok: true });
   }
 
   const codeRow = codes[0];
   if (codeRow.used_at) {
-    await sendMessage(token, chatId, `❌ Этот код уже использован.\n\nСгенерируй новый в настройках.`);
+    await sendMessage(token, chatId, `❌ Этот код уже использован.\n\nСгенерируй новый в кабинете.`);
     return NextResponse.json({ ok: true });
   }
 
   if (new Date(codeRow.expires_at as string).getTime() < Date.now()) {
-    await sendMessage(token, chatId, `⏰ Код истёк (живёт 10 минут).\n\nСгенерируй новый в настройках.`);
+    await sendMessage(token, chatId, `⏰ Код истёк (живёт 10 минут).\n\nСгенерируй новый в кабинете.`);
     return NextResponse.json({ ok: true });
   }
 
-  const partnerId = String(codeRow.partner_id);
+  const tgIdStr = String(tgUserId);
+  const isClientCode = !!codeRow.client_id;
+  const isPartnerCode = !!codeRow.partner_id;
 
-  // Проверить что telegram_id ещё не привязан к другому партнёру
-  const conflict = (await db`
-    SELECT partner_id, name FROM partners WHERE telegram_id = ${String(tgUserId)} AND partner_id != ${partnerId} LIMIT 1
-  `) as Row[];
-  if (conflict.length > 0) {
+  if (isClientCode) {
+    const clientId = String(codeRow.client_id);
+    const conflict = (await db`
+      SELECT client_id, name FROM clients WHERE telegram_id = ${tgIdStr} AND client_id != ${clientId} LIMIT 1
+    `) as Row[];
+    if (conflict.length > 0) {
+      await sendMessage(token, chatId, `⚠️ Этот Telegram уже привязан к другому клиенту: <b>${conflict[0].name}</b>. Отправь /unlink.`);
+      return NextResponse.json({ ok: true });
+    }
+    const clientRows = (await db`
+      UPDATE clients SET telegram_id = ${tgIdStr}, telegram_username = ${tgUsername}
+      WHERE client_id = ${clientId}
+      RETURNING name
+    `) as Row[];
+    if (clientRows.length === 0) {
+      await sendMessage(token, chatId, `❌ Клиент не найден. Обратись в поддержку.`);
+      return NextResponse.json({ ok: true });
+    }
+    await db`UPDATE telegram_pairing_codes SET used_at = NOW() WHERE id = ${codeRow.id}`;
     await sendMessage(
       token,
       chatId,
-      `⚠️ Этот Telegram уже привязан к другому аккаунту: <b>${conflict[0].name}</b>.\n\nЕсли это ошибка — отправь /unlink или обратись к админу.`
+      `✅ <b>Кабинет клиента привязан!</b>\n\n${tgFirstName}, аккаунт <b>${clientRows[0].name}</b> теперь связан с Telegram.\n\nТы будешь получать уведомления:\n• о новых этапах работы\n• о смене статуса проекта\n• о комментариях команды\n• о готовности результата\n\nКабинет открывается через кнопку <b>🚀 Кабинет</b> внизу. Если её нет — закрой и открой чат заново.`
     );
     return NextResponse.json({ ok: true });
   }
 
-  // Привязать
-  const partnerRows = (await db`
-    UPDATE partners
-    SET telegram_id = ${String(tgUserId)},
-        telegram_username = ${tgUsername}
-    WHERE partner_id = ${partnerId}
-    RETURNING name
-  `) as Row[];
-
-  if (partnerRows.length === 0) {
-    await sendMessage(token, chatId, `❌ Партнёр не найден. Обратись к админу.`);
+  if (isPartnerCode) {
+    const partnerId = String(codeRow.partner_id);
+    const conflict = (await db`
+      SELECT partner_id, name FROM partners WHERE telegram_id = ${tgIdStr} AND partner_id != ${partnerId} LIMIT 1
+    `) as Row[];
+    if (conflict.length > 0) {
+      await sendMessage(
+        token,
+        chatId,
+        `⚠️ Этот Telegram уже привязан к другому аккаунту: <b>${conflict[0].name}</b>. Отправь /unlink или обратись к админу.`
+      );
+      return NextResponse.json({ ok: true });
+    }
+    const partnerRows = (await db`
+      UPDATE partners SET telegram_id = ${tgIdStr}, telegram_username = ${tgUsername}
+      WHERE partner_id = ${partnerId}
+      RETURNING name
+    `) as Row[];
+    if (partnerRows.length === 0) {
+      await sendMessage(token, chatId, `❌ Партнёр не найден. Обратись к админу.`);
+      return NextResponse.json({ ok: true });
+    }
+    await db`UPDATE telegram_pairing_codes SET used_at = NOW() WHERE id = ${codeRow.id}`;
+    const partnerName = String(partnerRows[0].name || "");
+    await sendMessage(
+      token,
+      chatId,
+      `✅ <b>Партнёрский кабинет привязан!</b>\n\n${tgFirstName}, аккаунт <b>${partnerName}</b> теперь связан с Telegram.\n\nУведомления:\n• новые проекты и комиссии\n• выплаты (одобрено/отклонено)\n• комментарии по проектам\n• повышение уровня и достижения\n• приглашённые sub-партнёры\n\nКабинет — через кнопку <b>🚀 Кабинет</b> внизу. Если её нет — закрой и открой чат заново.`
+    );
     return NextResponse.json({ ok: true });
   }
 
-  // Пометить код использованным
-  await db`UPDATE telegram_pairing_codes SET used_at = NOW() WHERE id = ${codeRow.id}`;
-
-  const partnerName = String(partnerRows[0].name || "");
-  await sendMessage(
-    token,
-    chatId,
-    `✅ <b>Аккаунт привязан!</b>\n\n${tgFirstName}, твой аккаунт <b>${partnerName}</b> теперь связан с этим Telegram.\n\nТы будешь получать уведомления о:\n• новых проектах и комиссиях\n• выплатах (одобрено/отклонено)\n• новых комментариях по проектам\n• повышении уровня и достижениях\n• приглашённых sub-партнёрах\n\nКабинет открывается через кнопку <b>🚀 Кабинет</b> внизу. Если её нет — закрой и открой чат заново.`
-  );
-
+  await sendMessage(token, chatId, `❌ Код повреждён (не привязан ни к клиенту, ни к партнёру). Сгенерируй новый.`);
   return NextResponse.json({ ok: true });
 }
 

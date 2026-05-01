@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   await initProjectTables();
 
   const rows = (await db`
-    SELECT client_id, name, email, phone, created_at FROM clients WHERE client_id = ${clientId} LIMIT 1
+    SELECT client_id, name, email, phone, telegram_id, telegram_username, created_at FROM clients WHERE client_id = ${clientId} LIMIT 1
   `) as Record<string, unknown>[];
   if (rows.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
 
