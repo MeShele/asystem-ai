@@ -38,12 +38,13 @@ interface PartnerLite {
   level?: number;
 }
 
+// Единая модель статусов — те же значения и порядок что в TMA партнёра (/tg/leads)
 const columns = [
   { id: "new", label: "Новые", color: "bg-blue-500", emoji: "📥" },
-  { id: "review", label: "На рассмотрении", color: "bg-yellow-500", emoji: "👀" },
-  { id: "estimate", label: "Оценка", color: "bg-purple-500", emoji: "💰" },
-  { id: "progress", label: "В работе", color: "bg-brand-500", emoji: "⚙️" },
-  { id: "completed", label: "Готово", color: "bg-green-500", emoji: "✅" },
+  { id: "contacted", label: "Связались", color: "bg-amber-500", emoji: "📞" },
+  { id: "qualified", label: "Готова к сделке", color: "bg-purple-500", emoji: "🎯" },
+  { id: "won", label: "Закрыта", color: "bg-green-500", emoji: "✅" },
+  { id: "lost", label: "Потеряна", color: "bg-red-500", emoji: "❌" },
 ];
 
 const serviceLabels: Record<string, { label: string; icon: string }> = {

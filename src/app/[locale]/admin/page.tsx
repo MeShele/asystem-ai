@@ -72,16 +72,13 @@ const projectStatusMeta: Record<string, { label: string; color: string; bar: str
   cancelled: { label: "Отменён", color: "text-red-500", bar: "bg-red-500" },
 };
 
+// Единая модель — те же 5 статусов что и в TMA партнёра
 const requestStatusLabels: Record<string, { label: string; color: string }> = {
   new: { label: "Новая", color: "bg-blue-500/10 text-blue-500" },
-  review: { label: "На рассмотрении", color: "bg-yellow-500/10 text-yellow-500" },
-  estimate: { label: "Оценка отправлена", color: "bg-purple-500/10 text-purple-500" },
-  progress: { label: "В работе", color: "bg-brand-500/10 text-brand-500" },
-  in_progress: { label: "В работе", color: "bg-brand-500/10 text-brand-500" },
-  completed: { label: "Завершена", color: "bg-green-500/10 text-green-500" },
-  won: { label: "Закрыта (won)", color: "bg-green-500/10 text-green-500" },
+  contacted: { label: "Связались", color: "bg-amber-500/10 text-amber-500" },
+  qualified: { label: "Готова к сделке", color: "bg-purple-500/10 text-purple-500" },
+  won: { label: "Закрыта", color: "bg-green-500/10 text-green-500" },
   lost: { label: "Потеряна", color: "bg-red-500/10 text-red-500" },
-  closed: { label: "Закрыта", color: "bg-text-muted/10 text-text-muted" },
 };
 const FALLBACK_STATUS = { label: "—", color: "bg-text-muted/10 text-text-muted" };
 
