@@ -66,6 +66,9 @@ export default function AdminPartnerDetailPage({
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwdSaving, setPwdSaving] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -160,6 +163,28 @@ export default function AdminPartnerDetailPage({
     await navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const changePassword = async () => {
+    if (newPassword.length < 6) {
+      alert("Пароль должен быть не короче 6 символов");
+      return;
+    }
+    if (!confirm(`Установить новый пароль для «${partner?.name}»?`)) return;
+    setPwdSaving(true);
+    const res = await fetch(`/api/admin/partners/${partnerId}/password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    setPwdSaving(false);
+    if (res.ok) {
+      alert("Пароль обновлён. Передайте его партнёру.");
+      setNewPassword("");
+    } else {
+      const e = await res.json().catch(() => ({}));
+      alert(e.error || "Не удалось обновить пароль");
+    }
   };
 
   if (loading) {
@@ -271,6 +296,36 @@ export default function AdminPartnerDetailPage({
                 onChange={(e) => setForm({ ...form, company: e.target.value })}
                 className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
               />
+            </Field>
+            <Field label="Сменить пароль">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showPwd ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Минимум 6 символов"
+                    autoComplete="new-password"
+                    className="w-full px-3 py-2 pr-9 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-text-muted hover:text-text-primary"
+                  >
+                    {showPwd ? "Скрыть" : "Показать"}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={changePassword}
+                  disabled={pwdSaving || newPassword.length < 6}
+                  className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  {pwdSaving ? "..." : "Сохранить"}
+                </button>
+              </div>
+              <p className="text-[11px] text-text-muted mt-1">Новый пароль перезапишет старый. Передайте его партнёру вручную.</p>
             </Field>
           </div>
         </Section>
