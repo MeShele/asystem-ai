@@ -6,6 +6,10 @@ const ClientProjectDetail = dynamic(
   { ssr: false }
 );
 
-export default function TgClientProjectDetail() {
-  return <ClientProjectDetail />;
+export default function TgClientProjectDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return <ClientProjectDetail params={params} />;
 }
