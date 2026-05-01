@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Building, Percent, MessageCircle, Send, ExternalLink, CheckCircle2, Copy, CheckCheck, Bell, Sparkles, RefreshCw } from "lucide-react";
+import { User, Mail, Phone, Building, Percent, MessageCircle, Send, ExternalLink, CheckCircle2, Copy, CheckCheck, Bell, Sparkles, RefreshCw, KeyRound } from "lucide-react";
 import type { Partner } from "@/types/partner";
 
 export default function PartnerSettingsPage() {
@@ -18,6 +18,13 @@ export default function PartnerSettingsPage() {
   const [copied, setCopied] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Password change state
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMessage, setPwdMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showPwd, setShowPwd] = useState(false);
 
   const loadMe = useCallback(() => {
     return fetch("/api/partner/me")
@@ -171,6 +178,88 @@ export default function PartnerSettingsPage() {
         <p className="text-xs text-text-muted mt-4">
           ID: {partner.partner_id} · Ref: {partner.ref_code}
         </p>
+      </motion.div>
+
+      {/* Смена пароля */}
+      <motion.div
+        className="rounded-xl border border-border-faint bg-surface p-5 lg:p-6 mb-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <KeyRound className="w-5 h-5 text-brand-500" />
+          <h2 className="text-base font-semibold">Сменить пароль</h2>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-text-muted mb-1 block">Текущий пароль</label>
+            <input
+              type={showPwd ? "text" : "password"}
+              value={currentPwd}
+              onChange={(e) => setCurrentPwd(e.target.value)}
+              autoComplete="current-password"
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-text-muted mb-1 block">Новый пароль (минимум 6 символов)</label>
+            <div className="relative">
+              <input
+                type={showPwd ? "text" : "password"}
+                value={newPwd}
+                onChange={(e) => setNewPwd(e.target.value)}
+                autoComplete="new-password"
+                className="w-full px-3 py-2 pr-20 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-text-muted hover:text-text-primary px-2"
+              >
+                {showPwd ? "Скрыть" : "Показать"}
+              </button>
+            </div>
+          </div>
+          {pwdMessage && (
+            <div className={`text-xs px-3 py-2 rounded-lg ${pwdMessage.type === "success" ? "bg-green-500/10 text-green-700" : "bg-red-500/10 text-red-700"}`}>
+              {pwdMessage.text}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              setPwdMessage(null);
+              if (newPwd.length < 6) {
+                setPwdMessage({ type: "error", text: "Новый пароль не короче 6 символов" });
+                return;
+              }
+              if (currentPwd === newPwd) {
+                setPwdMessage({ type: "error", text: "Новый пароль должен отличаться от старого" });
+                return;
+              }
+              setPwdLoading(true);
+              const res = await fetch("/api/partner/password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ current_password: currentPwd, new_password: newPwd }),
+              });
+              setPwdLoading(false);
+              if (res.ok) {
+                setPwdMessage({ type: "success", text: "Пароль обновлён" });
+                setCurrentPwd("");
+                setNewPwd("");
+              } else {
+                const e = await res.json().catch(() => ({}));
+                setPwdMessage({ type: "error", text: e.error || "Не удалось обновить пароль" });
+              }
+            }}
+            disabled={pwdLoading || !currentPwd || newPwd.length < 6}
+            className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {pwdLoading ? "Сохранение..." : "Обновить пароль"}
+          </button>
+        </div>
       </motion.div>
 
       {/* Telegram integration */}
