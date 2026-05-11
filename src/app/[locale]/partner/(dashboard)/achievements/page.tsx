@@ -88,7 +88,7 @@ function nextStepHint(stats: AcceptanceStats, currentLevel: number): { action: s
     return need > 0
       ? {
           emphasis: `${need} ${need === 1 ? "сделка" : need < 5 ? "сделки" : "сделок"} за 90 дней`,
-          action: "до уровня L2 «Активный» — 20% базы вместо 15%",
+          action: "до уровня L2 «Активный» — 14% базы вместо 10%",
         }
       : { emphasis: "Условие выполнено", action: "уровень обновится при следующем входе" };
   }
@@ -97,7 +97,7 @@ function nextStepHint(stats: AcceptanceStats, currentLevel: number): { action: s
       const need = 5 - stats.totalDeals;
       return {
         emphasis: `${need} ${need === 1 ? "сделка" : "сделок"} или 1 проект $30K+`,
-        action: "до L3 «Эксклюзив» — 25% базы + ниша становится твоей",
+        action: "до L3 «Эксклюзив» — 19% базы + ниша становится твоей",
       };
     }
     return { emphasis: "Условие выполнено", action: "L3 откроется при следующем входе" };
@@ -108,7 +108,7 @@ function nextStepHint(stats: AcceptanceStats, currentLevel: number): { action: s
     if (dealsRemain > 0 && revRemain > 0) {
       return {
         emphasis: `${dealsRemain} ${dealsRemain === 1 ? "сделка" : "сделок"} за полгода или ещё $${revRemain.toLocaleString("ru-RU")} выручки`,
-        action: "до L4 «Лидер ниши» — 30% базы",
+        action: "до L4 «Лидер ниши» — 24% базы",
       };
     }
     return { emphasis: "Условие выполнено", action: "L4 откроется при следующем входе" };
@@ -118,7 +118,7 @@ function nextStepHint(stats: AcceptanceStats, currentLevel: number): { action: s
     const revRemain = Math.max(0, 200_000 - stats.totalRevenue);
     return {
       emphasis: `${dealsRemain} ${dealsRemain === 1 ? "сделка" : "сделок"} или ещё $${revRemain.toLocaleString("ru-RU")} выручки`,
-      action: "до L5 «Стратегический» — 40% базы и приватные апдейты",
+      action: "до L5 «Стратегический» — 30% базы и приватные апдейты",
     };
   }
   return null;

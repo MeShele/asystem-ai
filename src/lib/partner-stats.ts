@@ -131,7 +131,7 @@ export async function bumpPartnerActivity(partnerId: string) {
 export async function recomputeSingleProjectCommission(projectId: string) {
   const db = getDb();
   const rows = (await db`
-    SELECT p.partner_id, p.delivered_in_30_days, p.has_retention_bonus, p.has_churn_penalty,
+    SELECT p.partner_id, p.total_price, p.delivered_in_30_days, p.has_retention_bonus, p.has_churn_penalty,
            pt.level, pt.is_founding
     FROM projects p
     LEFT JOIN partners pt ON pt.partner_id = p.partner_id
@@ -145,6 +145,7 @@ export async function recomputeSingleProjectCommission(projectId: string) {
     deliveredIn30Days: Boolean(rows[0].delivered_in_30_days),
     hasRetentionBonus: Boolean(rows[0].has_retention_bonus),
     hasChurnPenalty: Boolean(rows[0].has_churn_penalty),
+    projectAmount: Number(rows[0].total_price || 0),
   });
   await db`UPDATE projects SET partner_commission_percent = ${calc.total}, updated_at = NOW() WHERE project_id = ${projectId}`;
 }

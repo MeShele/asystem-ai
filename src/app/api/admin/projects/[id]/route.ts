@@ -57,6 +57,7 @@ export async function GET(
         deliveredIn30Days: Boolean(project.delivered_in_30_days),
         hasRetentionBonus: Boolean(project.has_retention_bonus),
         hasChurnPenalty: Boolean(project.has_churn_penalty),
+        projectAmount: Number(project.total_price || 0),
       });
     }
   }

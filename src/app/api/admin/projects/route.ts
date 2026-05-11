@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
         deliveredIn30Days: Boolean(data.delivered_in_30_days),
         hasRetentionBonus,
         hasChurnPenalty: Boolean(data.has_churn_penalty),
+        projectAmount: totalPrice,
       });
       partnerCommissionPercent = calc.total;
     }

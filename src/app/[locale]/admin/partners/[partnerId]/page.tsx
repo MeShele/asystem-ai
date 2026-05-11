@@ -351,11 +351,11 @@ export default function AdminPartnerDetailPage({
                 onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}
                 className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
               >
-                <option value={1}>L1 🌱 Введённый — 15%</option>
-                <option value={2}>L2 🚀 Активный — 20%</option>
-                <option value={3}>L3 ⭐ Эксклюзив — 25%</option>
-                <option value={4}>L4 🏆 Лидер ниши — 30%</option>
-                <option value={5}>L5 👑 Стратегический — 40%</option>
+                <option value={1}>L1 🌱 Введённый — 10%</option>
+                <option value={2}>L2 🚀 Активный — 14%</option>
+                <option value={3}>L3 ⭐ Эксклюзив — 19%</option>
+                <option value={4}>L4 🏆 Лидер ниши — 24%</option>
+                <option value={5}>L5 👑 Стратегический — 30%</option>
               </select>
               <p className="text-[11px] text-text-muted mt-1">
                 Авто-расчёт по acceptance работает при изменении проектов. Здесь можно вручную повысить/понизить.

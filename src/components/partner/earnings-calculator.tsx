@@ -105,14 +105,24 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
   }, [hydrated, partnerId, amount, selectedLevel, fast, retention, founding]);
 
   const meta = useMemo(() => levels.find((l) => l.level === selectedLevel) || levels[0], [levels, selectedLevel]);
-  const base = meta?.base_pct ?? 15;
+  const base = meta?.base_pct ?? 10;
 
   const bonuses: { label: string; pct: number }[] = [];
   if (founding) bonuses.push({ label: "Founding partner", pct: 5 });
   if (retention) bonuses.push({ label: "Retention (3 сделки/60 дн)", pct: 5 });
   if (fast) bonuses.push({ label: "Быстрая сдача (<30 дн)", pct: 10 });
   const bonusSum = bonuses.reduce((s, b) => s + b.pct, 0);
-  const totalPct = Math.max(0, base + bonusSum);
+  const preDecayPct = Math.max(0, base + bonusSum);
+
+  // Tier-decay по сумме проекта
+  const tierBand = useMemo(() => {
+    if (amount <= 5_000) return { multiplier: 1.0, label: "до $5K — полная ставка", short: "×1.0" };
+    if (amount <= 20_000) return { multiplier: 0.8, label: "$5K – $20K", short: "×0.8" };
+    if (amount <= 50_000) return { multiplier: 0.65, label: "$20K – $50K", short: "×0.65" };
+    return { multiplier: 0.5, label: "$50K+", short: "×0.5" };
+  }, [amount]);
+
+  const totalPct = Math.round(preDecayPct * tierBand.multiplier * 100) / 100;
   const earnings = (amount * totalPct) / 100;
 
   const reset = () => {
@@ -379,6 +389,13 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                       {bonuses.map((b) => (
                         <Row key={b.label} label={b.label} value={`+${b.pct}%`} accent />
                       ))}
+                      {tierBand.multiplier < 1 && (
+                        <Row
+                          label={`Tier-decay (${tierBand.label})`}
+                          value={tierBand.short}
+                          accent
+                        />
+                      )}
                       <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/20">
                         <span className="text-xs uppercase opacity-80 tracking-wider">Итого</span>
                         <span className="font-mono font-bold text-lg">{totalPct}%</span>
@@ -520,11 +537,19 @@ function BonusToggle({
   );
 }
 
+function tierMul(amount: number): number {
+  if (amount <= 5_000) return 1.0;
+  if (amount <= 20_000) return 0.8;
+  if (amount <= 50_000) return 0.65;
+  return 0.5;
+}
+
 function calcDelta(amount: number, levels: TierLevel[], currentLvl: number, bonusSum: number): number {
   const cur = levels.find((l) => l.level === currentLvl);
   const next = levels.find((l) => l.level === currentLvl + 1);
   if (!cur || !next) return 0;
-  const curEarn = (amount * (cur.base_pct + bonusSum)) / 100;
-  const nextEarn = (amount * (next.base_pct + bonusSum)) / 100;
+  const mul = tierMul(amount);
+  const curEarn = (amount * (cur.base_pct + bonusSum) * mul) / 100;
+  const nextEarn = (amount * (next.base_pct + bonusSum) * mul) / 100;
   return Math.max(0, Math.round(nextEarn - curEarn));
 }

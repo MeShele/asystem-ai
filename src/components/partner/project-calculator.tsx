@@ -197,7 +197,10 @@ function PartnerMarkup({ basePrice }: { basePrice: number }) {
   const [retailPrice, setRetailPrice] = useState(Math.round(basePrice * 1.3));
   const clampedRetail = Math.max(retailPrice, basePrice);
 
-  const commission = Math.round(basePrice * 0.15);
+  // Базовая ставка L1 = 10%, далее tier-decay по сумме
+  const tierMul = basePrice <= 5_000 ? 1.0 : basePrice <= 20_000 ? 0.8 : basePrice <= 50_000 ? 0.65 : 0.5;
+  const effectivePct = 10 * tierMul;
+  const commission = Math.round((basePrice * effectivePct) / 100);
   const markup = clampedRetail - basePrice;
   const partnerMarkupShare = Math.round(markup * 0.5);
   const partnerTotal = commission + partnerMarkupShare;
@@ -236,7 +239,7 @@ function PartnerMarkup({ basePrice }: { basePrice: number }) {
       {/* Breakdown */}
       <div className="space-y-1.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-text-secondary">Комиссия 15%</span>
+          <span className="text-text-secondary">Комиссия L1 ({effectivePct}%)</span>
           <span className="text-green-600 dark:text-green-400 font-medium">+${commission.toLocaleString()}</span>
         </div>
         {markup > 0 && (

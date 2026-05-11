@@ -1,4 +1,5 @@
-// Partner level system: L1 (15%) → L5 (40%)
+// Partner level system: L1 (10%) → L5 (30%)
+// + tier-decay по сумме проекта (большие сделки урезаются мягко)
 // Acceptance: deal = project with contract_signed_at IS NOT NULL
 
 export const LEVELS = [
@@ -6,7 +7,7 @@ export const LEVELS = [
     level: 1,
     title: "Введённый",
     icon: "🌱",
-    base_pct: 15,
+    base_pct: 10,
     color: "blue",
     requirement: "Соглашение + 1 introduction",
   },
@@ -14,7 +15,7 @@ export const LEVELS = [
     level: 2,
     title: "Активный",
     icon: "🚀",
-    base_pct: 20,
+    base_pct: 14,
     color: "brand",
     requirement: "2 сделки за 90 дней",
   },
@@ -22,7 +23,7 @@ export const LEVELS = [
     level: 3,
     title: "Эксклюзив",
     icon: "⭐",
-    base_pct: 25,
+    base_pct: 19,
     color: "purple",
     requirement: "5 сделок ИЛИ T2-проект ($30K+) ИЛИ ниша-эксклюзив",
   },
@@ -30,7 +31,7 @@ export const LEVELS = [
     level: 4,
     title: "Лидер ниши",
     icon: "🏆",
-    base_pct: 30,
+    base_pct: 24,
     color: "amber",
     requirement: "10 сделок за 6 мес ИЛИ $50K+ выручки",
   },
@@ -38,11 +39,39 @@ export const LEVELS = [
     level: 5,
     title: "Стратегический",
     icon: "👑",
-    base_pct: 40,
+    base_pct: 30,
     color: "gold",
     requirement: "20+ сделок ИЛИ $200K+",
   },
 ] as const;
+
+/**
+ * Tier-decay по сумме проекта.
+ * Мелкие сделки — полная ставка. На крупных % мягко падает, но абсолютный $$ всё равно растёт.
+ *
+ * Применяется к ИТОГОВОМУ % (база + множители), не только к базе.
+ * Формула: total × multiplier(amount)
+ */
+export const TIER_BANDS = [
+  { maxAmount: 5_000, multiplier: 1.0, label: "до $5K — полная ставка" },
+  { maxAmount: 20_000, multiplier: 0.8, label: "$5K – $20K — ×0.8" },
+  { maxAmount: 50_000, multiplier: 0.65, label: "$20K – $50K — ×0.65" },
+  { maxAmount: Infinity, multiplier: 0.5, label: "$50K+ — ×0.5" },
+] as const;
+
+export function tierDecayMultiplier(amount: number): number {
+  for (const band of TIER_BANDS) {
+    if (amount <= band.maxAmount) return band.multiplier;
+  }
+  return TIER_BANDS[TIER_BANDS.length - 1].multiplier;
+}
+
+export function tierBandFor(amount: number): typeof TIER_BANDS[number] {
+  for (const band of TIER_BANDS) {
+    if (amount <= band.maxAmount) return band;
+  }
+  return TIER_BANDS[TIER_BANDS.length - 1];
+}
 
 export const MILESTONE_REWARDS = [
   { threshold: 5000, reward: 500, key: "5k", title: "Первая пятёрка", icon: "🎯" },
@@ -111,9 +140,12 @@ export function nextLevel(level: number): typeof LEVELS[number] | null {
 
 /**
  * Compute effective commission % for a project.
- * Formula: base(level) + multipliers + founding_bonus
+ * Formula: (base(level) + multipliers + founding_bonus) × tier_decay(amount)
  * Multipliers: +5% retention, +10% fast (<30d), -5% churn
  * Founding: +5% lifetime
+ * Tier decay: 1.0 / 0.8 / 0.65 / 0.5 по сумме проекта
+ *
+ * Если projectAmount не передан — decay не применяется (для UI-карточек уровней).
  */
 export function computeCommissionPct({
   level,
@@ -121,13 +153,21 @@ export function computeCommissionPct({
   deliveredIn30Days,
   hasRetentionBonus,
   hasChurnPenalty,
+  projectAmount,
 }: {
   level: number;
   isFounding: boolean;
   deliveredIn30Days: boolean;
   hasRetentionBonus: boolean;
   hasChurnPenalty: boolean;
-}): { base: number; bonuses: { label: string; pct: number }[]; total: number } {
+  projectAmount?: number;
+}): {
+  base: number;
+  bonuses: { label: string; pct: number }[];
+  preDecayTotal: number;
+  tierMultiplier: number;
+  total: number;
+} {
   const meta = levelMeta(level);
   const base = meta.base_pct;
   const bonuses: { label: string; pct: number }[] = [];
@@ -135,8 +175,12 @@ export function computeCommissionPct({
   if (hasRetentionBonus) bonuses.push({ label: "Retention 12 мес", pct: 5 });
   if (deliveredIn30Days) bonuses.push({ label: "Быстрая сдача (<30 дней)", pct: 10 });
   if (hasChurnPenalty) bonuses.push({ label: "Churn penalty (60 дн неактивности)", pct: -5 });
-  const total = Math.max(0, base + bonuses.reduce((s, b) => s + b.pct, 0));
-  return { base, bonuses, total };
+  const preDecayTotal = Math.max(0, base + bonuses.reduce((s, b) => s + b.pct, 0));
+  const tierMultiplier = typeof projectAmount === "number" && projectAmount > 0
+    ? tierDecayMultiplier(projectAmount)
+    : 1;
+  const total = Math.round((preDecayTotal * tierMultiplier) * 100) / 100;
+  return { base, bonuses, preDecayTotal, tierMultiplier, total };
 }
 
 /**

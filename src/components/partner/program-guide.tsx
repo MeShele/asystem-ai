@@ -185,8 +185,8 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
 
           <div className="mt-4 p-3 rounded-lg bg-green-500/[0.04] border border-green-500/20">
             <p className="text-xs text-green-700 leading-relaxed">
-              <strong>Пример:</strong> L3 (25%) + Founding (+5%) + Retention (+5%) + Быстрая сделка (+10%) ={" "}
-              <strong>итого 45%</strong> комиссии с проекта.
+              <strong>Пример:</strong> L3 (19%) + Founding (+5%) + Retention (+5%) + Быстрая сделка (+10%) ={" "}
+              <strong>39%</strong> до tier-decay. На проекте $5K — это 39%, на проекте $20K — ×0.8 = <strong>31.2%</strong>, на $50K — ×0.65 = <strong>25.3%</strong>.
             </p>
           </div>
         </Section>
@@ -210,7 +210,7 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
                 <ul className="text-xs text-text-secondary space-y-1.5 leading-relaxed">
                   <li className="flex items-start gap-2">
                     <span className="text-red-500 mt-1">•</span>
-                    <span>L3 (25%) → L2 (20%) — потеря 5% к будущим проектам</span>
+                    <span>L3 (19%) → L2 (14%) — потеря 5% к будущим проектам</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-red-500 mt-1">•</span>
@@ -299,13 +299,13 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  <strong className="text-text-primary">Вася не теряет ни цента.</strong> Его комиссия (15% / 20% / 25% и т.д.) идёт ему полностью. Override приходит <strong>дополнительно от студии</strong>.
+                  <strong className="text-text-primary">Вася не теряет ни цента.</strong> Его комиссия (10% / 14% / 19% и т.д. — после tier-decay) идёт ему полностью. Override приходит <strong>дополнительно от студии</strong>.
                 </p>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  <strong className="text-text-primary">У Васи такие же 15-40% что и у тебя.</strong> Sub-partner — не «партнёр второго сорта». Он проходит ту же лестницу L1-L5 и получает те же множители (Founding, Retention, Быстрая сделка). Никаких «тебе 15%, ему 12%».
+                  <strong className="text-text-primary">У Васи такие же 10-30% что и у тебя.</strong> Sub-partner — не «партнёр второго сорта». Он проходит ту же лестницу L1-L5 и получает те же множители (Founding, Retention, Быстрая сделка) и tier-decay по чеку. Никаких «тебе 10%, ему 8%».
                 </p>
               </div>
               <div className="flex items-start gap-2">
@@ -333,11 +333,12 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
                   <div className="text-right">Тебе с $40K</div>
                 </div>
                 {[
-                  { lvl: 1, title: "L1 Введённый", subPct: 15, overridePct: 3, you: 180 },
-                  { lvl: 2, title: "L2 Активный", subPct: 20, overridePct: 4, you: 320 },
-                  { lvl: 3, title: "L3 Эксклюзив", subPct: 25, overridePct: 5, you: 500 },
-                  { lvl: 4, title: "L4 Лидер ниши", subPct: 30, overridePct: 6, you: 720 },
-                  { lvl: 5, title: "L5 Стратегический", subPct: 40, overridePct: 8, you: 1280 },
+                  // Расчёт на проект $40K (tier-decay × 0.65). База после decay × overridePct/100
+                  { lvl: 1, title: "L1 Введённый", subPct: 10, overridePct: 3, you: 78 },
+                  { lvl: 2, title: "L2 Активный", subPct: 14, overridePct: 4, you: 146 },
+                  { lvl: 3, title: "L3 Эксклюзив", subPct: 19, overridePct: 5, you: 247 },
+                  { lvl: 4, title: "L4 Лидер ниши", subPct: 24, overridePct: 6, you: 374 },
+                  { lvl: 5, title: "L5 Стратегический", subPct: 30, overridePct: 8, you: 624 },
                 ].map((r) => (
                   <div key={r.lvl} className="grid grid-cols-[1.4fr_1fr_1fr_1fr] px-3 py-2 text-xs border-t border-border-faint">
                     <div className="text-text-secondary truncate">{r.title}</div>
@@ -348,7 +349,7 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
                 ))}
               </div>
               <p className="text-[11px] text-text-muted leading-relaxed mt-2">
-                <strong className="text-purple-600">Тебе выгодно чтобы Вася рос</strong> — твой override растёт вместе с его уровнем. Помоги ему дойти до L3 — и с каждой его сделки на $40K тебе будет капать $500 вместо $180.
+                <strong className="text-purple-600">Тебе выгодно чтобы Вася рос</strong> — твой override растёт вместе с его уровнем. Помоги ему дойти до L3 — и с каждой его сделки на $40K тебе будет капать $247 вместо $78.
               </p>
             </div>
 
@@ -364,7 +365,7 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
               </p>
 
               <div className="text-[11px] font-semibold text-text-secondary mb-2">
-                Один и тот же проект $40K · Вася на L3 (override = 5%):
+                Один и тот же проект $20K · Вася на L3 (override = 5%) · tier-decay ×0.8:
               </div>
               <div className="rounded-lg border border-border-faint overflow-hidden bg-surface">
                 <div className="grid grid-cols-[1.6fr_1fr_1fr] px-3 py-2 bg-bg-secondary/40 text-[10px] uppercase tracking-wider text-text-muted font-semibold">
@@ -373,11 +374,11 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
                   <div className="text-right">Тебе</div>
                 </div>
                 {[
-                  { label: "Базовая L3", subPct: 25, vasya: 10000, you: 500 },
-                  { label: "+ Founding", subPct: 30, vasya: 12000, you: 600 },
-                  { label: "+ Retention", subPct: 35, vasya: 14000, you: 700 },
-                  { label: "+ Быстрая сдача", subPct: 45, vasya: 18000, you: 900 },
-                  { label: "Все три бонуса", subPct: 55, vasya: 22000, you: 1100, highlight: true },
+                  // pre-decay → effective%×0.8 → Васе × $20K → override 5% от Васи
+                  { label: "Базовая L3 (19%)", subPct: 15.2, vasya: 3040, you: 152 },
+                  { label: "+ Founding (24%)", subPct: 19.2, vasya: 3840, you: 192 },
+                  { label: "+ Retention (29%)", subPct: 23.2, vasya: 4640, you: 232 },
+                  { label: "+ Быстрая сдача (39%)", subPct: 31.2, vasya: 6240, you: 312, highlight: true },
                 ].map((r, i) => (
                   <div
                     key={i}
@@ -386,7 +387,7 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
                     }`}
                   >
                     <div className="text-text-secondary">
-                      {r.label} <span className="text-text-muted font-mono">({r.subPct}%)</span>
+                      {r.label} <span className="text-text-muted font-mono">→ {r.subPct.toFixed(1)}%</span>
                     </div>
                     <div className="text-right font-mono text-text-muted">${r.vasya.toLocaleString("ru-RU")}</div>
                     <div className={`text-right font-mono font-bold ${r.highlight ? "text-purple-600" : "text-purple-500"}`}>
