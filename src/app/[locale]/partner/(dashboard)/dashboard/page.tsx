@@ -171,7 +171,7 @@ export default function PartnerDashboardPage() {
               L{currentMeta.level} · {currentMeta.title}
             </span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-500 text-xs font-bold">
-              база {currentMeta.base_pct}%
+              {baseCommission.total}% комиссия
             </span>
             {partner.is_founding && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-semibold">
