@@ -139,7 +139,7 @@ export async function initProjectTables() {
     progress_percent INT DEFAULT 0,
     status TEXT DEFAULT 'planning',
     developers JSONB DEFAULT '[]'::jsonb,
-    partner_commission_percent INT DEFAULT 0,
+    partner_commission_percent NUMERIC(5,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
@@ -442,7 +442,16 @@ export async function initProjectTables() {
   // Lazy migration: ensure partner_commission_percent column exists on legacy DBs
   await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'partner_commission_percent'`.then(async (rows) => {
     if (rows.length === 0) {
-      await getPool().query(`ALTER TABLE projects ADD COLUMN partner_commission_percent INT DEFAULT 0`);
+      await getPool().query(`ALTER TABLE projects ADD COLUMN partner_commission_percent NUMERIC(5,2) DEFAULT 0`);
     }
   });
+
+  // Lazy migration: переводим INT → NUMERIC(5,2) для tier-decay дробных процентов
+  const colType = await db`
+    SELECT data_type FROM information_schema.columns
+    WHERE table_name = 'projects' AND column_name = 'partner_commission_percent' LIMIT 1
+  `;
+  if (colType.length > 0 && colType[0].data_type === "integer") {
+    await getPool().query(`ALTER TABLE projects ALTER COLUMN partner_commission_percent TYPE NUMERIC(5,2)`);
+  }
 }
