@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "@/i18n/navigation";
 import { Search, UserPlus, Mail, Phone, RefreshCcw, Link as LinkIcon } from "lucide-react";
 import { InviteModal } from "@/components/shared/invite-modal";
+import { levelMeta } from "@/lib/partner-levels";
 
 interface Partner {
   partner_id: string;
@@ -229,7 +230,11 @@ export default function PartnersPage() {
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="font-bold text-sm">{Math.round(Number(partner.commission_rate) * 100)}%</div>
+                      <div className="font-bold text-sm">{(() => {
+                        const meta = levelMeta(Number(partner.level || 1));
+                        const founding = partner.is_founding ? 5 : 0;
+                        return meta.base_pct + founding;
+                      })()}%</div>
                       <div className="text-text-muted">комиссия</div>
                     </div>
                   </div>
