@@ -608,7 +608,7 @@ export default function AdminProjectDetailPage({
         </div>
         <div className="mt-3 p-3 rounded-lg bg-bg-secondary/40 border border-border-faint/60">
           <p className="text-[11px] text-text-muted leading-relaxed">
-            <span className="font-semibold text-text-secondary">Штраф −5%</span> за неактивность партнёра применяется автоматически через понижение уровня (60+ дней без сделок → уровень −1). Отдельного флага на проекте не нужно.
+            <span className="font-semibold text-text-secondary">Штраф за неактивность</span> применяется автоматически через понижение уровня (60+ дней без сделок → уровень −1). Это вычитает 4-5% от базы автоматически — отдельного %-штрафа нет.
           </p>
         </div>
       </Section>

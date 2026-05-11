@@ -90,7 +90,7 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
           icon={Award}
           tone="brand"
           title="Лестница уровней L1 → L5"
-          subtitle="Базовая ставка комиссии — от 15% до 40%. Поднимается автоматически по результатам"
+          subtitle="Базовая ставка комиссии — от 10% до 30%. Поднимается автоматически по результатам"
           isOpen={expanded === "levels"}
           onToggle={() => setExpanded(expanded === "levels" ? null : "levels")}
         >
@@ -278,18 +278,18 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="p-3 rounded-lg bg-surface border border-border-faint">
                   <div className="text-[10px] uppercase tracking-wider text-text-muted">Вася получает</div>
-                  <div className="text-lg font-bold font-mono text-green-600">$6 000</div>
-                  <div className="text-[11px] text-text-muted mt-0.5">15% × $40K — обычная L1-комиссия</div>
+                  <div className="text-lg font-bold font-mono text-green-600">$2 600</div>
+                  <div className="text-[11px] text-text-muted mt-0.5">10% × $40K × 0.65 (tier-decay) — обычная L1-комиссия</div>
                 </div>
                 <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
                   <div className="text-[10px] uppercase tracking-wider text-purple-500">Ты получаешь</div>
-                  <div className="text-lg font-bold font-mono text-purple-600">+$180</div>
-                  <div className="text-[11px] text-text-muted mt-0.5">3% × $6K — override от студии</div>
+                  <div className="text-lg font-bold font-mono text-purple-600">+$78</div>
+                  <div className="text-[11px] text-text-muted mt-0.5">3% × $2.6K — override от студии</div>
                 </div>
                 <div className="p-3 rounded-lg bg-surface border border-border-faint">
                   <div className="text-[10px] uppercase tracking-wider text-text-muted">Студия платит</div>
-                  <div className="text-lg font-bold font-mono">$6 180</div>
-                  <div className="text-[11px] text-text-muted mt-0.5">$6 000 Васе + $180 тебе</div>
+                  <div className="text-lg font-bold font-mono">$2 678</div>
+                  <div className="text-[11px] text-text-muted mt-0.5">$2 600 Васе + $78 тебе</div>
                 </div>
               </div>
             </div>
@@ -422,13 +422,14 @@ export function ProgramGuide({ levels, currentLevel, isFounding, stats }: Props)
           <div>
             <div className="text-sm font-semibold mb-1">Два пути к максимуму</div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              <strong>1) Сам.</strong> Растёшь по уровням → база с 15% до 40%. Закрываешь быстро (&lt;30 дней) → +10%.
-              Держишь ритм 3 сделки за 60 дней → +5% retention. На L5 с активными множителями реальная комиссия
-              достигает <strong>50–55%</strong> с проекта.
+              <strong>1) Сам.</strong> Растёшь по уровням → база с 10% до 30%. Закрываешь быстро (&lt;30 дней) → +10%.
+              Держишь ритм 3 сделки за 60 дней → +5% retention. На L5 с активными множителями реальная комиссия —
+              до <strong>50%</strong> на мелких сделках (до $5K) и <strong>25–32%</strong> на крупных
+              (за счёт tier-decay по чеку).
               <br />
               <br />
               <strong>2) Через сеть.</strong> Приглашаешь партнёров через реф-ссылку → получаешь override 3-8% от их комиссии.
-              5 активных sub-partners на L3 со средней сделкой $40K = ещё <strong>$2 500/мес</strong> сверху без твоего участия.
+              5 активных sub-partners на L3 со средней сделкой $40K = ещё <strong>~$1 200/мес</strong> сверху без твоего участия.
             </p>
           </div>
         </div>

@@ -171,7 +171,7 @@ export default function PartnerDashboardPage() {
               L{currentMeta.level} · {currentMeta.title}
             </span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-500 text-xs font-bold">
-              {baseCommission.total}% комиссия
+              база {currentMeta.base_pct}%
             </span>
             {partner.is_founding && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-semibold">
@@ -250,11 +250,11 @@ export default function PartnerDashboardPage() {
           },
           {
             label: "Уровень",
-            value: `${currentMeta.title} · ${baseCommission.total}%`,
+            value: `L${currentMeta.level} · ${currentMeta.title}`,
             icon: Trophy,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
-            sub: `L${currentMeta.level} · база ${currentMeta.base_pct}%`,
+            sub: `база ${currentMeta.base_pct}% + множители ${baseCommission.bonuses.reduce((s, b) => s + b.pct, 0) >= 0 ? "+" : ""}${baseCommission.bonuses.reduce((s, b) => s + b.pct, 0)}%`,
           },
         ].map((stat, i) => {
           const Icon = stat.icon;

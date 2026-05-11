@@ -141,9 +141,13 @@ export function nextLevel(level: number): typeof LEVELS[number] | null {
 /**
  * Compute effective commission % for a project.
  * Formula: (base(level) + multipliers + founding_bonus) × tier_decay(amount)
- * Multipliers: +5% retention, +10% fast (<30d), -5% churn
+ * Multipliers: +5% retention, +10% fast (<30d)
  * Founding: +5% lifetime
  * Tier decay: 1.0 / 0.8 / 0.65 / 0.5 по сумме проекта
+ *
+ * Штраф за неактивность реализован отдельно — через понижение уровня
+ * (enforceInactivityDowngrade). Старый флаг has_churn_penalty оставлен в схеме
+ * для backward compat, но в расчёт больше не входит.
  *
  * Если projectAmount не передан — decay не применяется (для UI-карточек уровней).
  */
@@ -152,14 +156,14 @@ export function computeCommissionPct({
   isFounding,
   deliveredIn30Days,
   hasRetentionBonus,
-  hasChurnPenalty,
   projectAmount,
 }: {
   level: number;
   isFounding: boolean;
   deliveredIn30Days: boolean;
   hasRetentionBonus: boolean;
-  hasChurnPenalty: boolean;
+  /** @deprecated — penalty теперь только через понижение уровня */
+  hasChurnPenalty?: boolean;
   projectAmount?: number;
 }): {
   base: number;
@@ -174,7 +178,6 @@ export function computeCommissionPct({
   if (isFounding) bonuses.push({ label: "Founding partner", pct: 5 });
   if (hasRetentionBonus) bonuses.push({ label: "Retention 12 мес", pct: 5 });
   if (deliveredIn30Days) bonuses.push({ label: "Быстрая сдача (<30 дней)", pct: 10 });
-  if (hasChurnPenalty) bonuses.push({ label: "Churn penalty (60 дн неактивности)", pct: -5 });
   const preDecayTotal = Math.max(0, base + bonuses.reduce((s, b) => s + b.pct, 0));
   const tierMultiplier = typeof projectAmount === "number" && projectAmount > 0
     ? tierDecayMultiplier(projectAmount)

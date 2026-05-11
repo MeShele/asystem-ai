@@ -201,7 +201,7 @@ export async function enforceInactivityDowngrade(partnerId: string): Promise<boo
 
   const newLevel = Math.max(1, level - 1);
   await db`UPDATE partners SET level = ${newLevel} WHERE partner_id = ${partnerId}`;
-  await db`INSERT INTO partner_level_history (partner_id, level, reason) VALUES (${partnerId}, ${newLevel}, ${`inactivity downgrade: ${days} дней без сделки, L${level} → L${newLevel} (−5%)`})`;
+  await db`INSERT INTO partner_level_history (partner_id, level, reason) VALUES (${partnerId}, ${newLevel}, ${`inactivity downgrade: ${days} дней без сделки, L${level} → L${newLevel}`})`;
   return true;
 }
 
