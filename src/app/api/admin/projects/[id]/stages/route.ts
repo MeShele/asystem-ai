@@ -47,18 +47,32 @@ export async function POST(
     RETURNING *
   `;
 
-  // Notify client if linked
-  const proj = (await db`SELECT name, client_id FROM projects WHERE project_id = ${id} LIMIT 1`) as Record<string, unknown>[];
-  if (proj.length > 0 && proj[0].client_id) {
-    await notify({
-      userRole: "client",
-      userId: String(proj[0].client_id),
-      kind: "stage_updated",
-      title: `Новый этап в проекте`,
-      body: `«${proj[0].name || ""}» → ${title}${data.percent ? ` (${data.percent}%)` : ""}`,
-      link: `/client/projects/${id}`,
-      payload: { projectId: id, stageId: inserted[0].id, title },
-    });
+  // Notify client AND partner if linked
+  const proj = (await db`SELECT name, client_id, partner_id FROM projects WHERE project_id = ${id} LIMIT 1`) as Record<string, unknown>[];
+  if (proj.length > 0) {
+    const body = `«${proj[0].name || ""}» → ${title}${data.percent ? ` (${data.percent}%)` : ""}`;
+    if (proj[0].client_id) {
+      await notify({
+        userRole: "client",
+        userId: String(proj[0].client_id),
+        kind: "stage_updated",
+        title: `Новый этап в проекте`,
+        body,
+        link: `/client/projects/${id}`,
+        payload: { projectId: id, stageId: inserted[0].id, title },
+      });
+    }
+    if (proj[0].partner_id) {
+      await notify({
+        userRole: "partner",
+        userId: String(proj[0].partner_id),
+        kind: "stage_updated",
+        title: `Новый этап в проекте`,
+        body,
+        link: `/partner/projects/${id}`,
+        payload: { projectId: id, stageId: inserted[0].id, title },
+      });
+    }
   }
 
   return NextResponse.json(inserted[0]);

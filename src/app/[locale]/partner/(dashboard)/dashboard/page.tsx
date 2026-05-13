@@ -187,6 +187,14 @@ export default function PartnerDashboardPage() {
               ? `До уровня ${nextMeta.icon} L${nextMeta.level} «${nextMeta.title}»: ${tierProgress.hint}`
               : "Вы достигли максимального уровня — L5 Стратегический 👑"}
           </p>
+          <div className="mt-3 inline-flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/[0.06] border border-amber-500/30 max-w-2xl">
+            <span className="text-amber-600 mt-0.5">⚠️</span>
+            <p className="text-[11px] text-amber-700 leading-relaxed">
+              <strong>{baseCommission.total}% — это максимум на чеке до $5K.</strong> На больших проектах процент мягко урезается:
+              <span className="font-mono">$5K–$20K ×0.8</span>, <span className="font-mono">$20K–$50K ×0.65</span>, <span className="font-mono">$50K+ ×0.5</span>.
+              Точный расчёт — в калькуляторе ниже.
+            </p>
+          </div>
         </div>
       </motion.div>
 

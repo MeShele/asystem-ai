@@ -382,6 +382,11 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                     </motion.div>
                     <div className="text-sm opacity-90 mt-1 mb-5">
                       {totalPct}% от ${amount.toLocaleString("ru-RU")}
+                      {tierBand.multiplier < 1 && (
+                        <span className="block text-[11px] opacity-75 mt-0.5">
+                          (теоретические {preDecayPct}% × {tierBand.short} tier-decay)
+                        </span>
+                      )}
                     </div>
 
                     <div className="space-y-1.5 pt-4 border-t border-white/20">
@@ -389,6 +394,10 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                       {bonuses.map((b) => (
                         <Row key={b.label} label={b.label} value={`+${b.pct}%`} accent />
                       ))}
+                      <div className="flex items-center justify-between pt-1 text-[11px] opacity-75">
+                        <span>До tier-decay</span>
+                        <span className="font-mono">{preDecayPct}%</span>
+                      </div>
                       {tierBand.multiplier < 1 && (
                         <Row
                           label={`Tier-decay (${tierBand.label})`}
@@ -397,7 +406,7 @@ export function EarningsCalculator({ levels, currentLevel, isFounding, retention
                         />
                       )}
                       <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/20">
-                        <span className="text-xs uppercase opacity-80 tracking-wider">Итого</span>
+                        <span className="text-xs uppercase opacity-80 tracking-wider">Реально к выплате</span>
                         <span className="font-mono font-bold text-lg">{totalPct}%</span>
                       </div>
                     </div>

@@ -79,13 +79,19 @@ export async function PATCH(
 
   // Снимок состояния ДО апдейта — нужен чтобы понимать "впервые привязали партнёра / подтвердили контракт"
   const beforeRows = (await db`
-    SELECT partner_id, contract_signed_at, total_price, partner_commission_percent, status, client_id, name
+    SELECT partner_id, contract_signed_at, total_price, paid_amount, progress_percent,
+           partner_commission_percent, status, client_id, name
     FROM projects WHERE project_id = ${id} OR id::text = ${id} LIMIT 1
   `) as Record<string, unknown>[];
   const before = beforeRows[0] || {};
   const hadPartner = Boolean(before.partner_id);
   const hadContract = Boolean(before.contract_signed_at);
   const oldStatus = before.status ? String(before.status) : null;
+  const oldProgress = Number(before.progress_percent || 0);
+  const oldPaid = Number(before.paid_amount || 0);
+  const oldPartnerId = before.partner_id ? String(before.partner_id) : null;
+  const oldClientId = before.client_id ? String(before.client_id) : null;
+  const projName = String(before.name || "");
 
   if ("name" in data) {
     await db`UPDATE projects SET name = ${String(data.name)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
@@ -112,7 +118,7 @@ export async function PATCH(
     await db`UPDATE projects SET status = ${String(data.status)}, updated_at = NOW() WHERE project_id = ${id} OR id::text = ${id}`;
   }
 
-  // Если статус действительно изменился — уведомляем клиента
+  // Если статус действительно изменился — уведомляем клиента и партнёра
   if ("status" in data && oldStatus !== String(data.status)) {
     const newStatus = String(data.status);
     const STATUS_RU: Record<string, string> = {
@@ -120,16 +126,88 @@ export async function PATCH(
       completed: "Готов", paused: "Пауза", cancelled: "Отменён",
     };
     const statusRu = STATUS_RU[newStatus] || newStatus;
-    const projName = String(before.name || "");
-    const clientId = before.client_id ? String(before.client_id) : null;
-    if (clientId) {
+    if (oldClientId) {
       await notify({
-        userRole: "client", userId: clientId,
+        userRole: "client", userId: oldClientId,
         kind: "project_status_changed",
         title: `Статус проекта обновлён: ${statusRu}`,
         body: `«${projName}» → ${statusRu}`,
         link: `/client/projects/${id}`,
         payload: { projectId: id, status: newStatus },
+      });
+    }
+    if (oldPartnerId) {
+      await notify({
+        userRole: "partner", userId: oldPartnerId,
+        kind: "project_status_changed",
+        title: `Статус проекта: ${statusRu}`,
+        body: `«${projName}» → ${statusRu}`,
+        link: `/partner/projects/${id}`,
+        payload: { projectId: id, status: newStatus },
+      });
+    }
+  }
+
+  // progress_percent изменился — уведомляем клиента и партнёра (только если изменение значимое ≥5%)
+  if ("progress_percent" in data) {
+    const newProgress = Number(data.progress_percent);
+    const delta = newProgress - oldProgress;
+    if (Math.abs(delta) >= 5) {
+      const arrow = delta > 0 ? "↑" : "↓";
+      if (oldClientId) {
+        await notify({
+          userRole: "client", userId: oldClientId,
+          kind: "stage_updated",
+          title: `Прогресс ${arrow} ${newProgress}%`,
+          body: `«${projName}» — было ${oldProgress}%, стало ${newProgress}%`,
+          link: `/client/projects/${id}`,
+          payload: { projectId: id, progress: newProgress },
+        });
+      }
+      if (oldPartnerId) {
+        await notify({
+          userRole: "partner", userId: oldPartnerId,
+          kind: "stage_updated",
+          title: `Прогресс ${arrow} ${newProgress}%`,
+          body: `«${projName}» — было ${oldProgress}%, стало ${newProgress}%`,
+          link: `/partner/projects/${id}`,
+          payload: { projectId: id, progress: newProgress },
+        });
+      }
+    }
+  }
+
+  // paid_amount изменился — уведомляем партнёра (его комиссия растёт)
+  if ("paid_amount" in data) {
+    const newPaid = Number(data.paid_amount);
+    if (newPaid > oldPaid && oldPartnerId) {
+      const deltaPaid = newPaid - oldPaid;
+      const pct = Number(before.partner_commission_percent || 0);
+      const yourShare = Math.round((deltaPaid * pct) / 100);
+      await notify({
+        userRole: "partner", userId: oldPartnerId,
+        kind: "payout_paid",
+        title: `Оплата по проекту: +$${deltaPaid.toLocaleString("ru-RU")}`,
+        body: `«${projName}» — клиент оплатил ещё $${deltaPaid.toLocaleString("ru-RU")}. Твоя доля по ${pct}% ≈ $${yourShare.toLocaleString("ru-RU")}`,
+        link: `/partner/projects/${id}`,
+        payload: { projectId: id, paidDelta: deltaPaid },
+      });
+    }
+  }
+
+  // Контракт впервые подписан — уведомляем партнёра (его комиссия теперь зафиксирована)
+  if ("contract_signed_at" in data && !hadContract && data.contract_signed_at) {
+    if (oldPartnerId) {
+      const pct = Number(before.partner_commission_percent || 0);
+      const total = Number(before.total_price || 0);
+      const yourTotal = Math.round((total * pct) / 100);
+      await notify({
+        userRole: "partner", userId: oldPartnerId,
+        kind: "milestone_paid",
+        title: `Контракт подписан 🎉`,
+        body: `«${projName}» — твоя комиссия ${pct}% зафиксирована. Полная сумма ≈ $${yourTotal.toLocaleString("ru-RU")} при чеке $${total.toLocaleString("ru-RU")}`,
+        link: `/partner/projects/${id}`,
+        payload: { projectId: id, pct, total },
       });
     }
   }
