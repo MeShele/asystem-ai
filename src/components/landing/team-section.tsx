@@ -89,22 +89,22 @@ function useScrambleText(text: string, trigger: boolean) {
 }
 
 const teamMembers = [
-  { key: "member1" as const, photo: "/team/asylbek.png" },
-  { key: "member2" as const, photo: "/team/urmat.png" },
-  { key: "member3" as const, photo: "/team/nasip.png" },
-  { key: "member4" as const, photo: "/team/dastan.png" },
-  { key: "member5" as const, photo: "/team/saadat.png" },
-  { key: "member6" as const, photo: "/team/suimonkul.png" },
-  { key: "member7" as const, photo: "/team/akylay.png" },
-  { key: "member8" as const, photo: "/team/ermek.png" },
-  { key: "member9" as const, photo: "/team/ruslan.png" },
-  { key: "member10" as const, photo: "/team/emir.png" },
-  { key: "member11" as const, photo: "/team/alan.png" },
-  { key: "member12" as const, photo: "/team/alinur.png" },
-  { key: "member13" as const, photo: "/team/nerses.png" },
-  { key: "member14" as const, photo: "/team/azamat.png" },
-  { key: "member15" as const, photo: "/team/ivan.png" },
-  { key: "member16" as const, photo: "/team/asel.png" },
+  { key: "asylbek" as const, photo: "/team/asylbek.png" },
+  { key: "urmat" as const, photo: "/team/urmat.png" },
+  { key: "asel" as const, photo: "/team/asel.png" },
+  { key: "nasip" as const, photo: "/team/nasip.png" },
+  { key: "dastan" as const, photo: "/team/dastan.png" },
+  { key: "akylay" as const, photo: "/team/akylay.png" },
+  { key: "ruslan" as const, photo: "/team/ruslan.png" },
+  { key: "ermek" as const, photo: "/team/ermek.png" },
+  { key: "suimonkul" as const, photo: "/team/suimonkul.png" },
+  { key: "ivan" as const, photo: "/team/ivan.png" },
+  { key: "saadat" as const, photo: "/team/saadat.png" },
+  { key: "azamat" as const, photo: "/team/azamat.png" },
+  { key: "alan" as const, photo: "/team/alan.png" },
+  { key: "emir" as const, photo: "/team/emir.png" },
+  { key: "alinur" as const, photo: "/team/alinur.png" },
+  { key: "nerses" as const, photo: "/team/nerses.png" },
 ];
 
 export function TeamSection() {

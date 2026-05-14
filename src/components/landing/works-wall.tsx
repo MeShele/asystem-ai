@@ -317,22 +317,22 @@ const LAB: LabTile[] = [
 ];
 
 const TEAM: Array<{ key: string; photo: string }> = [
-  { key: "member1", photo: "/team/asylbek.png" },
-  { key: "member2", photo: "/team/urmat.png" },
-  { key: "member3", photo: "/team/asel.png" },
-  { key: "member4", photo: "/team/nasip.png" },
-  { key: "member5", photo: "/team/dastan.png" },
-  { key: "member6", photo: "/team/akylay.png" },
-  { key: "member7", photo: "/team/ruslan.png" },
-  { key: "member8", photo: "/team/ermek.png" },
-  { key: "member9", photo: "/team/suimonkul.png" },
-  { key: "member10", photo: "/team/ivan.png" },
-  { key: "member11", photo: "/team/saadat.png" },
-  { key: "member12", photo: "/team/azamat.png" },
-  { key: "member13", photo: "/team/alan.png" },
-  { key: "member14", photo: "/team/emir.png" },
-  { key: "member15", photo: "/team/alinur.png" },
-  { key: "member16", photo: "/team/nerses.png" },
+  { key: "asylbek", photo: "/team/asylbek.png" },
+  { key: "urmat", photo: "/team/urmat.png" },
+  { key: "asel", photo: "/team/asel.png" },
+  { key: "nasip", photo: "/team/nasip.png" },
+  { key: "dastan", photo: "/team/dastan.png" },
+  { key: "akylay", photo: "/team/akylay.png" },
+  { key: "ruslan", photo: "/team/ruslan.png" },
+  { key: "ermek", photo: "/team/ermek.png" },
+  { key: "suimonkul", photo: "/team/suimonkul.png" },
+  { key: "ivan", photo: "/team/ivan.png" },
+  { key: "saadat", photo: "/team/saadat.png" },
+  { key: "azamat", photo: "/team/azamat.png" },
+  { key: "alan", photo: "/team/alan.png" },
+  { key: "emir", photo: "/team/emir.png" },
+  { key: "alinur", photo: "/team/alinur.png" },
+  { key: "nerses", photo: "/team/nerses.png" },
 ];
 
 export function WorksWall() {

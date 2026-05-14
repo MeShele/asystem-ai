@@ -113,85 +113,85 @@
       "label": "Team",
       "title": "Our Team",
       "subtitle": "The people who build your projects",
-      "member1": {
-        "name": "Asylbek",
-        "role": "CEO / Founder",
-        "bio": "Product strategy, fintech expertise, AI engineering. Launched 10+ projects from idea to production."
+      "asylbek": {
+        "name": "Asylbek Aitmatov",
+        "role": "Director, Founder",
+        "bio": "Leads ASystem's growth strategy and innovation in AI."
       },
-      "member2": {
-        "name": "Dastan",
-        "role": "CTO",
-        "bio": "System architecture, PHP/Laravel, enterprise security. 8 years building high-load systems."
+      "urmat": {
+        "name": "Urmat Myrzabekov",
+        "role": "Lead Developer",
+        "bio": "Responsible for architecture and technical implementation of company products."
       },
-      "member3": {
-        "name": "Nasip",
-        "role": "Full-Stack Developer",
-        "bio": "Next.js, TypeScript, bot development. Builds interfaces that work fast and look clean."
+      "asel": {
+        "name": "Asel Kadyrova",
+        "role": "Chief Accountant",
+        "bio": "Controls financial flows and ensures transparency of company reporting."
       },
-      "member4": {
-        "name": "Saadat",
-        "role": "Project Manager",
-        "bio": "Team coordination, deadline control, client communication. No deadline ever missed."
+      "nasip": {
+        "name": "Nasip Tolobai uulu",
+        "role": "No Code Developer",
+        "bio": "Builds digital solutions without programming, speeding up product launches."
       },
-      "member5": {
-        "name": "Suimonkul",
+      "dastan": {
+        "name": "Dastan Sultanov",
+        "role": "CRM Specialist",
+        "bio": "Configures CRM systems, optimizes sales and client interaction processes."
+      },
+      "akylay": {
+        "name": "Akylai Anvarjan",
+        "role": "Document Management Specialist",
+        "bio": "Maintains documentation and provides administrative support for the team."
+      },
+      "ruslan": {
+        "name": "Ruslan Aidarbek uulu",
+        "role": "Developer",
+        "bio": "Designs software architecture and implements modern technology integrations."
+      },
+      "ermek": {
+        "name": "Ermek Sheraliev",
+        "role": "Back-End Developer",
+        "bio": "Builds complex server architecture, ensuring scalability and security."
+      },
+      "suimonkul": {
+        "name": "Suimonkul Eraliev",
         "role": "Backend Developer",
-        "bio": "PostgreSQL, API integrations, 1C data exchange. Reliable backend is his territory."
+        "bio": "Develops and maintains the server side of projects, ensuring stability and performance."
       },
-      "member6": {
-        "name": "Urmat",
-        "role": "Business Development",
-        "bio": "Business growth, investor relations, partner network. Finds opportunities where others don't look."
-      },
-      "member7": {
-        "name": "Nerses",
-        "role": "Full-Stack Developer",
-        "bio": "React, Node.js, mobile development. Universal soldier — from frontend to backend."
-      },
-      "member8": {
-        "name": "Ivan",
-        "role": "DevOps Engineer",
-        "bio": "Docker, Kubernetes, CI/CD. If the code runs on prod without failures — that's his work."
-      },
-      "member9": {
-        "name": "Asel",
-        "role": "Finance Director",
-        "bio": "Financial planning, budgeting, cashflow control. Numbers always add up."
-      },
-      "member10": {
-        "name": "Azamat",
-        "role": "Product Designer",
-        "bio": "UX/UI, Figma, design systems. Turns complex into simple, and simple into beautiful."
-      },
-      "member11": {
-        "name": "Akylay",
-        "role": "Marketing Manager",
-        "bio": "SMM, content strategy, performance marketing. Makes sure people hear about us."
-      },
-      "member12": {
-        "name": "Alinur Beishenbekov",
-        "role": "Graphic Designer",
-        "bio": "Creates visual concepts and designs premium user-friendly interfaces."
-      },
-      "member13": {
-        "name": "Nerses Dapagyan",
-        "role": "Project Manager",
-        "bio": "Organizes development processes, controls deadlines and project quality."
-      },
-      "member14": {
-        "name": "Azamat Sultan",
-        "role": "Communications Manager",
-        "bio": "Coordinates external relations and shapes the company image in media and partnerships."
-      },
-      "member15": {
+      "ivan": {
         "name": "Ivan Shishkin",
         "role": "Creative Director",
         "bio": "Develops visual concepts and creative strategies for ASystem projects."
       },
-      "member16": {
-        "name": "Asel Kadyrova",
-        "role": "Chief Accountant",
-        "bio": "Controls financial flows and ensures transparency of company reporting."
+      "saadat": {
+        "name": "Saadat Myrzabekova",
+        "role": "UX/UI Designer",
+        "bio": "Crafts interfaces and visual solutions for usability and aesthetics."
+      },
+      "azamat": {
+        "name": "Azamat Sultan",
+        "role": "Communications Manager",
+        "bio": "Coordinates external relations and shapes the company image in media and partnerships."
+      },
+      "alan": {
+        "name": "Alan Beshev",
+        "role": "Network Engineer",
+        "bio": "Designs and configures network infrastructure, guaranteeing reliability and security."
+      },
+      "emir": {
+        "name": "Emir Emilbekov",
+        "role": "Software Engineer",
+        "bio": "Develops, integrates and tests high-load components."
+      },
+      "alinur": {
+        "name": "Alinur Beishenbekov",
+        "role": "Graphic Designer",
+        "bio": "Creates visual concepts and designs premium user-friendly interfaces."
+      },
+      "nerses": {
+        "name": "Nerses Dapagyan",
+        "role": "Project Manager",
+        "bio": "Organizes development processes, controls deadlines and project quality."
       }
     },
     "cta": {
