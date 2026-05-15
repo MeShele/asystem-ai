@@ -3,6 +3,41 @@ Allow: /
 
 Sitemap: https://asystem.ai/sitemap.xml
 
-# Disallow admin
+# Закрытые админки
 Disallow: /*/admin
 Disallow: /*/admin/*
+
+# Закрытые кабинеты партнёров
+Disallow: /*/partner/dashboard
+Disallow: /*/partner/dashboard/*
+Disallow: /*/partner/leads
+Disallow: /*/partner/leads/*
+Disallow: /*/partner/network
+Disallow: /*/partner/network/*
+Disallow: /*/partner/payouts
+Disallow: /*/partner/payouts/*
+Disallow: /*/partner/projects
+Disallow: /*/partner/projects/*
+Disallow: /*/partner/achievements
+Disallow: /*/partner/achievements/*
+Disallow: /*/partner/settings
+Disallow: /*/partner/settings/*
+Disallow: /*/partner/knowledge
+Disallow: /*/partner/knowledge/*
+Disallow: /*/partner/login
+Disallow: /*/partner/register
+
+# Закрытые кабинеты клиентов
+Disallow: /*/client/dashboard
+Disallow: /*/client/dashboard/*
+Disallow: /*/client/projects
+Disallow: /*/client/projects/*
+Disallow: /*/client/login
+Disallow: /*/client/register
+
+# Telegram Mini App — для использования внутри TG, не для индексации
+Disallow: /*/tg
+Disallow: /*/tg/*
+
+# API endpoints
+Disallow: /api/
