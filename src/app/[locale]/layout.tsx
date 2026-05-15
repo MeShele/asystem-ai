@@ -47,7 +47,11 @@ export async function generateMetadata({
         ru: "https://asystem.ai/ru",
         en: "https://asystem.ai/en",
         kg: "https://asystem.ai/kg",
+        "x-default": "https://asystem.ai/ru",
       },
+    },
+    verification: {
+      google: "PF_t4QIVfcH2EsHUqjdppqSjZspQTLrrXob80W3uITE",
     },
   };
 }
