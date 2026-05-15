@@ -7,6 +7,7 @@ import "../globals.css";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
+import { YandexMetrika, YandexMetrikaPageView } from "@/components/analytics/yandex-metrika";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -98,6 +99,8 @@ export default async function LocaleLayout({
             <ThemeModal />
           </ThemeProvider>
         </NextIntlClientProvider>
+        <YandexMetrika />
+        <YandexMetrikaPageView />
       </body>
     </html>
   );

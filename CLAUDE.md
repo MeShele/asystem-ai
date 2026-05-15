@@ -110,10 +110,12 @@ asystem.ai — Независимая AI-first IT-студия из Бишкек
 
 ## Deployment
 
-- **Домен:** https://dev.asystem.kg
+- **Боевой домен:** https://asystem.ai (production, единственный)
 - **Coolify:** https://c.asystem.kg
 - **App UUID:** `dicggi803q5g6mp8t4crfyle`
 - **Сервер:** VM 132 (10.30.30.132) на proximus
+
+> Домен `dev.asystem.kg` больше не используется — был тестовый, отключён. Все upcoming правки (metadata, sitemap, robots, аналитика) ориентируются только на `https://asystem.ai`.
 
 ### GitHub
 - Repo: https://github.com/MeShele/asystem-ai (приватный)
@@ -140,7 +142,7 @@ curl -s -X POST -H "Authorization: Bearer ${COOLIFY_TOKEN}" \
 
 ### Проверка
 ```bash
-curl -sL -o /dev/null -w '%{http_code}' https://dev.asystem.kg
+curl -sL -o /dev/null -w '%{http_code}' https://asystem.ai
 ```
 
 ### Цепочка трафика
