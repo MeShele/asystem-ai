@@ -8,6 +8,8 @@ import { LayoutShell } from "@/components/layout/layout-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeModal } from "@/components/theme-modal";
 import { YandexMetrika, YandexMetrikaPageView } from "@/components/analytics/yandex-metrika";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -94,6 +96,7 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="antialiased">
+        <JsonLd data={[organizationSchema, websiteSchema]} />
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[10000] focus:px-4 focus:py-2 focus:bg-bg-card focus:text-text-primary focus:rounded-lg focus:border focus:border-border-muted focus:text-sm focus:font-medium focus:shadow-lg">
           Skip to main content
         </a>

@@ -1,7 +1,32 @@
 {
   "meta": {
-    "title": "asystem.ai — IT Solutions for Business",
-    "description": "We build websites, bots, apps and automate business processes. Fast, quality, guaranteed."
+    "title": "asystem.ai — AI-first IT studio for CIS businesses",
+    "description": "Independent studio from Bishkek. AI solutions, web platforms, integrations and Telegram bots for CIS businesses. 4× faster than market, zero upfront. Clients: Ministry of Education KR, AURVA, Red Charge, Tulpar Express.",
+    "home": {
+      "title": "asystem.ai — Independent AI-first IT studio | Bishkek",
+      "description": "AI solutions and web platforms for CIS businesses. 4× faster than market, zero upfront, fixed pricing. 16-person team, 4 production clients."
+    },
+    "startups": {
+      "title": "AI for startups — launch MVP without a dev team",
+      "description": "Turn an idea into a working product in 4 weeks. AI replaces a dev team — from prototype to production without your own CTO. For B2B/SaaS founders in CIS."
+    },
+    "partner": {
+      "title": "Partner program — earn on IT without developers",
+      "description": "Bring clients on IT projects, earn 15% commission + 50/50 margin split. Free markup, transparent payouts, no rigid KPIs. For marketers, coaches and creators in CIS.",
+      "faqTitle": "Partner program FAQ"
+    },
+    "products": {
+      "title": "asystem.ai products — SaaS solutions coming soon",
+      "description": "Ready SaaS products in final stage: data autosync, KPI dashboards, AI assistant. Subscribe for early access."
+    },
+    "privacy": {
+      "title": "Privacy Policy | asystem.ai",
+      "description": "How ASYSTEM processes and protects personal data of asystem.ai visitors and clients."
+    },
+    "terms": {
+      "title": "Terms of Service | asystem.ai",
+      "description": "Terms of use for asystem.ai and ASYSTEM services (Bishkek, Kyrgyzstan)."
+    }
   },
   "nav": {
     "services": "Services",
