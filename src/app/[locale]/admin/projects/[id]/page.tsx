@@ -525,6 +525,38 @@ export default function AdminProjectDetailPage({
           </Field>
         </div>
 
+        {/* Авто-расчёт выплаты партнёру (read-only) */}
+        {form.partnerId && (() => {
+          const total = Number(form.totalPrice) || 0;
+          const paid = Number(form.paidAmount) || 0;
+          const pct = Number(form.partnerCommissionPercent) || 0;
+          const totalDue = Math.round((total * pct) / 100);
+          const paidDue = Math.round((paid * pct) / 100);
+          const remaining = Math.max(0, totalDue - paidDue);
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-green-500/[0.04] border border-green-500/20">
+              <ReadOnlyValue
+                label={`К выплате (от оплаченного)`}
+                value={`$${paidDue.toLocaleString("ru-RU")}`}
+                hint={`${paid.toLocaleString("ru-RU")} × ${pct}%`}
+                tone="green"
+              />
+              <ReadOnlyValue
+                label="Потенциал (от полной)"
+                value={`$${totalDue.toLocaleString("ru-RU")}`}
+                hint={`${total.toLocaleString("ru-RU")} × ${pct}%`}
+                tone="neutral"
+              />
+              <ReadOnlyValue
+                label="Осталось дозаплатить"
+                value={`$${remaining.toLocaleString("ru-RU")}`}
+                hint={remaining > 0 ? "по мере оплаты клиентом" : "проект полностью закрыт"}
+                tone={remaining > 0 ? "amber" : "muted"}
+              />
+            </div>
+          );
+        })()}
+
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
           <Field label="Клиент">
             <select
@@ -1427,6 +1459,32 @@ function StageRow({
         rows={2}
         className="w-full px-2 py-1.5 text-xs bg-transparent border border-border-faint rounded focus:border-brand-500 outline-none resize-none text-text-secondary"
       />
+    </div>
+  );
+}
+
+function ReadOnlyValue({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone: "green" | "amber" | "neutral" | "muted";
+}) {
+  const toneClasses: Record<typeof tone, string> = {
+    green: "text-green-600",
+    amber: "text-amber-600",
+    neutral: "text-text-primary",
+    muted: "text-text-muted",
+  };
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-text-muted mb-0.5">{label}</div>
+      <div className={`text-base font-mono font-bold tabular-nums ${toneClasses[tone]}`}>{value}</div>
+      {hint && <div className="text-[10px] text-text-muted mt-0.5">{hint}</div>}
     </div>
   );
 }
