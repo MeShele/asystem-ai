@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Wallet,
   Calendar,
+  CreditCard,
 } from "lucide-react";
 import { ProjectComments } from "@/components/shared/project-comments";
 import { LiveProgressBar } from "@/components/shared/live-progress-bar";
@@ -88,6 +89,7 @@ export default function PartnerProjectDetailPage({
   const [breakdown, setBreakdown] = useState<CommissionBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<number | null>(null);
+  const [paymentsHistory, setPaymentsHistory] = useState<Array<{ id: number; amount: number; note: string | null; paid_at: string }>>([]);
 
   useEffect(() => {
     fetch(`/api/partner/projects/${id}`)
@@ -101,6 +103,10 @@ export default function PartnerProjectDetailPage({
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    fetch(`/api/partner/projects/${id}/payments`)
+      .then((r) => (r.ok ? r.json() : { payments: [] }))
+      .then((d) => setPaymentsHistory(Array.isArray(d.payments) ? d.payments : []))
+      .catch(() => {});
   }, [id]);
 
   if (loading) {
@@ -214,6 +220,39 @@ export default function PartnerProjectDetailPage({
           <div className="text-xl font-semibold text-orange-500">${remaining.toLocaleString("ru-RU")}</div>
         </div>
       </div>
+
+      {/* История оплат клиента (read-only для партнёра) */}
+      {paymentsHistory.length > 0 && (
+        <div className="rounded-xl border border-border-faint bg-surface p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <CreditCard className="w-4 h-4 text-brand-500" />
+            <h3 className="text-sm font-semibold">История оплат клиента</h3>
+            <span className="text-[11px] text-text-muted ml-auto">{paymentsHistory.length} транзакций</span>
+          </div>
+          <div className="divide-y divide-border-faint">
+            {paymentsHistory.map((p) => {
+              const partnerShare = Math.round((Number(p.amount) * commissionPct) / 100);
+              return (
+                <div key={p.id} className="flex items-center gap-3 py-2">
+                  <div className="text-[11px] text-text-muted font-mono w-20 shrink-0">
+                    {new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-mono font-bold text-green-600 tabular-nums">
+                      +${Number(p.amount).toLocaleString("ru-RU")}
+                    </div>
+                    {p.note && <div className="text-[11px] text-text-muted truncate">{p.note}</div>}
+                  </div>
+                  <div className="text-right text-[11px] shrink-0">
+                    <div className="text-text-muted">ваша доля</div>
+                    <div className="font-mono text-purple-600 font-semibold">+${partnerShare.toLocaleString("ru-RU")}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Partner commission */}
       {commissionPct > 0 && (

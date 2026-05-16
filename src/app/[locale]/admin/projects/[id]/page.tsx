@@ -12,10 +12,12 @@ import {
   X,
   Save,
   CircleCheck,
+  CheckCircle2,
   Circle,
   Percent,
   Wallet,
   Calendar,
+  CreditCard,
 } from "lucide-react";
 import Image from "next/image";
 import { ImageUpload } from "@/components/shared/image-upload";
@@ -54,6 +56,15 @@ interface ProjectDetail {
   delivered_in_30_days: boolean;
   has_retention_bonus: boolean;
   has_churn_penalty: boolean;
+  price_confirmed_at?: string | null;
+  created_at: string;
+}
+
+interface ProjectPayment {
+  id: number;
+  amount: number | string;
+  note: string | null;
+  paid_at: string;
   created_at: string;
 }
 
@@ -117,6 +128,9 @@ export default function AdminProjectDetailPage({
   const [partners, setPartners] = useState<Partner[]>([]);
   const [allClients, setAllClients] = useState<ClientLite[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [payments, setPayments] = useState<ProjectPayment[]>([]);
+  const [showAddPayment, setShowAddPayment] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [commissionBreakdown, setCommissionBreakdown] = useState<CommissionBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -194,9 +208,17 @@ export default function AdminProjectDetailPage({
       .catch(() => setPayouts([]));
   }, [id]);
 
+  const loadPayments = useCallback(() => {
+    fetch(`/api/admin/projects/${id}/payments`)
+      .then((r) => r.json())
+      .then((data) => setPayments(Array.isArray(data) ? data : []))
+      .catch(() => setPayments([]));
+  }, [id]);
+
   useEffect(() => {
     load();
     loadPayouts();
+    loadPayments();
     fetch("/api/partners")
       .then((r) => r.json())
       .then((data) => setPartners(Array.isArray(data) ? data : []))
@@ -209,7 +231,7 @@ export default function AdminProjectDetailPage({
       .then((r) => r.json())
       .then((data) => setAllClients(Array.isArray(data) ? data : []))
       .catch(() => setAllClients([]));
-  }, [load, loadPayouts]);
+  }, [load, loadPayouts, loadPayments]);
 
   const stagesDirty = useMemo(() => {
     if (stages.length !== originalStages.length) return false;
@@ -236,7 +258,6 @@ export default function AdminProjectDetailPage({
       form.description !== (project.description || "") ||
       form.logoUrl !== (project.logo_url || "") ||
       Number(form.totalPrice) !== Number(project.total_price) ||
-      Number(form.paidAmount) !== Number(project.paid_amount) ||
       form.partnerId !== (project.partner_id || "") ||
       form.clientId !== (project.client_id || "") ||
       form.progressPercent !== Number(project.progress_percent || 0) ||
@@ -262,7 +283,6 @@ export default function AdminProjectDetailPage({
           description: form.description || null,
           logo_url: form.logoUrl || null,
           total_price: Number(form.totalPrice),
-          paid_amount: Number(form.paidAmount),
           partner_id: form.partnerId || null,
           client_id: form.clientId || null,
           progress_percent: Number(form.progressPercent),
@@ -500,12 +520,12 @@ export default function AdminProjectDetailPage({
               className={`${FIELD_INPUT_CLASS} font-mono tabular-nums`}
             />
           </Field>
-          <Field label="Оплачено, $">
+          <Field label="Оплачено, $ (авто из журнала)">
             <input
-              type="number"
-              value={form.paidAmount}
-              onChange={(e) => setForm({ ...form, paidAmount: e.target.value })}
-              className={`${FIELD_INPUT_CLASS} font-mono tabular-nums`}
+              type="text"
+              readOnly
+              value={`$${Number(form.paidAmount || 0).toLocaleString("ru-RU")}`}
+              className={`${FIELD_INPUT_CLASS} font-mono tabular-nums opacity-70 cursor-not-allowed`}
             />
           </Field>
           <Field label="Партнёр">
@@ -524,6 +544,56 @@ export default function AdminProjectDetailPage({
             </select>
           </Field>
         </div>
+
+        {/* Подтверждение суммы (price_confirmed_at) */}
+        {(() => {
+          const totalNum = Number(form.totalPrice) || 0;
+          const confirmedAt = project?.price_confirmed_at;
+          if (confirmedAt) {
+            return (
+              <div className="p-3 rounded-lg bg-green-500/[0.06] border border-green-500/30 flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-green-700">
+                    Сумма $ {totalNum.toLocaleString("ru-RU")} согласована
+                  </div>
+                  <div className="text-[11px] text-text-muted">
+                    Подтверждена: {new Date(confirmedAt).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <button
+              type="button"
+              onClick={async () => {
+                if (totalNum <= 0) {
+                  alert("Сначала задайте стоимость проекта (>0) и сохраните");
+                  return;
+                }
+                if (Number(project?.total_price ?? 0) !== totalNum) {
+                  alert("Сначала сохраните проект с новой стоимостью, потом подтверждайте");
+                  return;
+                }
+                if (!confirm(`Подтвердить сумму $${totalNum.toLocaleString("ru-RU")} и запустить проект? Партнёру и клиенту уйдёт уведомление.`)) return;
+                setConfirming(true);
+                const res = await fetch(`/api/admin/projects/${id}/confirm-price`, { method: "POST" });
+                setConfirming(false);
+                if (res.ok) {
+                  load();
+                } else {
+                  const e = await res.json().catch(() => ({}));
+                  alert(e.error || "Не удалось подтвердить");
+                }
+              }}
+              disabled={confirming || totalNum <= 0}
+              className="w-full p-3 rounded-lg border-2 border-dashed border-brand-500/40 bg-brand-500/[0.05] hover:bg-brand-500/[0.1] text-brand-600 font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {confirming ? "Подтверждаем..." : totalNum > 0 ? `✓ Подтвердить сумму $${totalNum.toLocaleString("ru-RU")} и запустить проект` : "Задайте стоимость для подтверждения"}
+            </button>
+          );
+        })()}
 
         {/* Авто-расчёт выплаты партнёру (read-only) */}
         {form.partnerId && (() => {
@@ -556,6 +626,37 @@ export default function AdminProjectDetailPage({
             </div>
           );
         })()}
+
+        {/* Журнал оплат */}
+        <PaymentsJournal
+          payments={payments}
+          totalPrice={Number(form.totalPrice) || 0}
+          paidAmount={Number(form.paidAmount) || 0}
+          onAdd={() => setShowAddPayment(true)}
+          onDelete={async (paymentId) => {
+            if (!confirm("Удалить эту оплату? Будет пересчитана общая сумма оплат проекта.")) return;
+            const res = await fetch(`/api/admin/projects/${id}/payments/${paymentId}`, { method: "DELETE" });
+            if (res.ok) {
+              loadPayments();
+              load();
+            } else {
+              alert("Не удалось удалить");
+            }
+          }}
+        />
+
+        {showAddPayment && (
+          <AddPaymentModal
+            maxAmount={Math.max(0, (Number(form.totalPrice) || 0) - (Number(form.paidAmount) || 0))}
+            onClose={() => setShowAddPayment(false)}
+            onAdded={() => {
+              setShowAddPayment(false);
+              loadPayments();
+              load();
+            }}
+            projectId={id}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
           <Field label="Клиент">
@@ -1485,6 +1586,207 @@ function ReadOnlyValue({
       <div className="text-[10px] uppercase tracking-wider text-text-muted mb-0.5">{label}</div>
       <div className={`text-base font-mono font-bold tabular-nums ${toneClasses[tone]}`}>{value}</div>
       {hint && <div className="text-[10px] text-text-muted mt-0.5">{hint}</div>}
+    </div>
+  );
+}
+
+function PaymentsJournal({
+  payments,
+  totalPrice,
+  paidAmount,
+  onAdd,
+  onDelete,
+}: {
+  payments: ProjectPayment[];
+  totalPrice: number;
+  paidAmount: number;
+  onAdd: () => void;
+  onDelete: (id: number) => void;
+}) {
+  const remaining = Math.max(0, totalPrice - paidAmount);
+  const percent = totalPrice > 0 ? Math.min(100, (paidAmount / totalPrice) * 100) : 0;
+
+  return (
+    <div className="p-4 rounded-xl border border-border-faint bg-surface space-y-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-brand-500" />
+          <h3 className="text-sm font-bold">Журнал оплат</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-500 hover:bg-brand-600 text-white transition-colors flex items-center gap-1.5"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Добавить оплату
+        </button>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-baseline justify-between text-xs">
+          <span className="text-text-muted">Оплачено</span>
+          <span className="font-mono font-bold tabular-nums">
+            ${paidAmount.toLocaleString("ru-RU")}{" "}
+            <span className="text-text-muted">/ ${totalPrice.toLocaleString("ru-RU")}</span>
+            <span className="text-green-600 ml-1">({Math.round(percent)}%)</span>
+          </span>
+        </div>
+        <div className="h-2 rounded-full bg-bg-secondary overflow-hidden">
+          <div
+            className="h-full bg-green-500 transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <div className="text-[11px] text-text-muted">
+          Остаток: <span className="font-mono">${remaining.toLocaleString("ru-RU")}</span>
+        </div>
+      </div>
+
+      {payments.length === 0 ? (
+        <div className="text-center py-6 text-xs text-text-muted">
+          Оплат пока нет. Зафиксируйте первую через «+ Добавить оплату».
+        </div>
+      ) : (
+        <div className="divide-y divide-border-faint border-t border-border-faint pt-2">
+          {payments.map((p) => (
+            <div key={p.id} className="flex items-center gap-3 py-2 group">
+              <div className="text-[11px] text-text-muted font-mono w-20 shrink-0">
+                {new Date(p.paid_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-mono font-bold text-green-600 tabular-nums">
+                  +${Number(p.amount).toLocaleString("ru-RU")}
+                </div>
+                {p.note && <div className="text-[11px] text-text-muted truncate">{p.note}</div>}
+              </div>
+              <button
+                onClick={() => onDelete(p.id)}
+                className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded text-text-muted hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-all"
+                title="Удалить оплату"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddPaymentModal({
+  maxAmount,
+  onClose,
+  onAdded,
+  projectId,
+}: {
+  maxAmount: number;
+  onClose: () => void;
+  onAdded: () => void;
+  projectId: string;
+}) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [paidAt, setPaidAt] = useState(new Date().toISOString().split("T")[0]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-surface rounded-xl border border-border-faint p-5 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-bold">Добавить оплату</h3>
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-text-muted block mb-1">
+              Сумма, $ {maxAmount > 0 && <span>· макс ${maxAmount.toLocaleString("ru-RU")}</span>}
+            </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="1000"
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-text-muted block mb-1">Заметка (необязательно)</label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Первый транш / по договору / и т.д."
+              maxLength={200}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-text-muted block mb-1">Дата</label>
+            <input
+              type="date"
+              value={paidAt}
+              onChange={(e) => setPaidAt(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-faint rounded-lg focus:border-brand-500 outline-none"
+            />
+          </div>
+
+          {error && (
+            <div className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-700">{error}</div>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border-faint hover:bg-bg-secondary transition-colors"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setError(null);
+                const n = Number(amount);
+                if (!Number.isFinite(n) || n <= 0) {
+                  setError("Сумма должна быть положительным числом");
+                  return;
+                }
+                setSaving(true);
+                const res = await fetch(`/api/admin/projects/${projectId}/payments`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ amount: n, note: note || undefined, paid_at: paidAt }),
+                });
+                setSaving(false);
+                if (res.ok) {
+                  onAdded();
+                } else {
+                  const e = await res.json().catch(() => ({}));
+                  setError(e.error || "Ошибка сохранения");
+                }
+              }}
+              disabled={saving || !amount}
+              className="flex-1 px-3 py-2 text-sm font-semibold rounded-lg bg-brand-500 hover:bg-brand-600 text-white transition-colors disabled:opacity-50"
+            >
+              {saving ? "Сохранение..." : "Зафиксировать"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

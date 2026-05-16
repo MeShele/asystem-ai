@@ -454,4 +454,21 @@ export async function initProjectTables() {
   if (colType.length > 0 && colType[0].data_type === "integer") {
     await getPool().query(`ALTER TABLE projects ALTER COLUMN partner_commission_percent TYPE NUMERIC(5,2)`);
   }
+
+  // Lazy migration: price_confirmed_at — момент когда админ зафиксировал стоимость
+  const confirmCol = await db`SELECT 1 FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'price_confirmed_at'`;
+  if (confirmCol.length === 0) {
+    await getPool().query(`ALTER TABLE projects ADD COLUMN price_confirmed_at TIMESTAMP`);
+  }
+
+  // Журнал оплат: каждый транш отдельная запись с датой и заметкой
+  await db`CREATE TABLE IF NOT EXISTS project_payments (
+    id SERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    amount NUMERIC(12,2) NOT NULL,
+    note TEXT,
+    paid_at DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+  await db`CREATE INDEX IF NOT EXISTS idx_project_payments_project ON project_payments(project_id, paid_at DESC)`;
 }
