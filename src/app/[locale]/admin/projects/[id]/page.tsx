@@ -95,6 +95,8 @@ interface Payout {
   amount: number | string;
   paid_at: string;
   comment: string | null;
+  status?: string | null;
+  rejection_comment?: string | null;
 }
 
 interface Partner {
@@ -420,7 +422,12 @@ export default function AdminProjectDetailPage({
 
   const total = Number(form.totalPrice || 0);
   const partnerCommissionAmount = Math.round((total * form.partnerCommissionPercent) / 100);
-  const totalPayouts = payouts.reduce((s, p) => s + Number(p.amount || 0), 0);
+  // В "выплачено" суммируем ТОЛЬКО paid; rejected и requested не считаются завершёнными
+  const paidPayouts = payouts.filter((p) => !p.status || p.status === "paid");
+  const pendingPayouts = payouts.filter((p) => p.status === "requested");
+  const rejectedPayouts = payouts.filter((p) => p.status === "rejected");
+  const totalPayouts = paidPayouts.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const pendingAmount = pendingPayouts.reduce((s, p) => s + Number(p.amount || 0), 0);
   const remaining = Math.max(0, partnerCommissionAmount - totalPayouts);
   const linkedIds = new Set(linkedDevelopers.map((d) => d.id));
   const availableDevs = allDevelopers.filter((d) => !linkedIds.has(d.id));
@@ -829,7 +836,15 @@ export default function AdminProjectDetailPage({
               <div className="text-lg font-bold text-green-500">
                 ${totalPayouts.toLocaleString("ru-RU")}
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">{payouts.length} {payouts.length === 1 ? "выплата" : "выплат"}</div>
+              <div className="text-[10px] text-text-muted mt-0.5">
+                {paidPayouts.length} {paidPayouts.length === 1 ? "выплата" : "выплат"}
+                {pendingAmount > 0 && (
+                  <span className="text-orange-500"> · +${pendingAmount.toLocaleString("ru-RU")} в обработке</span>
+                )}
+                {rejectedPayouts.length > 0 && (
+                  <span className="text-red-500"> · {rejectedPayouts.length} отклонено</span>
+                )}
+              </div>
             </div>
             <div className="p-3 rounded-lg border border-orange-500/30 bg-orange-500/5">
               <div className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Остаток к выплате</div>
@@ -848,19 +863,37 @@ export default function AdminProjectDetailPage({
 
         {payouts.length > 0 && (
           <div className="space-y-2">
-            {payouts.map((p) => (
+            {payouts.map((p) => {
+              const status = p.status || "paid";
+              const isPaid = status === "paid";
+              const isRequested = status === "requested";
+              const isRejected = status === "rejected";
+              const iconBg = isPaid ? "bg-green-500/10" : isRequested ? "bg-orange-500/10" : "bg-red-500/10";
+              const iconColor = isPaid ? "text-green-500" : isRequested ? "text-orange-500" : "text-red-500";
+              const amountColor = isPaid ? "text-green-500" : isRequested ? "text-orange-500" : "text-red-500 line-through";
+              const statusLabel = isPaid ? "Оплачено" : isRequested ? "В обработке" : "Отклонено";
+              const statusClass = isPaid ? "bg-green-500/15 text-green-500" : isRequested ? "bg-orange-500/15 text-orange-500" : "bg-red-500/15 text-red-500";
+              return (
               <div
                 key={p.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border-faint hover:bg-surface-raised transition-colors"
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${isRejected ? "border-red-500/20 bg-red-500/[0.02]" : "border-border-faint hover:bg-surface-raised"}`}
               >
-                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <Wallet className="w-4 h-4 text-green-500" />
+                <div className={`w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <Wallet className={`w-4 h-4 ${iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-green-500">
-                    ${Number(p.amount).toLocaleString("ru-RU")}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-sm font-semibold ${amountColor}`}>
+                      ${Number(p.amount).toLocaleString("ru-RU")}
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${statusClass}`}>
+                      {statusLabel}
+                    </span>
                   </div>
                   {p.comment && <div className="text-xs text-text-muted truncate">{p.comment}</div>}
+                  {isRejected && p.rejection_comment && (
+                    <div className="text-[11px] text-red-500 truncate mt-0.5">Причина: {p.rejection_comment}</div>
+                  )}
                 </div>
                 <div className="text-xs text-text-muted flex items-center gap-1 flex-shrink-0">
                   <Calendar className="w-3 h-3" />
@@ -874,7 +907,8 @@ export default function AdminProjectDetailPage({
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
