@@ -12,14 +12,14 @@ interface Props {
   contactLabel?: string;
 }
 
-const STATUS_LABEL: Record<PortfolioCase["status"], { ru: string; kg: string; en: string }> = {
-  LIVE: { ru: "LIVE", kg: "LIVE", en: "LIVE" },
-  NDA: { ru: "NDA", kg: "NDA", en: "NDA" },
-  INTERNAL: { ru: "INTERNAL", kg: "ICHKI", en: "INTERNAL" },
+const STATUS_LABEL: Record<PortfolioCase["status"], string> = {
+  LIVE: "LIVE",
+  NDA: "NDA",
+  INTERNAL: "INTERNAL",
 };
 
 const STATUS_HINT: Record<PortfolioCase["status"], { ru: string; kg: string; en: string }> = {
-  LIVE: { ru: "", kg: "", en: "" },
+  LIVE: { ru: "Открыть сайт", kg: "Сайтты ачуу", en: "Open site" },
   NDA: {
     ru: "Закрытый контур · доступ по запросу",
     kg: "Жабык контур · сурам боюнча",
@@ -32,20 +32,24 @@ const STATUS_HINT: Record<PortfolioCase["status"], { ru: string; kg: string; en:
   },
 };
 
+/**
+ * Карточка кейса портфолио. Сам компонент всегда рендерит <div> —
+ * внешнюю обёртку (Link на детальную страницу) накручивает родитель.
+ * Внутри для LIVE-кейсов есть inline-ссылка «Открыть сайт» с stopPropagation,
+ * чтобы клик по ней не триггерил навигацию родительского Link.
+ */
 export function PortfolioCard({ case: c, locale = "ru", variant = "wide", contactLabel }: Props) {
   const t = pickTranslation(c.translations, locale);
   const name = t?.name ?? c.slug;
   const tagline = t?.tagline ?? "";
   const result = t?.result ?? "";
-
-  const statusLabel = STATUS_LABEL[c.status][locale] ?? STATUS_LABEL[c.status].ru;
   const statusHint = STATUS_HINT[c.status][locale] ?? STATUS_HINT[c.status].ru;
 
-  const Inner = (
+  return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-border-faint bg-white transition-all duration-300 ${
-        c.kind === "linked" ? "hover:-translate-y-1 hover:shadow-xl hover:border-brand-500/40" : ""
-      } ${variant === "wide" ? "grid grid-cols-1 lg:grid-cols-[1fr_1fr] min-h-[420px]" : "flex flex-col h-full min-h-[320px]"}`}
+      className={`group relative overflow-hidden rounded-2xl border border-border-faint bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-brand-500/40 ${
+        variant === "wide" ? "grid grid-cols-1 lg:grid-cols-[1fr_1fr] min-h-[420px]" : "flex flex-col h-full min-h-[320px]"
+      }`}
     >
       {/* Brand bg + logo */}
       <div
@@ -68,21 +72,17 @@ export function PortfolioCard({ case: c, locale = "ru", variant = "wide", contac
           <span className="text-white/80 text-3xl font-bold tracking-tight">{name.slice(0, 12)}</span>
         )}
 
-        {/* Status badge */}
         <span
           className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider backdrop-blur-md ${
             c.status === "LIVE"
               ? "bg-white/95 text-emerald-600"
-              : c.status === "NDA"
-                ? "bg-black/45 text-white"
-                : "bg-black/45 text-white"
+              : "bg-black/45 text-white"
           }`}
         >
           {c.status === "LIVE" ? <ArrowUpRight className="w-3 h-3" /> : c.status === "NDA" ? <Lock className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
-          {statusLabel}
+          {STATUS_LABEL[c.status]}
         </span>
 
-        {/* Year */}
         {c.year && (
           <span className="absolute bottom-4 left-4 font-mono text-[10px] text-white/80 tracking-wider">
             {c.year}
@@ -122,15 +122,21 @@ export function PortfolioCard({ case: c, locale = "ru", variant = "wide", contac
         </div>
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-border-faint flex items-center justify-between text-xs">
+        <div className="mt-6 pt-4 border-t border-border-faint flex items-center justify-between gap-3 text-xs">
           {c.kind === "linked" ? (
-            <span className="inline-flex items-center gap-1 text-brand-500 font-medium group-hover:gap-2 transition-all">
-              {locale === "ru" ? "Открыть сайт" : locale === "kg" ? "Сайтты ачуу" : "Open site"}
+            <a
+              href={c.public_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-brand-500 font-medium hover:gap-2 transition-all"
+            >
+              {statusHint}
               <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-          ) : statusHint ? (
+            </a>
+          ) : (
             <span className="text-text-muted">{statusHint}</span>
-          ) : <span />}
+          )}
 
           {c.contact_person && (
             <span className="text-text-muted text-right">
@@ -143,15 +149,6 @@ export function PortfolioCard({ case: c, locale = "ru", variant = "wide", contac
       </div>
     </div>
   );
-
-  if (c.kind === "linked") {
-    return (
-      <a href={c.public_url} target="_blank" rel="noopener noreferrer" className="block">
-        {Inner}
-      </a>
-    );
-  }
-  return <div>{Inner}</div>;
 }
 
 function shade(hex: string, percent: number): string {

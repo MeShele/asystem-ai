@@ -157,7 +157,52 @@ type ClientTile = {
   logoW: number;
   logoH: number;
   bg: string;
+  href?: string; // если задан — открывается по клику, иначе anchor #case-{id}
 };
+
+/** Сырой featured-кейс из БД, передаётся серверной страницей в WorksWall. */
+export type FeaturedFromDb = {
+  id: string;
+  slug: string;
+  name: string;
+  tag: string;
+  desc: string;
+  result: string;
+  stack: string;
+  year: string;
+  logoPath: string | null;
+  bgColor: string;
+  publicUrl: string | null;
+};
+
+function shadeForGradient(hex: string, percent: number): string {
+  const h = hex.replace("#", "");
+  const num = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  let r = (num >> 16) + Math.round((percent / 100) * 255);
+  let g = ((num >> 8) & 0xff) + Math.round((percent / 100) * 255);
+  let b = (num & 0xff) + Math.round((percent / 100) * 255);
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
+}
+
+function featuredToTile(f: FeaturedFromDb): ClientTile {
+  return {
+    id: f.slug,
+    name: f.name,
+    tag: f.tag || "PROJECT",
+    desc: f.desc,
+    result: f.result,
+    stack: f.stack,
+    year: f.year,
+    logo: f.logoPath ?? "/logos/placeholder.svg",
+    logoW: 200,
+    logoH: 100,
+    bg: `linear-gradient(135deg, ${f.bgColor} 0%, ${shadeForGradient(f.bgColor, -15)} 100%)`,
+    href: `/projects/${f.slug}`,
+  };
+}
 
 const CLIENTS: ClientTile[] = [
   {
@@ -335,7 +380,12 @@ const TEAM: Array<{ key: string; photo: string }> = [
   { key: "nerses", photo: "/team/nerses.png" },
 ];
 
-export function WorksWall() {
+interface WorksWallProps {
+  featured?: FeaturedFromDb[];
+  totalCount?: number;
+}
+
+export function WorksWall({ featured, totalCount = 0 }: WorksWallProps = {}) {
   const activeSection = useActiveSection();
   return (
     <ActiveSectionContext.Provider value={activeSection}>
@@ -345,7 +395,7 @@ export function WorksWall() {
         style={{ background: "#fff", color: "#0a0a0a" }}
       >
         <Sidebar />
-        <Main />
+        <Main featured={featured} totalCount={totalCount} />
       </div>
     </ActiveSectionContext.Provider>
   );
@@ -538,14 +588,16 @@ function LiveTimestamp() {
 
 /* ═══════════════ MAIN ═══════════════ */
 
-function Main() {
+function Main({ featured, totalCount = 0 }: { featured?: FeaturedFromDb[]; totalCount?: number }) {
+  const clients: ClientTile[] = featured && featured.length > 0 ? featured.map(featuredToTile) : CLIENTS;
+  const hasMore = totalCount > clients.length;
   return (
     <main id="main-content" className="flex-1 min-w-0">
       <HeroBar />
 
       <SectionHeader
         id="clients"
-        kicker="Clients · 4"
+        kicker={`Clients · ${clients.length}`}
         title="Работы"
         subtitle="Что делали, что убрали, что стало."
       />
@@ -553,10 +605,29 @@ function Main() {
         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2"
         style={{ borderTop: "1px solid #e5e5e5", borderLeft: "1px solid #e5e5e5" }}
       >
-        {CLIENTS.map((c, i) => (
+        {clients.map((c, i) => (
           <ClientCell key={c.id} c={c} index={i} />
         ))}
       </div>
+
+      {hasMore && (
+        <div
+          className="flex items-center justify-between px-6 lg:px-12 py-6"
+          style={{ borderTop: "1px solid #e5e5e5", borderBottom: "1px solid #e5e5e5", background: "#fafafa" }}
+        >
+          <div className="font-mono text-[11px] tracking-wider" style={{ color: "#9ca3af", letterSpacing: "0.2em" }}>
+            +{totalCount - clients.length} ПРОЕКТОВ · ВСЕГО {totalCount}
+          </div>
+          <Link
+            href="/projects"
+            className="font-mono text-[12px] transition-colors inline-flex items-center gap-1.5 group"
+            style={{ color: "#0a0a0a", letterSpacing: "0.1em" }}
+          >
+            Все проекты · {totalCount}
+            <span className="transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+        </div>
+      )}
 
       <PeaceOfMind />
 
@@ -810,7 +881,7 @@ function SectionHeader({
 function ClientCell({ c, index }: { c: ClientTile; index: number }) {
   return (
     <motion.a
-      href={`#case-${c.id}`}
+      href={c.href ?? `#case-${c.id}`}
       className="group relative flex flex-col transition-colors"
       style={{
         borderRight: "1px solid #e5e5e5",
