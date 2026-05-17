@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft } from "lucide-react";
 import { getDb, initPortfolioTables } from "@/lib/db";
 import {
   toPortfolioCase,
@@ -11,34 +10,42 @@ import {
   type PortfolioLocale,
 } from "@/lib/portfolio-types";
 import { PortfolioCard } from "@/components/portfolio/portfolio-card";
+import { ProjectsShell, type ProjectsShellCategory } from "@/components/projects/projects-shell";
 
-const HEADLINE: Record<PortfolioLocale, { eyebrow: string; title: string; subtitle: string; back: string; empty: string; contactLabel: string; all: string }> = {
+const T: Record<PortfolioLocale, {
+  eyebrow: string; title: string; subtitle: string;
+  back: string; empty: string; contactLabel: string;
+  all: string; uncategorized: string;
+}> = {
   ru: {
     eyebrow: "Portfolio · Все проекты",
-    title: "Работы студии",
+    title: "Работы\nстудии",
     subtitle: "Кейсы, которые мы сделали и которые делаем сейчас. Если есть публичный сайт — открывается по клику. Если нет — рядом контактное лицо клиента.",
     back: "На главную",
-    empty: "Пока пусто. Скоро здесь появятся кейсы.",
+    empty: "Пока пусто.",
     contactLabel: "Подтвердит",
     all: "Все",
+    uncategorized: "Без категории",
   },
   kg: {
     eyebrow: "Portfolio · Бардык долбоорлор",
-    title: "Студиянын иштери",
+    title: "Студиянын\nиштери",
     subtitle: "Биз жасаган жана азыр жасап жаткан кейстер. Ачык сайт болсо — басууга болот. Жок болсо — кардардын байланыш адамы.",
     back: "Башкы бетке",
-    empty: "Азырынча бош. Жакында кейстер пайда болот.",
+    empty: "Азырынча бош.",
     contactLabel: "Ырастайт",
     all: "Баары",
+    uncategorized: "Категориясыз",
   },
   en: {
     eyebrow: "Portfolio · All projects",
-    title: "Studio work",
+    title: "Studio\nwork",
     subtitle: "Cases we've shipped and ones in flight. If there's a public site — open it. If not — the client contact is right next to it.",
     back: "Back to home",
-    empty: "Nothing here yet. Cases are coming.",
+    empty: "Nothing here yet.",
     contactLabel: "Confirms",
     all: "All",
+    uncategorized: "Uncategorized",
   },
 };
 
@@ -51,12 +58,13 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const h = HEADLINE[locale as PortfolioLocale] ?? HEADLINE.ru;
+  const h = T[locale as PortfolioLocale] ?? T.ru;
+  const title = h.title.replace("\n", " ");
   return {
-    title: `${h.title} · asystem.ai`,
+    title: `${title} · asystem.ai`,
     description: h.subtitle,
     openGraph: {
-      title: `${h.title} · asystem.ai`,
+      title: `${title} · asystem.ai`,
       description: h.subtitle,
       url: `https://asystem.ai/${locale}/projects`,
       type: "website",
@@ -99,10 +107,9 @@ export default async function ProjectsPage({
 }) {
   const { locale: rawLocale } = await params;
   const locale: PortfolioLocale = ["ru", "kg", "en"].includes(rawLocale) ? (rawLocale as PortfolioLocale) : "ru";
-  const h = HEADLINE[locale];
+  const h = T[locale];
   const { cases, categories } = await loadData();
 
-  // group by category_id (включая null = "Без категории")
   const byCategory = new Map<number | "none", PortfolioCase[]>();
   for (const c of cases) {
     const key = c.category_id ?? "none";
@@ -110,136 +117,102 @@ export default async function ProjectsPage({
     byCategory.get(key)!.push(c);
   }
 
+  const shellCategories: ProjectsShellCategory[] = categories.map((cat) => ({
+    slug: cat.slug,
+    name: pickTranslation(cat.translations, locale)?.name ?? cat.slug,
+    count: byCategory.get(cat.id)?.length ?? 0,
+  }));
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#fff", color: "#0a0a0a" }}>
-      {/* SIDEBAR */}
-      <aside
-        className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-8 lg:py-12 lg:flex-col lg:gap-8"
-        style={{ borderRight: "1px solid #e5e5e5", background: "#fff" }}
-      >
-        <Link href="/" className="inline-flex items-baseline gap-1 group" aria-label="asystem.ai">
-          <span className="text-[22px] font-semibold tracking-tight">asystem</span>
-          <span className="text-[22px] font-semibold" style={{ color: "#2563EB" }}>.</span>
-          <span className="text-[22px] font-semibold tracking-tight">ai</span>
-        </Link>
-
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-text-muted hover:text-text-primary transition-colors"
+    <ProjectsShell
+      locale={locale}
+      totalCount={cases.length}
+      categories={shellCategories}
+      uncategorizedCount={byCategory.get("none")?.length ?? 0}
+      backLabel={h.back}
+      allLabel={h.all}
+      uncategorizedLabel={h.uncategorized}
+    >
+      {/* HERO в стиле главной */}
+      <header id="all" className="px-6 lg:px-12 py-16 lg:py-24" style={{ borderBottom: "1px solid #e5e5e5" }}>
+        <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: "#2563EB" }}>
+          {h.eyebrow} · {cases.length}
+        </div>
+        <h1
+          className="font-semibold tracking-tight whitespace-pre-line"
+          style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.02, letterSpacing: "-0.02em" }}
         >
-          <ArrowLeft className="w-3 h-3" /> {h.back}
-        </Link>
+          {h.title}
+        </h1>
+        <p className="mt-6 max-w-2xl text-[15px] lg:text-[16px]" style={{ color: "rgba(10,10,10,0.65)", lineHeight: 1.55 }}>
+          {h.subtitle}
+        </p>
+      </header>
 
-        <div className="flex flex-col gap-1">
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted mb-2">Категории</div>
-          <a
-            href="#all"
-            className="flex items-center justify-between py-1.5 text-[13px] text-text-primary hover:text-brand-500 transition-colors"
-          >
-            <span>{h.all}</span>
-            <span className="font-mono text-[11px] text-text-muted tabular-nums">{cases.length}</span>
-          </a>
+      {/* LIST по категориям */}
+      {cases.length === 0 ? (
+        <div className="px-6 lg:px-12 py-32 text-center text-text-muted">{h.empty}</div>
+      ) : (
+        <>
           {categories.map((cat) => {
-            const count = byCategory.get(cat.id)?.length ?? 0;
-            if (count === 0) return null;
+            const list = byCategory.get(cat.id) ?? [];
+            if (list.length === 0) return null;
             const name = pickTranslation(cat.translations, locale)?.name ?? cat.slug;
             return (
-              <a
-                key={cat.id}
-                href={`#cat-${cat.slug}`}
-                className="flex items-center justify-between py-1.5 text-[13px] text-text-secondary hover:text-brand-500 transition-colors"
-              >
-                <span>{name}</span>
-                <span className="font-mono text-[11px] text-text-muted tabular-nums">{count}</span>
-              </a>
-            );
-          })}
-          {(byCategory.get("none")?.length ?? 0) > 0 && categories.length > 0 && (
-            <a
-              href="#cat-none"
-              className="flex items-center justify-between py-1.5 text-[13px] text-text-secondary hover:text-brand-500 transition-colors"
-            >
-              <span>—</span>
-              <span className="font-mono text-[11px] text-text-muted tabular-nums">{byCategory.get("none")?.length}</span>
-            </a>
-          )}
-        </div>
-
-        <div className="mt-auto font-mono text-[10px] uppercase tracking-wider text-text-muted">
-          BISHKEK · STUDIO
-        </div>
-      </aside>
-
-      {/* MAIN */}
-      <main className="flex-1 min-w-0">
-        {/* HERO */}
-        <section
-          id="all"
-          className="px-6 lg:px-12 py-16 lg:py-24"
-          style={{ borderBottom: "1px solid #e5e5e5" }}
-        >
-          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand-500 mb-4">
-            {h.eyebrow} · {cases.length}
-          </div>
-          <h1 className="text-[clamp(36px,5vw,64px)] font-semibold leading-[1.05] tracking-tight max-w-3xl">
-            {h.title}
-          </h1>
-          <p className="mt-5 text-[15px] leading-relaxed text-text-secondary max-w-2xl">
-            {h.subtitle}
-          </p>
-        </section>
-
-        {/* LIST */}
-        {cases.length === 0 ? (
-          <div className="px-6 lg:px-12 py-24 text-center text-text-muted">{h.empty}</div>
-        ) : (
-          <div>
-            {categories.map((cat) => {
-              const list = byCategory.get(cat.id) ?? [];
-              if (list.length === 0) return null;
-              const name = pickTranslation(cat.translations, locale)?.name ?? cat.slug;
-              return (
-                <CategorySection key={cat.id} id={`cat-${cat.slug}`} title={name} cases={list} locale={locale} contactLabel={h.contactLabel} />
-              );
-            })}
-            {(byCategory.get("none")?.length ?? 0) > 0 && (
               <CategorySection
-                id="cat-none"
-                title={locale === "ru" ? "Без категории" : locale === "kg" ? "Категориясыз" : "Uncategorized"}
-                cases={byCategory.get("none") ?? []}
+                key={cat.id}
+                id={`cat-${cat.slug}`}
+                kicker={`Category · ${list.length}`}
+                title={name}
+                cases={list}
                 locale={locale}
                 contactLabel={h.contactLabel}
               />
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+            );
+          })}
+          {(byCategory.get("none")?.length ?? 0) > 0 && (
+            <CategorySection
+              id="cat-none"
+              kicker={`Category · ${byCategory.get("none")!.length}`}
+              title={h.uncategorized}
+              cases={byCategory.get("none") ?? []}
+              locale={locale}
+              contactLabel={h.contactLabel}
+            />
+          )}
+        </>
+      )}
+    </ProjectsShell>
   );
 }
 
 function CategorySection({
   id,
+  kicker,
   title,
   cases,
   locale,
   contactLabel,
 }: {
   id: string;
+  kicker: string;
   title: string;
   cases: PortfolioCase[];
   locale: PortfolioLocale;
   contactLabel: string;
 }) {
   return (
-    <section id={id} className="px-6 lg:px-12 py-12 lg:py-16" style={{ borderBottom: "1px solid #e5e5e5" }}>
-      <div className="flex items-baseline justify-between mb-8">
-        <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight">{title}</h2>
-        <span className="font-mono text-[11px] uppercase tracking-wider text-text-muted tabular-nums">
-          · {cases.length}
-        </span>
-      </div>
-      <div className="space-y-6">
+    <section id={id} style={{ borderBottom: "1px solid #e5e5e5" }}>
+      {/* SectionHeader в стиле главной */}
+      <header className="px-6 lg:px-12 py-12 lg:py-16">
+        <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-3" style={{ color: "#2563EB" }}>
+          {kicker}
+        </div>
+        <h2 className="font-semibold tracking-tight" style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)", lineHeight: 1.05 }}>
+          {title}
+        </h2>
+      </header>
+      <div className="px-6 lg:px-12 pb-12 lg:pb-16 space-y-6">
         {cases.map((c) => (
           <Link key={c.id} href={`/projects/${c.slug}`} className="block">
             <PortfolioCard case={c} locale={locale} variant="wide" contactLabel={contactLabel} />

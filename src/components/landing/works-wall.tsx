@@ -196,7 +196,7 @@ function featuredToTile(f: FeaturedFromDb): ClientTile {
     result: f.result,
     stack: f.stack,
     year: f.year,
-    logo: f.logoPath ?? "/logos/placeholder.svg",
+    logo: f.logoPath ?? "",
     logoW: 200,
     logoH: 100,
     bg: `linear-gradient(135deg, ${f.bgColor} 0%, ${shadeForGradient(f.bgColor, -15)} 100%)`,
@@ -929,19 +929,27 @@ function ClientCell({ c, index }: { c: ClientTile; index: number }) {
             maxWidth: "70%",
           }}
         >
-          <Image
-            src={c.logo}
-            alt={c.name}
-            width={c.logoW}
-            height={c.logoH}
-            className="object-contain"
-            style={{
-              width: "auto",
-              height: "100%",
-              maxWidth: "100%",
-              filter: "brightness(0) invert(1)",
-            }}
-          />
+          {c.logo ? (
+            <Image
+              src={c.logo}
+              alt={c.name}
+              width={c.logoW}
+              height={c.logoH}
+              className="object-contain"
+              style={{
+                width: "auto",
+                height: "100%",
+                maxWidth: "100%",
+                // Старые хардкод-лого — белые SVG/PNG, нужен invert; новые из БД — цветные favicon, без фильтра
+                filter: c.href ? "none" : "brightness(0) invert(1)",
+              }}
+              unoptimized={c.logo.startsWith("data:")}
+            />
+          ) : (
+            <span className="text-white font-semibold tracking-tight" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>
+              {c.name}
+            </span>
+          )}
         </div>
 
       </div>

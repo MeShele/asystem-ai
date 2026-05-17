@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft, ArrowUpRight, Lock, Building2, Calendar, Layers, User } from "lucide-react";
+import { ArrowUpRight, Lock, Building2, Calendar, Layers, User } from "lucide-react";
 import { getDb, initPortfolioTables } from "@/lib/db";
 import {
   toPortfolioCase,
@@ -12,14 +12,17 @@ import {
   type PortfolioCategory,
   type PortfolioLocale,
 } from "@/lib/portfolio-types";
+import { ProjectsShell, type ProjectsShellCategory } from "@/components/projects/projects-shell";
 
 const T: Record<PortfolioLocale, {
-  back: string; about: string; tasks: string; gallery: string;
+  back: string; allProjects: string; about: string; tasks: string; gallery: string;
   stack: string; year: string; category: string; contact: string;
   openSite: string; ndaHint: string; internalHint: string;
+  all: string; uncategorized: string;
 }> = {
   ru: {
-    back: "Все проекты",
+    back: "На главную",
+    allProjects: "Все проекты",
     about: "О проекте",
     tasks: "Что сделали",
     gallery: "Скриншоты",
@@ -30,9 +33,12 @@ const T: Record<PortfolioLocale, {
     openSite: "Открыть сайт",
     ndaHint: "Проект под NDA — публичная ссылка недоступна.",
     internalHint: "Внутренняя система клиента — публично не открывается.",
+    all: "Все",
+    uncategorized: "Без категории",
   },
   kg: {
-    back: "Бардык долбоорлор",
+    back: "Башкы бетке",
+    allProjects: "Бардык долбоорлор",
     about: "Долбоор жөнүндө",
     tasks: "Эмне жасадык",
     gallery: "Скриншоттор",
@@ -43,9 +49,12 @@ const T: Record<PortfolioLocale, {
     openSite: "Сайтты ачуу",
     ndaHint: "NDA астында — ачык шилтеме жок.",
     internalHint: "Ички система — ачык эмес.",
+    all: "Баары",
+    uncategorized: "Категориясыз",
   },
   en: {
-    back: "All projects",
+    back: "Back to home",
+    allProjects: "All projects",
     about: "About",
     tasks: "What we did",
     gallery: "Screenshots",
@@ -56,6 +65,8 @@ const T: Record<PortfolioLocale, {
     openSite: "Open site",
     ndaHint: "Under NDA — no public link.",
     internalHint: "Internal client system — not public.",
+    all: "All",
+    uncategorized: "Uncategorized",
   },
 };
 
@@ -86,6 +97,24 @@ async function loadCase(slug: string): Promise<{ case: PortfolioCase; category: 
   }
 }
 
+async function loadCategoriesForShell(): Promise<{ shellCategories: ProjectsShellCategory[]; totalCount: number; uncategorizedCount: number }> {
+  try {
+    await initPortfolioTables();
+    const db = getDb();
+    const cats = (await db`SELECT * FROM portfolio_categories ORDER BY order_index ASC, id ASC`).map(toPortfolioCategory);
+    const counts = await db`SELECT category_id, COUNT(*)::int AS n FROM portfolio_cases GROUP BY category_id`;
+    const totals = await db`SELECT COUNT(*)::int AS n FROM portfolio_cases`;
+    const countMap = new Map<number | null, number>(counts.map((r) => [r.category_id == null ? null : Number(r.category_id), Number(r.n)]));
+    return {
+      shellCategories: cats.map((c) => ({ slug: c.slug, name: c.translations.ru?.name ?? c.slug, count: countMap.get(c.id) ?? 0 })),
+      totalCount: Number(totals[0]?.n ?? 0),
+      uncategorizedCount: countMap.get(null) ?? 0,
+    };
+  } catch {
+    return { shellCategories: [], totalCount: 0, uncategorizedCount: 0 };
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -106,7 +135,7 @@ export async function generateMetadata({
       description: desc,
       url: `https://asystem.ai/${locale}/projects/${slug}`,
       type: "article",
-      images: data.case.cover_path ? [{ url: `https://asystem.ai${data.case.cover_path}` }] : [],
+      images: data.case.cover_path ? [{ url: data.case.cover_path.startsWith("data:") ? `https://asystem.ai/og.png` : `https://asystem.ai${data.case.cover_path}` }] : [],
     },
     alternates: {
       canonical: `https://asystem.ai/${locale}/projects/${slug}`,
@@ -124,6 +153,7 @@ export default async function CasePage({
   const data = await loadCase(slug);
   if (!data) notFound();
   const { case: c, category } = data;
+  const { shellCategories, totalCount, uncategorizedCount } = await loadCategoriesForShell();
   const tr = pickTranslation(c.translations, locale);
   const name = tr?.name ?? c.slug;
   const tagline = tr?.tagline ?? "";
@@ -133,96 +163,90 @@ export default async function CasePage({
   const labels = T[locale];
   const categoryName = category ? pickTranslation(category.translations, locale)?.name ?? category.slug : null;
 
-  // JSON-LD CreativeWork
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CreativeWork",
     name,
     description: description || tagline,
     inLanguage: locale,
-    creator: {
-      "@type": "Organization",
-      name: "asystem.ai",
-      url: "https://asystem.ai",
-    },
+    creator: { "@type": "Organization", name: "asystem.ai", url: "https://asystem.ai" },
     ...(c.kind === "linked" ? { url: c.public_url } : {}),
     ...(c.year ? { dateCreated: String(c.year) } : {}),
   };
 
   return (
-    <div className="min-h-screen bg-white text-ink">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <ProjectsShell
+      locale={locale}
+      totalCount={totalCount}
+      categories={shellCategories}
+      uncategorizedCount={uncategorizedCount}
+      backLabel={labels.back}
+      allLabel={labels.all}
+      uncategorizedLabel={labels.uncategorized}
+    >
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* HERO */}
+      {/* HERO как на главной — цветной полноразмерный, с лого + название + результат */}
       <header
-        className="relative px-6 lg:px-12 py-12 lg:py-20 overflow-hidden"
+        className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${c.bg_color} 0%, ${shadeHex(c.bg_color, -15)} 100%)`,
+          borderBottom: "1px solid #e5e5e5",
         }}
       >
-        <div className="max-w-5xl mx-auto">
-          <Link
-            href="/projects"
-            className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-white/70 hover:text-white transition-colors mb-8"
-          >
-            <ArrowLeft className="w-3 h-3" /> {labels.back}
-          </Link>
+        <Link
+          href="/projects"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors mb-10"
+        >
+          ← {labels.allProjects}
+        </Link>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end">
-            <div>
-              <StatusBadge status={c.status} />
-              <h1 className="mt-4 text-[clamp(40px,6vw,76px)] font-semibold leading-[1.02] tracking-tight text-white">
-                {name}
-              </h1>
-              {tagline && (
-                <p className="mt-4 text-[17px] lg:text-[20px] text-white/85 max-w-2xl leading-relaxed">
-                  {tagline}
-                </p>
-              )}
-              {result && (
-                <div className="mt-8 inline-block">
-                  <div className="font-mono text-[10px] text-white/60 uppercase tracking-wider mb-1">Результат</div>
-                  <div className="text-2xl lg:text-3xl font-semibold text-white tabular-nums">{result}</div>
-                </div>
-              )}
-            </div>
-            {c.logo_path && (
-              <div className="flex items-center justify-center lg:justify-end">
-                <Image
-                  src={c.logo_path}
-                  alt={name}
-                  width={200}
-                  height={120}
-                  className="max-w-[200px] max-h-[120px] object-contain drop-shadow-2xl"
-                  unoptimized={c.logo_path.startsWith("data:")}
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-end">
+          <div>
+            <StatusBadge status={c.status} />
+            <h1 className="mt-5 font-semibold leading-[0.95] tracking-tight text-white" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em" }}>
+              {name}
+            </h1>
+            {tagline && (
+              <p className="mt-5 text-[18px] lg:text-[22px] text-white/85 max-w-2xl leading-relaxed">
+                {tagline}
+              </p>
+            )}
+            {result && (
+              <div className="mt-10 inline-block">
+                <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.25em] mb-2">Результат</div>
+                <div className="text-2xl lg:text-4xl font-semibold text-white tabular-nums leading-[1.1]">{result}</div>
               </div>
             )}
           </div>
+          {c.logo_path && (
+            <div className="flex items-center justify-center lg:justify-end">
+              <Image
+                src={c.logo_path}
+                alt={name}
+                width={220}
+                height={140}
+                className="max-w-[220px] max-h-[140px] object-contain drop-shadow-2xl"
+                unoptimized
+              />
+            </div>
+          )}
         </div>
       </header>
 
-      {/* META BAR */}
-      <div className="px-6 lg:px-12 py-5 border-y border-border-faint bg-[#fafafa]">
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
-          {c.year && (
-            <MetaItem icon={<Calendar className="w-3.5 h-3.5" />} label={labels.year} value={String(c.year)} />
-          )}
-          {categoryName && (
-            <MetaItem icon={<Layers className="w-3.5 h-3.5" />} label={labels.category} value={categoryName} />
-          )}
-          {c.stack.length > 0 && (
-            <MetaItem icon={<Layers className="w-3.5 h-3.5" />} label={labels.stack} value={c.stack.join(" · ")} />
-          )}
+      {/* META */}
+      <div className="px-6 lg:px-12 py-5" style={{ borderBottom: "1px solid #e5e5e5", background: "#fafafa" }}>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
+          {c.year && <MetaItem icon={<Calendar className="w-3.5 h-3.5" />} label={labels.year} value={String(c.year)} />}
+          {categoryName && <MetaItem icon={<Layers className="w-3.5 h-3.5" />} label={labels.category} value={categoryName} />}
+          {c.stack.length > 0 && <MetaItem icon={<Layers className="w-3.5 h-3.5" />} label={labels.stack} value={c.stack.join(" · ")} />}
           {c.kind === "linked" && (
             <a
               href={c.public_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto inline-flex items-center gap-1.5 text-brand-500 hover:text-brand-400 font-medium transition-colors"
+              className="ml-auto inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[#1D4ED8]"
+              style={{ color: "#2563EB" }}
             >
               {labels.openSite}
               <ArrowUpRight className="w-4 h-4" />
@@ -232,26 +256,24 @@ export default async function CasePage({
       </div>
 
       {/* BODY */}
-      <main className="px-6 lg:px-12 py-12 lg:py-20">
-        <div className="max-w-3xl mx-auto space-y-12">
-          {/* About */}
+      <div className="px-6 lg:px-12 py-16 lg:py-24" style={{ borderBottom: "1px solid #e5e5e5" }}>
+        <div className="max-w-3xl space-y-14">
           {description && (
             <section>
-              <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-text-muted mb-4">{labels.about}</h2>
-              <div className="prose prose-lg text-[16px] leading-[1.75] text-text-secondary whitespace-pre-wrap">
+              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: "#2563EB" }}>{labels.about}</div>
+              <div className="text-[17px] leading-[1.75] whitespace-pre-wrap" style={{ color: "rgba(10,10,10,0.75)" }}>
                 {description}
               </div>
             </section>
           )}
 
-          {/* Tasks */}
           {tasks.filter(Boolean).length > 0 && (
             <section>
-              <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-text-muted mb-4">{labels.tasks}</h2>
+              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: "#2563EB" }}>{labels.tasks}</div>
               <ul className="space-y-3">
                 {tasks.filter(Boolean).map((task, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[16px] text-text-primary leading-relaxed">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-500 flex-shrink-0" />
+                  <li key={i} className="flex items-start gap-3 text-[17px] leading-relaxed" style={{ color: "#0a0a0a" }}>
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#2563EB" }} />
                     <span>{task}</span>
                   </li>
                 ))}
@@ -259,53 +281,54 @@ export default async function CasePage({
             </section>
           )}
 
-          {/* Status hint */}
           {c.kind === "static" && (
-            <section className="rounded-2xl border border-border-faint bg-[#fafafa] p-5 text-sm text-text-secondary">
-              {c.status === "NDA" ? labels.ndaHint : labels.internalHint}
+            <section className="rounded-2xl p-6" style={{ border: "1px solid #e5e5e5", background: "#fafafa" }}>
+              <p className="text-[15px]" style={{ color: "rgba(10,10,10,0.7)" }}>
+                {c.status === "NDA" ? labels.ndaHint : labels.internalHint}
+              </p>
               {c.contact_person && (
-                <div className="mt-3 flex items-center gap-2 text-text-primary">
-                  <User className="w-4 h-4 text-brand-500" />
+                <div className="mt-4 flex items-center gap-2 text-[14px]" style={{ color: "#0a0a0a" }}>
+                  <User className="w-4 h-4" style={{ color: "#2563EB" }} />
                   <strong>{labels.contact}:</strong>
                   <span>{c.contact_person}</span>
-                  {c.contact_role && <span className="text-text-muted">· {c.contact_role}</span>}
+                  {c.contact_role && <span style={{ color: "#9ca3af" }}>· {c.contact_role}</span>}
                 </div>
               )}
             </section>
           )}
         </div>
+      </div>
 
-        {/* Gallery */}
-        {c.gallery.length > 0 && (
-          <section className="max-w-6xl mx-auto mt-16">
-            <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-text-muted mb-6">{labels.gallery}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {c.gallery.map((g, i) => (
-                <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-border-faint bg-bg-secondary">
-                  <Image
-                    src={g.path}
-                    alt={g.alt ?? `${name} screenshot ${i + 1}`}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-cover"
-                    unoptimized={g.path.startsWith("data:")}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
-    </div>
+      {/* GALLERY */}
+      {c.gallery.length > 0 && (
+        <div className="px-6 lg:px-12 py-16 lg:py-24" style={{ borderBottom: "1px solid #e5e5e5" }}>
+          <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: "#2563EB" }}>{labels.gallery}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {c.gallery.map((g, i) => (
+              <div key={i} className="relative aspect-video rounded-xl overflow-hidden" style={{ border: "1px solid #e5e5e5", background: "#fafafa" }}>
+                <Image
+                  src={g.path}
+                  alt={g.alt ?? `${name} screenshot ${i + 1}`}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </ProjectsShell>
   );
 }
 
 function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-text-muted">{icon}</span>
-      <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">{label}</span>
-      <span className="text-text-primary">{value}</span>
+      <span style={{ color: "#9ca3af" }}>{icon}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: "#9ca3af" }}>{label}</span>
+      <span style={{ color: "#0a0a0a" }}>{value}</span>
     </div>
   );
 }
@@ -318,7 +341,7 @@ function StatusBadge({ status }: { status: PortfolioCase["status"] }) {
   };
   const conf = map[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider ${conf.bg}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] ${conf.bg}`}>
       {conf.icon}
       {status}
     </span>
