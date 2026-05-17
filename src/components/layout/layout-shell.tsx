@@ -21,11 +21,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const isClientPanel = pathname.includes("/client/") && !pathname.match(/^\/(ru|en|kg)\/client\/request\/?$/);
   const isPartnerLanding = /^\/(ru|en|kg)\/partner\/?$/.test(pathname);
   const isStartupsLanding = /^\/(ru|en|kg)\/startups\/?$/.test(pathname);
+  const isProjectsLanding = /^\/(ru|en|kg)\/projects(\/|$)/.test(pathname);
   const isQuizPage = /^\/(ru|en|kg)\/client\/request\/?$/.test(pathname);
   const isSplash = /^\/(ru|en|kg)?\/?$/.test(pathname);
   const isTelegramMiniApp = /^\/(ru|en|kg)\/tg(\/|$)/.test(pathname);
 
-  if (isAdmin || isPartnerPanel || isClientPanel || isSplash || isPartnerLanding || isStartupsLanding || isQuizPage || isTelegramMiniApp) {
+  if (isAdmin || isPartnerPanel || isClientPanel || isSplash || isPartnerLanding || isStartupsLanding || isProjectsLanding || isQuizPage || isTelegramMiniApp) {
     // Home (splash) и admin/partner/startups panels рендерят свой layout
     return <>{children}</>;
   }
