@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unlink } from "node:fs/promises";
-import path from "node:path";
 import { getDb, initPortfolioTables } from "@/lib/db";
 import { persistImage, persistGallery } from "@/lib/portfolio-upload";
 import type { PortfolioStatus, PortfolioGalleryItem } from "@/lib/portfolio-types";
@@ -100,13 +98,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json(updated[0]);
 }
 
-async function tryUnlinkPublic(maybePath: unknown) {
-  if (typeof maybePath !== "string") return;
-  if (!maybePath.startsWith("/uploads/portfolio/")) return;
-  const abs = path.join(process.cwd(), "public", maybePath.replace(/^\//, ""));
-  await unlink(abs).catch(() => {});
-}
-
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!authed(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await initPortfolioTables();
@@ -114,16 +105,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
   const caseId = Number(id);
 
-  const rows = await db`SELECT logo_path, cover_path, gallery FROM portfolio_cases WHERE id = ${caseId} LIMIT 1`;
-  if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  await db`DELETE FROM portfolio_cases WHERE id = ${caseId}`;
-
-  // cleanup files (best-effort)
-  await tryUnlinkPublic(rows[0].logo_path);
-  await tryUnlinkPublic(rows[0].cover_path);
-  const gal = (rows[0].gallery as PortfolioGalleryItem[]) ?? [];
-  for (const g of gal) await tryUnlinkPublic(g.path);
-
+  const result = await db`DELETE FROM portfolio_cases WHERE id = ${caseId} RETURNING id`;
+  if (result.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
