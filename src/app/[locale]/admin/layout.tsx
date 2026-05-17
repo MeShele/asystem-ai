@@ -16,6 +16,7 @@ import {
   ChevronRight,
   LogOut,
   BookOpen,
+  Briefcase,
   Menu,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const navItems = [
   { href: "/admin" as const, label: "Дашборд", icon: LayoutDashboard, badge: null },
   { href: "/admin/requests" as const, label: "Заявки", icon: Inbox, badge: "new" as const },
   { href: "/admin/projects" as const, label: "Проекты", icon: FolderKanban, badge: null },
+  { href: "/admin/portfolio" as const, label: "Портфолио", icon: Briefcase, badge: null },
   { href: "/admin/clients" as const, label: "Клиенты", icon: UserCircle, badge: null },
   { href: "/admin/partners" as const, label: "Партнёры", icon: Handshake, badge: null },
   { href: "/admin/developers" as const, label: "Разработчики", icon: Users, badge: null },

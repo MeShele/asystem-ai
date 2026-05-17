@@ -472,3 +472,46 @@ export async function initProjectTables() {
   )`;
   await db`CREATE INDEX IF NOT EXISTS idx_project_payments_project ON project_payments(project_id, paid_at DESC)`;
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Portfolio (публичная витрина проектов на /projects, отвязана от operational projects)
+// ──────────────────────────────────────────────────────────────────────────────
+export async function initPortfolioTables() {
+  const db = getDb();
+
+  await db`CREATE TABLE IF NOT EXISTS portfolio_categories (
+    id SERIAL PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    translations JSONB NOT NULL DEFAULT '{}'::jsonb,
+    order_index INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE TABLE IF NOT EXISTS portfolio_cases (
+    id SERIAL PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    category_id INT REFERENCES portfolio_categories(id) ON DELETE SET NULL,
+    status TEXT NOT NULL DEFAULT 'NDA',
+    public_url TEXT,
+    is_featured BOOLEAN DEFAULT FALSE,
+    order_index INT DEFAULT 0,
+    year INT,
+    stack TEXT[] DEFAULT '{}'::text[],
+    bg_color TEXT DEFAULT '#2563EB',
+    logo_path TEXT,
+    cover_path TEXT,
+    gallery JSONB NOT NULL DEFAULT '[]'::jsonb,
+    translations JSONB NOT NULL DEFAULT '{}'::jsonb,
+    contact_person TEXT,
+    contact_role TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await db`CREATE INDEX IF NOT EXISTS idx_portfolio_cases_slug ON portfolio_cases(slug)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_portfolio_cases_featured ON portfolio_cases(is_featured, order_index) WHERE is_featured = TRUE`;
+  await db`CREATE INDEX IF NOT EXISTS idx_portfolio_cases_category ON portfolio_cases(category_id, order_index)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_portfolio_cases_order ON portfolio_cases(order_index)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_portfolio_categories_order ON portfolio_categories(order_index)`;
+}
