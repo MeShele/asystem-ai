@@ -128,8 +128,7 @@ export function ProjectsShell({
         <main className="flex-1 min-w-0">
           {children}
 
-          {/* Footer wordmark + easter egg, как на главной */}
-          <FooterWordmark />
+          {/* Easter egg (внутри уже есть свой wordmark «asystem.ai» с яйцом-точкой) */}
           <VinylEasterEgg />
         </main>
       </div>
@@ -199,30 +198,3 @@ function LiveTimestamp() {
   );
 }
 
-function FooterWordmark() {
-  return (
-    <div
-      aria-hidden
-      className="select-none overflow-hidden"
-      style={{
-        background: "#fafafa",
-        lineHeight: 0.82,
-        borderTop: "1px solid #e5e5e5",
-        paddingTop: "clamp(40px, 8vh, 96px)",
-        paddingBottom: "clamp(16px, 3vh, 32px)",
-      }}
-    >
-      <div
-        className="font-semibold tracking-tighter whitespace-nowrap text-center"
-        style={{
-          fontSize: "clamp(56px, 14vw, 220px)",
-          color: "rgba(10,10,10,0.18)",
-          paddingLeft: "clamp(16px, 3vw, 48px)",
-          paddingRight: "clamp(16px, 3vw, 48px)",
-        }}
-      >
-        asystem<span style={{ color: "rgba(37, 99, 235,0.5)" }}>.</span>ai
-      </div>
-    </div>
-  );
-}
