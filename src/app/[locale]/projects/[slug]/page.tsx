@@ -183,6 +183,7 @@ export default async function CasePage({
       backLabel={labels.back}
       allLabel={labels.all}
       uncategorizedLabel={labels.uncategorized}
+      categoryHrefBase="/projects"
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 

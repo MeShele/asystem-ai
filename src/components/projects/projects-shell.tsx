@@ -20,6 +20,8 @@ interface Props {
   backLabel: string;
   allLabel: string;
   uncategorizedLabel: string;
+  /** Префикс для якорей категорий — "" на /projects (якоря на той же странице), "/projects" на /projects/[slug] (переход + якорь). Локаль добавляется автоматически. */
+  categoryHrefBase?: string;
   children: React.ReactNode;
 }
 
@@ -31,15 +33,18 @@ export function ProjectsShell({
   backLabel,
   allLabel,
   uncategorizedLabel,
+  categoryHrefBase = "",
   children,
 }: Props) {
+  const base = categoryHrefBase ? `/${locale}${categoryHrefBase}` : "";
+  const catHref = (anchor: string) => `${base}#${anchor}`;
   const mobileNav = [
     {
       title: "Категории",
       items: [
-        { label: `${allLabel} · ${totalCount}`, href: "#all" },
-        ...categories.filter((c) => c.count > 0).map((c) => ({ label: `${c.name} · ${c.count}`, href: `#cat-${c.slug}` })),
-        ...(uncategorizedCount > 0 ? [{ label: `${uncategorizedLabel} · ${uncategorizedCount}`, href: "#cat-none" }] : []),
+        { label: `${allLabel} · ${totalCount}`, href: catHref("all") },
+        ...categories.filter((c) => c.count > 0).map((c) => ({ label: `${c.name} · ${c.count}`, href: catHref(`cat-${c.slug}`) })),
+        ...(uncategorizedCount > 0 ? [{ label: `${uncategorizedLabel} · ${uncategorizedCount}`, href: catHref("cat-none") }] : []),
       ],
     },
     {
@@ -82,14 +87,14 @@ export function ProjectsShell({
           </Link>
 
           <SidebarGroup title={`Категории · ${totalCount}`}>
-            <SidebarItem href="#all">{allLabel} · <span className="font-mono text-[#9ca3af]">{totalCount}</span></SidebarItem>
+            <SidebarItem href={catHref("all")}>{allLabel} · <span className="font-mono text-[#9ca3af]">{totalCount}</span></SidebarItem>
             {categories.filter((c) => c.count > 0).map((c) => (
-              <SidebarItem key={c.slug} href={`#cat-${c.slug}`}>
+              <SidebarItem key={c.slug} href={catHref(`cat-${c.slug}`)}>
                 {c.name} · <span className="font-mono text-[#9ca3af]">{c.count}</span>
               </SidebarItem>
             ))}
             {uncategorizedCount > 0 && (
-              <SidebarItem href="#cat-none">
+              <SidebarItem href={catHref("cat-none")}>
                 {uncategorizedLabel} · <span className="font-mono text-[#9ca3af]">{uncategorizedCount}</span>
               </SidebarItem>
             )}
@@ -170,10 +175,12 @@ function SidebarItem({
   if (external || href.startsWith("mailto:") || href.startsWith("http")) {
     return <li><a href={href} target={external ? "_blank" : undefined} rel="noopener noreferrer">{inner}</a></li>;
   }
-  if (href.startsWith("#")) {
+  // Якорь на текущей странице ИЛИ переход с якорем (/{locale}/projects#cat-X) — обычный <a>,
+  // чтобы браузер scroll-spy сработал после навигации.
+  if (href.startsWith("#") || href.includes("#")) {
     return <li><a href={href}>{inner}</a></li>;
   }
-  return <li><Link href={href}>{inner}</Link></li>;
+  return <li><Link href={href as never}>{inner}</Link></li>;
 }
 
 function LiveTimestamp() {

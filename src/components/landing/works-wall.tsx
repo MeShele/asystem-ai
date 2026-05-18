@@ -173,6 +173,10 @@ export type FeaturedFromDb = {
   logoPath: string | null;
   bgColor: string;
   publicUrl: string | null;
+  /** Полный путь с локалью на детальную страницу (e.g. `/ru/projects/aku`). */
+  detailHref: string;
+  /** Полный путь с локалью на список всех проектов. */
+  listHref: string;
 };
 
 function shadeForGradient(hex: string, percent: number): string {
@@ -200,7 +204,7 @@ function featuredToTile(f: FeaturedFromDb): ClientTile {
     logoW: 200,
     logoH: 100,
     bg: `linear-gradient(135deg, ${f.bgColor} 0%, ${shadeForGradient(f.bgColor, -15)} 100%)`,
-    href: `/projects/${f.slug}`,
+    href: f.detailHref,
   };
 }
 
@@ -383,9 +387,10 @@ const TEAM: Array<{ key: string; photo: string }> = [
 interface WorksWallProps {
   featured?: FeaturedFromDb[];
   totalCount?: number;
+  projectsHref?: string;
 }
 
-export function WorksWall({ featured, totalCount = 0 }: WorksWallProps = {}) {
+export function WorksWall({ featured, totalCount = 0, projectsHref = "/projects" }: WorksWallProps = {}) {
   const activeSection = useActiveSection();
   return (
     <ActiveSectionContext.Provider value={activeSection}>
@@ -395,7 +400,7 @@ export function WorksWall({ featured, totalCount = 0 }: WorksWallProps = {}) {
         style={{ background: "#fff", color: "#0a0a0a" }}
       >
         <Sidebar />
-        <Main featured={featured} totalCount={totalCount} />
+        <Main featured={featured} totalCount={totalCount} projectsHref={projectsHref} />
       </div>
     </ActiveSectionContext.Provider>
   );
@@ -588,7 +593,7 @@ function LiveTimestamp() {
 
 /* ═══════════════ MAIN ═══════════════ */
 
-function Main({ featured, totalCount = 0 }: { featured?: FeaturedFromDb[]; totalCount?: number }) {
+function Main({ featured, totalCount = 0, projectsHref = "/projects" }: { featured?: FeaturedFromDb[]; totalCount?: number; projectsHref?: string }) {
   const clients: ClientTile[] = featured && featured.length > 0 ? featured.map(featuredToTile) : CLIENTS;
   const hasMore = totalCount > clients.length;
   return (
@@ -618,14 +623,14 @@ function Main({ featured, totalCount = 0 }: { featured?: FeaturedFromDb[]; total
           <div className="font-mono text-[11px] tracking-wider" style={{ color: "#9ca3af", letterSpacing: "0.2em" }}>
             +{totalCount - clients.length} ПРОЕКТОВ · ВСЕГО {totalCount}
           </div>
-          <Link
-            href="/projects"
+          <a
+            href={projectsHref}
             className="font-mono text-[12px] transition-colors inline-flex items-center gap-1.5 group"
             style={{ color: "#0a0a0a", letterSpacing: "0.1em" }}
           >
             Все проекты · {totalCount}
             <span className="transition-transform group-hover:translate-x-1">→</span>
-          </Link>
+          </a>
         </div>
       )}
 

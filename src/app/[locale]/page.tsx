@@ -45,6 +45,8 @@ async function loadHomePortfolio(locale: PortfolioLocale): Promise<{ featured: F
         logoPath: c.logo_path,
         bgColor: c.bg_color,
         publicUrl: c.kind === "linked" ? c.public_url : null,
+        detailHref: `/${locale}/projects/${c.slug}`,
+        listHref: `/${locale}/projects`,
       };
     });
     return { featured, totalCount: Number(totalRow[0]?.n ?? 0) };
@@ -57,5 +59,5 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const { locale: rawLocale } = await params;
   const locale: PortfolioLocale = ["ru", "kg", "en"].includes(rawLocale) ? (rawLocale as PortfolioLocale) : "ru";
   const { featured, totalCount } = await loadHomePortfolio(locale);
-  return <WorksWall featured={featured} totalCount={totalCount} />;
+  return <WorksWall featured={featured} totalCount={totalCount} projectsHref={`/${locale}/projects`} />;
 }
