@@ -11,6 +11,7 @@ import {
 } from "@/lib/portfolio-types";
 import { PortfolioCard } from "@/components/portfolio/portfolio-card";
 import { ProjectsShell, type ProjectsShellCategory } from "@/components/projects/projects-shell";
+import { HeroMeshBg } from "@/components/projects/hero-mesh-bg";
 
 const T: Record<PortfolioLocale, {
   eyebrow: string; title: string; subtitle: string;
@@ -133,20 +134,27 @@ export default async function ProjectsPage({
       allLabel={h.all}
       uncategorizedLabel={h.uncategorized}
     >
-      {/* HERO в стиле главной */}
-      <header id="all" className="px-6 lg:px-12 py-16 lg:py-24" style={{ borderBottom: "1px solid #e5e5e5" }}>
-        <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: "#2563EB" }}>
-          {h.eyebrow} · {cases.length}
+      {/* HERO в стиле главной — с анимированным mesh-фоном Brand Blue */}
+      <header
+        id="all"
+        className="relative overflow-hidden px-6 lg:px-12 py-16 lg:py-24"
+        style={{ borderBottom: "1px solid #e5e5e5" }}
+      >
+        <HeroMeshBg />
+        <div className="relative z-10">
+          <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: "#2563EB" }}>
+            {h.eyebrow} · {cases.length}
+          </div>
+          <h1
+            className="font-semibold tracking-tight whitespace-pre-line"
+            style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.02, letterSpacing: "-0.02em" }}
+          >
+            {h.title}
+          </h1>
+          <p className="mt-6 max-w-2xl text-[15px] lg:text-[16px]" style={{ color: "rgba(10,10,10,0.65)", lineHeight: 1.55 }}>
+            {h.subtitle}
+          </p>
         </div>
-        <h1
-          className="font-semibold tracking-tight whitespace-pre-line"
-          style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.02, letterSpacing: "-0.02em" }}
-        >
-          {h.title}
-        </h1>
-        <p className="mt-6 max-w-2xl text-[15px] lg:text-[16px]" style={{ color: "rgba(10,10,10,0.65)", lineHeight: 1.55 }}>
-          {h.subtitle}
-        </p>
       </header>
 
       {/* LIST по категориям */}
