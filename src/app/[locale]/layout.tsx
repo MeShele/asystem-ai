@@ -31,17 +31,32 @@ export async function generateMetadata({
     title: t("title"),
     description: t("description"),
     metadataBase: new URL("https://asystem.ai"),
+    keywords: [
+      "AI-разработка", "AI-first студия", "веб-разработка СНГ",
+      "Next.js разработка", "AI-агенты для бизнеса", "Telegram-боты",
+      "интеграции CRM", "автоматизация бизнес-процессов",
+      "разработка SaaS", "Бишкек", "Кыргызстан", "fix-price разработка",
+    ],
     openGraph: {
       title: t("title"),
       description: t("description"),
       siteName: "asystem.ai",
       locale,
       type: "website",
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: "asystem.ai — Независимая AI-first IT-студия",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
+      images: ["/opengraph-image"],
     },
     alternates: {
       canonical: `https://asystem.ai/${locale}`,

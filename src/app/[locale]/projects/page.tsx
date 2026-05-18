@@ -12,6 +12,11 @@ import {
 import { PortfolioCard } from "@/components/portfolio/portfolio-card";
 import { ProjectsShell, type ProjectsShellCategory } from "@/components/projects/projects-shell";
 import { HeroMeshBg } from "@/components/projects/hero-mesh-bg";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  buildProjectsCollectionSchema,
+  buildProjectsBreadcrumbSchema,
+} from "@/lib/seo/schema";
 
 const T: Record<PortfolioLocale, {
   eyebrow: string; title: string; subtitle: string;
@@ -124,6 +129,17 @@ export default async function ProjectsPage({
     count: byCategory.get(cat.id)?.length ?? 0,
   }));
 
+  const jsonLdItems = cases.map((c) => {
+    const tr = pickTranslation(c.translations, locale);
+    return {
+      slug: c.slug,
+      name: tr?.name ?? c.slug,
+      description: tr?.tagline ?? tr?.description?.slice(0, 160) ?? undefined,
+    };
+  });
+  const collectionSchema = buildProjectsCollectionSchema(locale, jsonLdItems);
+  const breadcrumbSchema = buildProjectsBreadcrumbSchema(locale);
+
   return (
     <ProjectsShell
       locale={locale}
@@ -134,6 +150,8 @@ export default async function ProjectsPage({
       allLabel={h.all}
       uncategorizedLabel={h.uncategorized}
     >
+      <JsonLd data={[collectionSchema, breadcrumbSchema]} />
+
       {/* HERO в стиле главной — с анимированным mesh-фоном Brand Blue */}
       <header
         id="all"

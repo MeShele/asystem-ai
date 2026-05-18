@@ -103,6 +103,56 @@ export const websiteSchema = {
   inLanguage: ["ru", "kg", "en"],
 };
 
+export function buildProjectsCollectionSchema(
+  locale: string,
+  cases: { slug: string; name: string; description?: string }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${BASE_URL}/${locale}/projects#collection`,
+    url: `${BASE_URL}/${locale}/projects`,
+    name: "Портфолио asystem.ai",
+    description:
+      "Кейсы asystem.ai: реализованные и текущие проекты для бизнеса и государственных структур СНГ.",
+    inLanguage: locale,
+    isPartOf: { "@id": `${BASE_URL}/#website` },
+    publisher: { "@id": `${BASE_URL}/#organization` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: cases.length,
+      itemListElement: cases.map((c, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        url: `${BASE_URL}/${locale}/projects/${c.slug}`,
+        name: c.name,
+        ...(c.description ? { description: c.description } : {}),
+      })),
+    },
+  };
+}
+
+export function buildProjectsBreadcrumbSchema(locale: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "asystem.ai",
+        item: `${BASE_URL}/${locale}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Проекты",
+        item: `${BASE_URL}/${locale}/projects`,
+      },
+    ],
+  };
+}
+
 export const partnerFaqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",

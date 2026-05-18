@@ -127,18 +127,42 @@ export async function generateMetadata({
   const t = pickTranslation(data.case.translations, locale);
   const name = t?.name ?? data.case.slug;
   const desc = t?.tagline ?? t?.description?.slice(0, 160) ?? "";
+
+  // Используем cover как OG, только если это публичный URL (не base64).
+  // Иначе падаем на корневой /opengraph-image (auto-generated через ImageResponse).
+  const hasPublicCover = data.case.cover_path && !data.case.cover_path.startsWith("data:");
+  const ogImage = hasPublicCover
+    ? `https://asystem.ai${data.case.cover_path}`
+    : "/opengraph-image";
+
+  const canonical = `https://asystem.ai/${locale}/projects/${slug}`;
+
   return {
     title: `${name} · asystem.ai`,
     description: desc,
     openGraph: {
       title: `${name} · asystem.ai`,
       description: desc,
-      url: `https://asystem.ai/${locale}/projects/${slug}`,
+      url: canonical,
       type: "article",
-      images: data.case.cover_path ? [{ url: data.case.cover_path.startsWith("data:") ? `https://asystem.ai/og.png` : `https://asystem.ai${data.case.cover_path}` }] : [],
+      siteName: "asystem.ai",
+      locale,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} · asystem.ai`,
+      description: desc,
+      images: [ogImage],
     },
     alternates: {
-      canonical: `https://asystem.ai/${locale}/projects/${slug}`,
+      canonical,
+      languages: {
+        ru: `https://asystem.ai/ru/projects/${slug}`,
+        kg: `https://asystem.ai/kg/projects/${slug}`,
+        en: `https://asystem.ai/en/projects/${slug}`,
+        "x-default": `https://asystem.ai/ru/projects/${slug}`,
+      },
     },
   };
 }

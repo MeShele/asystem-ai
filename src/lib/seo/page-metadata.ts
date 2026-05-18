@@ -15,6 +15,35 @@ const PAGE_PATHS: Record<PageKey, string> = {
   terms: "/terms",
 };
 
+// B2B-релевантные keywords для СНГ-таргета. Не транслируются — содержат бренды и термины.
+const PAGE_KEYWORDS: Record<PageKey, string[]> = {
+  home: [
+    "AI-разработка", "AI-first студия", "веб-разработка СНГ",
+    "Next.js разработка", "AI-агенты для бизнеса", "Telegram-боты",
+    "интеграции CRM", "автоматизация бизнес-процессов",
+    "разработка SaaS", "AI-консалтинг", "Бишкек", "Кыргызстан",
+    "разработка под ключ", "fix-price разработка",
+  ],
+  startups: [
+    "MVP за 4 недели", "AI для стартапов", "запуск стартапа без CTO",
+    "MVP без команды", "стартап СНГ", "B2B SaaS MVP",
+    "AI-замена команды разработчиков", "технический партнёр стартапа",
+    "no-code MVP", "AI-разработка для фаундеров",
+  ],
+  partner: [
+    "партнёрская программа IT", "реферальная программа разработка",
+    "заработок на IT-проектах", "комиссия за клиентов IT",
+    "партнёрка для маркетологов", "IT-партнёрство", "белая партнёрка",
+    "passive income IT", "agency reseller", "white-label разработка",
+  ],
+  products: [
+    "SaaS-продукты asystem", "AI-ассистент для бизнеса",
+    "автосинхронизация данных", "KPI-дашборды", "ранний доступ SaaS",
+  ],
+  privacy: ["политика конфиденциальности", "GDPR", "обработка данных asystem.ai"],
+  terms: ["пользовательское соглашение", "условия использования asystem.ai"],
+};
+
 export async function buildPageMetadata(
   locale: string,
   pageKey: PageKey,
@@ -24,12 +53,14 @@ export async function buildPageMetadata(
 
   const title = t("title");
   const description = t("description");
+  const canonical = `${BASE_URL}/${locale}${path}`;
 
   return {
     title,
     description,
+    keywords: PAGE_KEYWORDS[pageKey],
     alternates: {
-      canonical: `${BASE_URL}/${locale}${path}`,
+      canonical,
       languages: {
         ...Object.fromEntries(
           LOCALES.map((l) => [l, `${BASE_URL}/${l}${path}`]),
@@ -40,15 +71,24 @@ export async function buildPageMetadata(
     openGraph: {
       title,
       description,
-      url: `${BASE_URL}/${locale}${path}`,
+      url: canonical,
       siteName: "asystem.ai",
       locale,
       type: "website",
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: "asystem.ai — Независимая AI-first IT-студия",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: ["/opengraph-image"],
     },
   };
 }
