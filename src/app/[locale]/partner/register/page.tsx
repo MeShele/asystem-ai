@@ -9,6 +9,7 @@ function RegisterForm() {
   const params = useSearchParams();
   const router = useRouter();
   const inviteToken = params.get("invite") || "";
+  const ref = params.get("ref") || "";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,6 +20,11 @@ function RegisterForm() {
   const [inviteState, setInviteState] = useState<"valid" | "invalid" | "loading" | "no-invite">("loading");
   const [err, setErr] = useState("");
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!ref) return;
+    document.cookie = `partner_ref=${encodeURIComponent(ref)}; path=/; max-age=7200; samesite=lax`;
+  }, [ref]);
 
   useEffect(() => {
     if (!inviteToken) {
@@ -56,6 +62,7 @@ function RegisterForm() {
         company: company || null,
         password,
         invite_token: inviteToken || null,
+        ref_code: ref || null,
       }),
     });
     setLoading(false);

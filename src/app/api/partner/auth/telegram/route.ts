@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initPartnerTables } from "@/lib/db";
 import { notifyAdmin } from "@/lib/telegram";
+import { notify } from "@/lib/notify";
 import crypto from "crypto";
 
 // Verify Telegram Login Widget data
@@ -54,16 +55,36 @@ export async function POST(req: NextRequest) {
     // Register new partner via Telegram
     partnerId = "P-" + String(Date.now()).slice(-6);
     const refCode = crypto.randomBytes(4).toString("hex");
+    let referrerPartnerId: string | null = null;
+    const refCookie = req.cookies.get("partner_ref")?.value;
 
-    await db`INSERT INTO partners (partner_id, name, telegram_id, telegram_username, ref_code, password_hash)
+    if (refCookie) {
+      const refRows = (await db`SELECT partner_id FROM partners WHERE ref_code = ${refCookie} LIMIT 1`) as Record<string, unknown>[];
+      if (refRows.length > 0) referrerPartnerId = String(refRows[0].partner_id);
+    }
+
+    await db`INSERT INTO partners (partner_id, name, telegram_id, telegram_username, ref_code, password_hash, referrer_partner_id)
       VALUES (
         ${partnerId},
         ${fullName || username || "Partner"},
         ${telegramId},
         ${username || null},
         ${refCode},
-        ${crypto.randomBytes(16).toString("hex")}
+        ${crypto.randomBytes(16).toString("hex")},
+        ${referrerPartnerId}
       )`;
+
+    if (referrerPartnerId) {
+      await notify({
+        userRole: "partner",
+        userId: referrerPartnerId,
+        kind: "lead_assigned",
+        title: "Новый партнёр в твоей сети",
+        body: `${fullName || username || "Новый партнёр"} зарегистрировался по твоей реф-ссылке. Ты будешь получать override с его сделок.`,
+        link: "/partner/network",
+        payload: { newPartnerId: partnerId },
+      });
+    }
 
     // Notify admin
     await notifyAdmin(`🤝 Новый партнёр через Telegram\nID: ${partnerId}\nИмя: ${fullName}\nTG: @${username || "—"}`).catch(() => {});
@@ -78,6 +99,7 @@ export async function POST(req: NextRequest) {
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
+  res.cookies.set("partner_ref", "", { path: "/", maxAge: 0 });
 
   return res;
 }

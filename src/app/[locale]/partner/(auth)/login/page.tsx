@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 const inputClass =
   "w-full p-3 bg-bg-primary border border-border-faint rounded-xl text-text-primary text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all placeholder:text-text-muted";
 
-export default function PartnerLoginPage() {
+function PartnerLoginForm() {
+  const params = useSearchParams();
+  const ref = params.get("ref") || "";
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
   const [error, setError] = useState("");
@@ -19,7 +22,7 @@ export default function PartnerLoginPage() {
     const endpoint = mode === "login" ? "/api/partner/login" : "/api/partner/register";
     const body = mode === "login"
       ? { email: form.email, password: form.password }
-      : form;
+      : { ...form, ref_code: ref || null };
 
     try {
       const res = await fetch(endpoint, {
@@ -96,5 +99,13 @@ export default function PartnerLoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function PartnerLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <PartnerLoginForm />
+    </Suspense>
   );
 }
