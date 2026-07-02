@@ -5,7 +5,8 @@ type Row = Record<string, unknown>;
 
 /**
  * Создаёт override-запись если у sub-партнёра есть referrer и тот активен.
- * Условия активности referrer'а: хотя бы 1 подписанная сделка за 90 дней.
+ * Условия: проект — реальная сделка (contract_signed_at IS NOT NULL);
+ * у referrer'а хотя бы 1 подписанная сделка за 90 дней (активность).
  *
  * Override считается от commission sub-партнёра по этому проекту, не от total_price.
  * @param subPartnerId — кто закрыл сделку
@@ -31,6 +32,11 @@ export async function createOverrideIfApplicable({
   if (subRows.length === 0) return { created: false };
   const referrerId = subRows[0].referrer_partner_id ? String(subRows[0].referrer_partner_id) : null;
   if (!referrerId) return { created: false };
+
+  // Override — только за реальную сделку: проект с подписанным контрактом.
+  // Иначе override мог начислиться преждевременно (при простой привязке партнёра).
+  const projectRows = (await db`SELECT contract_signed_at FROM projects WHERE project_id = ${projectId} LIMIT 1`) as Row[];
+  if (projectRows.length === 0 || !projectRows[0].contract_signed_at) return { created: false };
 
   // Проверяем активность referrer'а — нужна сделка за последние 90 дней
   const activityRow = (await db`
