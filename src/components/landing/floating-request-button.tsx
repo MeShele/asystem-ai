@@ -93,7 +93,7 @@ export function FloatingRequestButton() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.96 }}
         aria-label="Оставить заявку"
-        className="fixed left-4 bottom-4 md:left-6 md:bottom-6 lg:left-auto lg:right-8 z-[150] inline-flex items-center gap-2.5 rounded-full pl-4 pr-5 py-3.5 text-white font-medium text-sm"
+        className="fixed left-4 bottom-4 md:left-6 md:bottom-6 lg:left-auto lg:right-8 z-[150] inline-flex items-center justify-center rounded-full p-4 lg:gap-2.5 lg:pl-4 lg:pr-5 lg:py-3.5 text-white font-medium text-sm"
         style={{
           background: "#2563EB",
           boxShadow: "0 12px 32px -6px rgba(37,99,235,0.5)",
@@ -102,7 +102,7 @@ export function FloatingRequestButton() {
         onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#2563EB")}
       >
         <PenLine size={17} />
-        Оставить заявку
+        <span className="hidden lg:inline">Оставить заявку</span>
       </motion.button>
 
       <AnimatePresence>
