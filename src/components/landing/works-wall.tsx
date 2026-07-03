@@ -413,7 +413,7 @@ export function WorksWall({ featured, totalCount = 0, projectsHref = "/projects"
 function Sidebar() {
   return (
     <aside
-      className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-8 lg:py-12 lg:flex-col lg:gap-10"
+      className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-8 lg:pt-12 lg:pb-28 lg:flex-col lg:gap-10"
       style={{
         borderRight: "1px solid #e5e5e5",
         background: "#fff",
