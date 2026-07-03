@@ -458,7 +458,7 @@ function Sidebar() {
         </div>
       </SidebarGroup>
 
-      <div className="mt-auto pt-10 lg:mb-20">
+      <div className="mt-auto pt-10">
         <LiveTimestamp />
         <div className="mt-4 font-mono text-[10px]" style={{ color: "#9ca3af", letterSpacing: "0.1em" }}>
           © 2026 · BISHKEK, KG

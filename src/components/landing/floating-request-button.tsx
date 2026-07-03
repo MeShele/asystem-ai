@@ -93,7 +93,7 @@ export function FloatingRequestButton() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.96 }}
         aria-label="Оставить заявку"
-        className="fixed left-4 bottom-4 md:left-6 md:bottom-6 z-[150] inline-flex items-center gap-2.5 rounded-full pl-4 pr-5 py-3.5 text-white font-medium text-sm"
+        className="fixed left-4 bottom-4 md:left-6 md:bottom-6 lg:left-auto lg:right-8 z-[150] inline-flex items-center gap-2.5 rounded-full pl-4 pr-5 py-3.5 text-white font-medium text-sm"
         style={{
           background: "#2563EB",
           boxShadow: "0 12px 32px -6px rgba(37,99,235,0.5)",
