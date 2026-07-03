@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
+import { FloatingRequestButton } from "./floating-request-button";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion, useInView } from "framer-motion";
@@ -402,6 +403,7 @@ export function WorksWall({ featured, totalCount = 0, projectsHref = "/projects"
         <Sidebar />
         <Main featured={featured} totalCount={totalCount} projectsHref={projectsHref} />
       </div>
+      <FloatingRequestButton />
     </ActiveSectionContext.Provider>
   );
 }
