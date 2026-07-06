@@ -73,7 +73,24 @@ const T: Record<PortfolioLocale, {
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
-async function loadCase(slug: string): Promise<{ case: PortfolioCase; category: PortfolioCategory | null } | null> {
+function buildProjectOgImage(c: PortfolioCase): string {
+  const hasPublicCover = c.cover_path && !c.cover_path.startsWith("data:");
+  return hasPublicCover
+    ? `https://asystem.ai${c.cover_path}`
+    : "/opengraph-image";
+}
+
+function toAbsoluteAsystemUrl(url: string): string {
+  return url.startsWith("http") ? url : `https://asystem.ai${url}`;
+}
+
+function toSchemaDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+async function loadCase(slug: string): Promise<{ case: PortfolioCase; category: PortfolioCategory | null; updatedAt: unknown } | null> {
   try {
     await initPortfolioTables();
     const db = getDb();
@@ -85,13 +102,14 @@ async function loadCase(slug: string): Promise<{ case: PortfolioCase; category: 
       LIMIT 1
     `;
     if (rows.length === 0) return null;
-    const c = toPortfolioCase(rows[0]);
+    const row = rows[0];
+    const c = toPortfolioCase(row);
     let category: PortfolioCategory | null = null;
     if (c.category_id) {
       const catRows = await db`SELECT * FROM portfolio_categories WHERE id = ${c.category_id} LIMIT 1`;
       if (catRows.length > 0) category = toPortfolioCategory(catRows[0]);
     }
-    return { case: c, category };
+    return { case: c, category, updatedAt: row.updated_at };
   } catch {
     return null;
   }
@@ -130,16 +148,13 @@ export async function generateMetadata({
 
   // Используем cover как OG, только если это публичный URL (не base64).
   // Иначе падаем на корневой /opengraph-image (auto-generated через ImageResponse).
-  const hasPublicCover = data.case.cover_path && !data.case.cover_path.startsWith("data:");
-  const ogImage = hasPublicCover
-    ? `https://asystem.ai${data.case.cover_path}`
-    : "/opengraph-image";
-
+  const ogImage = buildProjectOgImage(data.case);
   const canonical = `https://asystem.ai/${locale}/projects/${slug}`;
 
   return {
     title: `${name} · asystem.ai`,
     description: desc,
+    keywords: [name, "кейс", "портфолио", "проект", "asystem.ai"],
     openGraph: {
       title: `${name} · asystem.ai`,
       description: desc,
@@ -186,16 +201,20 @@ export default async function CasePage({
   const tasks = tr?.tasks ?? [];
   const labels = T[locale];
   const categoryName = category ? pickTranslation(category.translations, locale)?.name ?? category.slug : null;
+  const ogImage = buildProjectOgImage(c);
+  const dateModified = toSchemaDate(data.updatedAt);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CreativeWork",
     name,
     description: description || tagline,
+    image: toAbsoluteAsystemUrl(ogImage),
     inLanguage: locale,
     creator: { "@type": "Organization", name: "asystem.ai", url: "https://asystem.ai" },
     ...(c.kind === "linked" ? { url: c.public_url } : {}),
     ...(c.year ? { dateCreated: String(c.year) } : {}),
+    ...(dateModified ? { dateModified } : {}),
   };
 
   return (

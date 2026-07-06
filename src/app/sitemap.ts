@@ -7,20 +7,19 @@ const DEFAULT_LOCALE = "ru";
 
 type Page = {
   path: string;
-  lastModified: string;
   changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
   priority: number;
 };
 
 const PAGES: Page[] = [
-  { path: "", lastModified: "2026-05-18", changeFrequency: "weekly", priority: 1.0 },
-  { path: "/startups", lastModified: "2026-05-18", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/partner", lastModified: "2026-05-18", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/projects", lastModified: "2026-05-18", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/products", lastModified: "2026-05-18", changeFrequency: "monthly", priority: 0.6 },
-  { path: "/client/request", lastModified: "2026-05-18", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/privacy", lastModified: "2026-01-01", changeFrequency: "yearly", priority: 0.3 },
-  { path: "/terms", lastModified: "2026-01-01", changeFrequency: "yearly", priority: 0.3 },
+  { path: "", changeFrequency: "weekly", priority: 1.0 },
+  { path: "/startups", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/partner", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/projects", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/products", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/client/request", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 async function fetchProjectSlugs(): Promise<{ slug: string; updatedAt: string }[]> {
@@ -43,7 +42,7 @@ async function fetchProjectSlugs(): Promise<{ slug: string; updatedAt: string }[
   }
 }
 
-function buildEntries(path: string, lastModified: string, changeFrequency: Page["changeFrequency"], priority: number): MetadataRoute.Sitemap {
+function buildEntries(path: string, lastModified: Date | string, changeFrequency: Page["changeFrequency"], priority: number): MetadataRoute.Sitemap {
   const languages: Record<string, string> = Object.fromEntries(
     LOCALES.map((l) => [l, `${BASE}/${l}${path}`]),
   );
@@ -59,8 +58,9 @@ function buildEntries(path: string, lastModified: string, changeFrequency: Page[
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
   const staticEntries = PAGES.flatMap((page) =>
-    buildEntries(page.path, page.lastModified, page.changeFrequency, page.priority),
+    buildEntries(page.path, now, page.changeFrequency, page.priority),
   );
 
   const projectSlugs = await fetchProjectSlugs();

@@ -41,3 +41,44 @@ Disallow: /*/tg/*
 
 # API endpoints
 Disallow: /api/
+
+# ─────────────────────────────────────────────────────────────
+# AI-краулеры и LLM-ассистенты (ChatGPT, Claude, Gemini, Perplexity, и др.)
+# Публичный контент открыт для обучения и цитирования.
+# Структурированное описание компании для LLM: https://asystem.ai/llms.txt
+# ─────────────────────────────────────────────────────────────
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: Amazonbot
+User-agent: cohere-ai
+User-agent: Meta-ExternalAgent
+User-agent: Meta-ExternalFetcher
+User-agent: Bytespider
+Allow: /
+Disallow: /*/admin
+Disallow: /*/partner/dashboard
+Disallow: /*/partner/leads
+Disallow: /*/partner/network
+Disallow: /*/partner/payouts
+Disallow: /*/partner/projects
+Disallow: /*/partner/achievements
+Disallow: /*/partner/settings
+Disallow: /*/partner/knowledge
+Disallow: /*/partner/login
+Disallow: /*/partner/register
+Disallow: /*/client/dashboard
+Disallow: /*/client/projects
+Disallow: /*/client/login
+Disallow: /*/client/register
+Disallow: /*/tg
+Disallow: /api/

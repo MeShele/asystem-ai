@@ -69,6 +69,7 @@ export async function generateMetadata({
   return {
     title: `${title} · asystem.ai`,
     description: h.subtitle,
+    keywords: ["портфолио", "кейсы", "проекты", "веб-разработка", "AI-разработка", "asystem"],
     openGraph: {
       title: `${title} · asystem.ai`,
       description: h.subtitle,
