@@ -105,18 +105,18 @@ export function Footer() {
             <ul className="flex flex-col gap-3">
               <li>
                 <a
-                  href="mailto:hello@asystem.ai"
+                  href="mailto:asystem.teamwork@gmail.com"
                   className="transition-colors"
                   style={{ fontSize: "14px", color: "#0a0a0a" }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                 >
-                  hello@asystem.ai
+                  asystem.teamwork@gmail.com
                 </a>
               </li>
               <li>
                 <a
-                  href="https://t.me/asystem_ai"
+                  href="https://t.me/asystem_studio"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors"
@@ -124,12 +124,12 @@ export function Footer() {
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#2563EB")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#0a0a0a")}
                 >
-                  Telegram · @asystem_ai
+                  Telegram · @asystem_studio
                 </a>
               </li>
               <li>
                 <a
-                  href="https://wa.me/996"
+                  href="https://wa.me/996500115133"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors"

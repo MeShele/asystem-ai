@@ -58,8 +58,8 @@ export function ProjectsShell({
     {
       title: "Contact",
       items: [
-        { label: "hello@asystem.ai", href: "mailto:hello@asystem.ai", external: true },
-        { label: "Telegram", href: "https://t.me/asystem_ai", external: true },
+        { label: "asystem.teamwork@gmail.com", href: "mailto:asystem.teamwork@gmail.com", external: true },
+        { label: "Telegram", href: "https://t.me/asystem_studio", external: true },
       ],
     },
   ];
@@ -107,9 +107,9 @@ export function ProjectsShell({
           </SidebarGroup>
 
           <SidebarGroup title="Contact">
-            <SidebarItem href="mailto:hello@asystem.ai" external>hello@asystem.ai</SidebarItem>
-            <SidebarItem href="https://t.me/asystem_ai" external>Telegram</SidebarItem>
-            <SidebarItem href="https://wa.me/996" external>WhatsApp</SidebarItem>
+            <SidebarItem href="mailto:asystem.teamwork@gmail.com" external>asystem.teamwork@gmail.com</SidebarItem>
+            <SidebarItem href="https://t.me/asystem_studio" external>Telegram</SidebarItem>
+            <SidebarItem href="https://wa.me/996500115133" external>WhatsApp</SidebarItem>
           </SidebarGroup>
 
           <SidebarGroup title="Language">

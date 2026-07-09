@@ -44,10 +44,10 @@ export function CTASection() {
                   </span>
                 </Link>
                 <a
-                  href="mailto:hello@asystem.ai"
+                  href="mailto:asystem.teamwork@gmail.com"
                   className="text-sm text-text-muted hover:text-text-secondary transition-colors h-14 inline-flex items-center underline underline-offset-4 decoration-border-faint hover:decoration-text-muted"
                 >
-                  hello@asystem.ai →
+                  asystem.teamwork@gmail.com →
                 </a>
               </div>
             </div>

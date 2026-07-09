@@ -196,7 +196,7 @@ export function ServiceModal({
                       Оставить заявку →
                     </Link>
                     <a
-                      href="mailto:hello@asystem.ai"
+                      href="mailto:asystem.teamwork@gmail.com"
                       className="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-medium transition-colors"
                       style={{
                         border: "1px solid rgba(10,10,10,0.2)",
@@ -210,7 +210,7 @@ export function ServiceModal({
                         ((e.currentTarget as HTMLElement).style.background = "transparent")
                       }
                     >
-                      hello@asystem.ai
+                      asystem.teamwork@gmail.com
                     </a>
                   </div>
                 </div>

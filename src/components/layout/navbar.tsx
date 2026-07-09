@@ -85,7 +85,7 @@ export function Navbar() {
             </div>
 
             <a
-              href="mailto:hello@asystem.ai"
+              href="mailto:asystem.teamwork@gmail.com"
               className="hidden md:inline-flex font-mono text-[13px] transition-colors"
               style={{
                 color: "#0a0a0a",
@@ -102,7 +102,7 @@ export function Navbar() {
                 (e.currentTarget as HTMLElement).style.borderBottomColor = "#78716c";
               }}
             >
-              hello@asystem.ai
+              asystem.teamwork@gmail.com
             </a>
 
             <button
@@ -142,11 +142,11 @@ export function Navbar() {
                 </Link>
               ))}
               <a
-                href="mailto:hello@asystem.ai"
+                href="mailto:asystem.teamwork@gmail.com"
                 className="font-mono text-[13px] mt-2"
                 style={{ color: "#2563EB", letterSpacing: "0.05em" }}
               >
-                hello@asystem.ai →
+                asystem.teamwork@gmail.com →
               </a>
             </nav>
           </div>

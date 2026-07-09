@@ -44,9 +44,9 @@ const HOME_MOBILE_NAV = [
   {
     title: "Contact",
     items: [
-      { label: "hello@asystem.ai", href: "mailto:hello@asystem.ai", external: true },
-      { label: "Telegram", href: "https://t.me/asystem_ai", external: true },
-      { label: "WhatsApp", href: "https://wa.me/996", external: true },
+      { label: "asystem.teamwork@gmail.com", href: "mailto:asystem.teamwork@gmail.com", external: true },
+      { label: "Telegram", href: "https://t.me/asystem_studio", external: true },
+      { label: "WhatsApp", href: "https://wa.me/996500115133", external: true },
     ],
   },
 ];
@@ -443,9 +443,9 @@ function Sidebar() {
       </SidebarGroup>
 
       <SidebarGroup title="Contact">
-        <SidebarLink href="mailto:hello@asystem.ai" external>hello@asystem.ai</SidebarLink>
-        <SidebarLink href="https://t.me/asystem_ai" external>Telegram</SidebarLink>
-        <SidebarLink href="https://wa.me/996" external>WhatsApp</SidebarLink>
+        <SidebarLink href="mailto:asystem.teamwork@gmail.com" external>asystem.teamwork@gmail.com</SidebarLink>
+        <SidebarLink href="https://t.me/asystem_studio" external>Telegram</SidebarLink>
+        <SidebarLink href="https://wa.me/996500115133" external>WhatsApp</SidebarLink>
       </SidebarGroup>
 
       <SidebarGroup title="Language">
@@ -1770,7 +1770,7 @@ function FinalCTA() {
             <span>→</span>
           </Link>
           <a
-            href="mailto:hello@asystem.ai"
+            href="mailto:asystem.teamwork@gmail.com"
             className="inline-flex items-center gap-3 px-7 py-4 font-medium transition-colors"
             style={{
               border: "1px solid rgba(10,10,10,0.2)",
@@ -1784,7 +1784,7 @@ function FinalCTA() {
               (e.currentTarget as HTMLElement).style.background = "transparent";
             }}
           >
-            hello@asystem.ai
+            asystem.teamwork@gmail.com
           </a>
         </div>
 

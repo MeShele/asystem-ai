@@ -38,8 +38,8 @@ const PARTNER_MOBILE_NAV = [
   {
     title: "Contact",
     items: [
-      { label: "partner@asystem.ai", href: "mailto:partner@asystem.ai", external: true },
-      { label: "Telegram", href: "https://t.me/asystem_ai", external: true },
+      { label: "asystem.teamwork@gmail.com", href: "mailto:asystem.teamwork@gmail.com", external: true },
+      { label: "Telegram", href: "https://t.me/asystem_studio", external: true },
     ],
   },
 ];
@@ -98,10 +98,10 @@ function PartnerSidebar() {
       </SidebarGroup>
 
       <SidebarGroup title="Contact">
-        <SidebarLink href="mailto:partner@asystem.ai" external>
-          partner@asystem.ai
+        <SidebarLink href="mailto:asystem.teamwork@gmail.com" external>
+          asystem.teamwork@gmail.com
         </SidebarLink>
-        <SidebarLink href="https://t.me/asystem_ai" external>
+        <SidebarLink href="https://t.me/asystem_studio" external>
           Telegram
         </SidebarLink>
       </SidebarGroup>
@@ -806,7 +806,7 @@ function FinalCTA() {
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4">
           <a
-            href="https://t.me/asystem_ai"
+            href="https://t.me/asystem_studio"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-7 py-4 transition-colors"
@@ -823,7 +823,7 @@ function FinalCTA() {
             <ArrowRight size={16} />
           </a>
           <a
-            href="mailto:partner@asystem.ai"
+            href="mailto:asystem.teamwork@gmail.com"
             className="inline-flex items-center gap-3 px-7 py-4 transition-colors"
             style={{
               border: "1px solid rgba(10,10,10,0.2)",
@@ -834,7 +834,7 @@ function FinalCTA() {
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(10,10,10,0.05)")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
           >
-            partner@asystem.ai
+            asystem.teamwork@gmail.com
           </a>
         </div>
 

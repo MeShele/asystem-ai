@@ -76,7 +76,7 @@ export function FloatingRequestButton() {
       if (!res.ok) throw new Error("failed");
       setSent(true);
     } catch {
-      setErr("Не удалось отправить. Попробуйте ещё раз или напишите на hello@asystem.ai");
+      setErr("Не удалось отправить. Попробуйте ещё раз или напишите на asystem.teamwork@gmail.com");
     } finally {
       setLoading(false);
     }

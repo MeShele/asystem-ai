@@ -12,13 +12,13 @@ export const organizationSchema = {
   description:
     "Независимая AI-first IT-студия из Бишкека. Разработка AI-решений, веб-платформ, интеграций и Telegram-ботов для бизнеса в странах СНГ.",
   foundingDate: "2024",
-  email: "hello@asystem.ai",
+  email: "asystem.teamwork@gmail.com",
   slogan: "Независимая AI-first IT-студия — 4× быстрее, без предоплаты, по FIX-цене",
   numberOfEmployees: { "@type": "QuantitativeValue", value: 16 },
-  sameAs: ["https://t.me/asystem_ai"],
+  sameAs: ["https://t.me/asystem_studio"],
   contactPoint: {
     "@type": "ContactPoint",
-    email: "hello@asystem.ai",
+    email: "asystem.teamwork@gmail.com",
     contactType: "customer support",
     availableLanguage: ["Russian", "English", "Kyrgyz"],
   },

@@ -103,7 +103,7 @@ export default function SettingsPage() {
     desc: "Название компании, контакты, адрес",
     fields: [
       { key: "company_name" as const, label: "Название компании", placeholder: "asystem.ai", type: "text" },
-      { key: "company_email" as const, label: "Email для уведомлений", placeholder: "admin@asystem.ai", type: "email" },
+      { key: "company_email" as const, label: "Email для уведомлений", placeholder: "asystem.teamwork@gmail.com", type: "email" },
       { key: "company_phone" as const, label: "Телефон", placeholder: "+996 XXX XXX XXX", type: "tel" },
     ],
   };
