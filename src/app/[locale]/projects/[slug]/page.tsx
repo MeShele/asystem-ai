@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, Lock, Building2, Calendar, Layers, User } from "lucide-react";
+import { getCaseTheme } from "@/lib/case-themes";
 import { getDb, initPortfolioTables } from "@/lib/db";
 import {
   toPortfolioCase,
@@ -192,6 +193,7 @@ export default async function CasePage({
   const data = await loadCase(slug);
   if (!data) notFound();
   const { case: c, category } = data;
+  const theme = getCaseTheme(slug);
   const { shellCategories, totalCount, uncategorizedCount } = await loadCategoriesForShell();
   const tr = pickTranslation(c.translations, locale);
   const name = tr?.name ?? c.slug;
@@ -231,52 +233,113 @@ export default async function CasePage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* HERO как на главной — цветной полноразмерный, с лого + название + результат */}
-      <header
-        className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, ${c.bg_color} 0%, ${shadeHex(c.bg_color, -15)} 100%)`,
-          borderBottom: "1px solid #e5e5e5",
-        }}
-      >
-        <Link
-          href="/projects"
-          className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors mb-10"
+      {theme?.archetype === "terminal" ? (
+        <header
+          className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
+          style={{
+            background: theme.heroSurface,
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
         >
-          ← {labels.allProjects}
-        </Link>
+          {theme.pattern === "grid" && (
+            <div
+              className="absolute inset-0 z-0 pointer-events-none"
+              style={{
+                backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            />
+          )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-end">
-          <div>
-            <StatusBadge status={c.status} />
-            <h1 className="mt-5 font-semibold leading-[0.95] tracking-tight text-white" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em" }}>
-              {name}
-            </h1>
-            {tagline && (
-              <p className="mt-5 text-[18px] lg:text-[22px] text-white/85 max-w-2xl leading-relaxed">
-                {tagline}
-              </p>
-            )}
-            {result && (
-              <div className="mt-10 inline-block">
-                <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.25em] mb-2">Результат</div>
-                <div className="text-2xl lg:text-4xl font-semibold text-white tabular-nums leading-[1.1]">{result}</div>
+          <div className="relative z-10">
+            <Link
+              href="/projects"
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors mb-10"
+            >
+              ← {labels.allProjects}
+            </Link>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-end">
+              <div>
+                <StatusBadge status={c.status} />
+                <h1 className="mt-5 font-semibold leading-[0.95] tracking-tight text-white" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em" }}>
+                  {name}
+                </h1>
+                {tagline && (
+                  <p className="mt-5 text-[18px] lg:text-[22px] max-w-2xl leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    {tagline}
+                  </p>
+                )}
+                {result && (
+                  <div className="mt-10 inline-block">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.25em] mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Результат</div>
+                    <div className="text-2xl lg:text-4xl font-semibold tabular-nums leading-[1.1]" style={{ color: theme.accent }}>{result}</div>
+                  </div>
+                )}
+              </div>
+              {c.logo_path && (
+                <div className="flex items-center justify-center lg:justify-end">
+                  <Image
+                    src={c.logo_path}
+                    alt={name}
+                    width={220}
+                    height={140}
+                    className="max-w-[220px] max-h-[140px] object-contain drop-shadow-2xl"
+                    unoptimized
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+      ) : (
+        <header
+          className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${c.bg_color} 0%, ${shadeHex(c.bg_color, -15)} 100%)`,
+            borderBottom: "1px solid #e5e5e5",
+          }}
+        >
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors mb-10"
+          >
+            ← {labels.allProjects}
+          </Link>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-end">
+            <div>
+              <StatusBadge status={c.status} />
+              <h1 className="mt-5 font-semibold leading-[0.95] tracking-tight text-white" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em" }}>
+                {name}
+              </h1>
+              {tagline && (
+                <p className="mt-5 text-[18px] lg:text-[22px] text-white/85 max-w-2xl leading-relaxed">
+                  {tagline}
+                </p>
+              )}
+              {result && (
+                <div className="mt-10 inline-block">
+                  <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.25em] mb-2">Результат</div>
+                  <div className="text-2xl lg:text-4xl font-semibold text-white tabular-nums leading-[1.1]">{result}</div>
+                </div>
+              )}
+            </div>
+            {c.logo_path && (
+              <div className="flex items-center justify-center lg:justify-end">
+                <Image
+                  src={c.logo_path}
+                  alt={name}
+                  width={220}
+                  height={140}
+                  className="max-w-[220px] max-h-[140px] object-contain drop-shadow-2xl"
+                  unoptimized
+                />
               </div>
             )}
           </div>
-          {c.logo_path && (
-            <div className="flex items-center justify-center lg:justify-end">
-              <Image
-                src={c.logo_path}
-                alt={name}
-                width={220}
-                height={140}
-                className="max-w-[220px] max-h-[140px] object-contain drop-shadow-2xl"
-                unoptimized
-              />
-            </div>
-          )}
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* META */}
       <div className="px-6 lg:px-12 py-5" style={{ borderBottom: "1px solid #e5e5e5", background: "#fafafa" }}>
