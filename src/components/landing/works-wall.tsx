@@ -212,7 +212,7 @@ function featuredToTile(f: FeaturedFromDb): ClientTile {
 const CLIENTS: ClientTile[] = [
   {
     id: "minobr",
-    name: "Минобр КР",
+    name: "Министерство образования КР",
     tag: "ГОСЗАКАЗ",
     desc: "Платформа для Министерства образования. Архитектура ПО, госстандарты, безопасность для тысяч пользователей.",
     result: "Запуск за 6 недель вместо 6 месяцев",
@@ -1204,7 +1204,7 @@ function PeaceOfMind() {
           style={{ color: "rgba(10,10,10,0.45)", letterSpacing: "0.15em" }}
         >
           <span className="inline-block w-8 h-px" style={{ background: "rgba(10,10,10,0.3)" }} />
-          ЭТО УЖЕ ПРОВЕРИЛИ НА СЕБЕ · МИНОБР КР · АУРВА · RED CHARGE · TULPAR EXPRESS
+          ЭТО УЖЕ ПРОВЕРИЛИ НА СЕБЕ · МИНОБРАЗОВАНИЯ КР · АУРВА · RED CHARGE · TULPAR EXPRESS
         </motion.div>
       </div>
     </section>
