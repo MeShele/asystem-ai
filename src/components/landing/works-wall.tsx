@@ -1138,10 +1138,10 @@ function TeamLabel({ memberKey, visible }: { memberKey: string; visible: boolean
 /* ═══════════════ PEACE OF MIND ═══════════════ */
 
 const GUARANTEES = [
-  { Icon: Gauge,       value: "4×",    label: "БЫСТРЕЕ РЫНКА",  sub: "MVP за 3-4 недели — не 3-4 месяца" },
-  { Icon: Wallet,      value: "0 сом", label: "БЕЗ ПРЕДОПЛАТЫ", sub: "Сначала MVP — потом счёт" },
-  { Icon: ShieldCheck, value: "FIX",   label: "ЛОЯЛЬНЫЕ ЦЕНЫ",  sub: "Бишкек-rate, не Москва-rate. Базовая цена известна до старта." },
-  { Icon: Timer,       value: "24h",   label: "ОТВЕТ ПО КП",    sub: "Шесть вопросов — и у вас цифры" },
+  { Icon: Gauge,       value: "4×",     label: "Быстрее рынка",      sub: "Рабочую версию продукта вы увидите через 3–4 недели, а не через полгода — и начнёте зарабатывать раньше." },
+  { Icon: Wallet,      value: "0 сом",  label: "Без предоплаты",     sub: "Сначала делаем продукт, а платите, когда убедитесь, что он работает. Все риски мы берём на себя." },
+  { Icon: ShieldCheck, value: "Честно", label: "Цена без сюрпризов", sub: "Полную стоимость называем до старта и не меняем её по ходу работы. Цены бишкекские, не московские." },
+  { Icon: Timer,       value: "Сутки",  label: "Ответим с цифрами",  sub: "Задаём всего шесть вопросов — и в течение суток присылаем сроки и цену под вашу задачу." },
 ];
 
 function PeaceOfMind() {
@@ -1204,7 +1204,7 @@ function PeaceOfMind() {
           style={{ color: "rgba(10,10,10,0.45)", letterSpacing: "0.15em" }}
         >
           <span className="inline-block w-8 h-px" style={{ background: "rgba(10,10,10,0.3)" }} />
-          ПОДТВЕРЖДАЮТ · МИНОБР КР · АУРВА · RED CHARGE · TULPAR EXPRESS
+          ЭТО УЖЕ ПРОВЕРИЛИ НА СЕБЕ · МИНОБР КР · АУРВА · RED CHARGE · TULPAR EXPRESS
         </motion.div>
       </div>
     </section>
