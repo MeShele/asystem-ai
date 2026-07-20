@@ -10,13 +10,39 @@ import { ThemeModal } from "@/components/theme-modal";
 import { YandexMetrika, YandexMetrikaPageView } from "@/components/analytics/yandex-metrika";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk, Rajdhani, IBM_Plex_Mono, JetBrains_Mono } from "next/font/google";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-inter",
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+
+// Дисплейные шрифты для брендированных hero кейс-страниц (см. case-themes.ts)
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-grotesk",
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  variable: "--font-rajdhani",
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-plexmono",
+  display: "swap",
+  weight: ["500", "600"],
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+  weight: ["500", "700"],
 });
 
 export const viewport: Viewport = {
@@ -97,7 +123,11 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning className={inter.variable}>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${inter.variable} ${spaceGrotesk.variable} ${rajdhani.variable} ${ibmPlexMono.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

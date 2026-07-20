@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, Lock, Building2, Calendar, Layers, User } from "lucide-react";
-import { getCaseTheme } from "@/lib/case-themes";
+import { getCaseTheme, FONT_VAR, type CaseTheme } from "@/lib/case-themes";
 import { getDb, initPortfolioTables } from "@/lib/db";
 import {
   toPortfolioCase,
@@ -194,6 +194,7 @@ export default async function CasePage({
   if (!data) notFound();
   const { case: c, category } = data;
   const theme = getCaseTheme(slug);
+  const accentInk = theme?.accentInk ?? "#2563EB";
   const { shellCategories, totalCount, uncategorizedCount } = await loadCategoriesForShell();
   const tr = pickTranslation(c.translations, locale);
   const name = tr?.name ?? c.slug;
@@ -232,29 +233,24 @@ export default async function CasePage({
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* HERO как на главной — цветной полноразмерный, с лого + название + результат */}
-      {theme?.archetype === "terminal" ? (
+      {/* HERO — брендированный канвас проекта (см. case-themes.ts) */}
+      {theme ? (
         <header
           className="relative px-6 lg:px-12 py-16 lg:py-24 overflow-hidden"
           style={{
-            background: theme.heroSurface,
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            background: `linear-gradient(150deg, ${theme.heroFrom} 0%, ${theme.heroTo} 100%)`,
+            borderBottom: `1px solid ${theme.heroBorder}`,
           }}
         >
-          {theme.pattern === "grid" && (
-            <div
-              className="absolute inset-0 z-0 pointer-events-none"
-              style={{
-                backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
-                backgroundSize: "40px 40px",
-              }}
-            />
+          {theme.pattern !== "none" && (
+            <div className="absolute inset-0 z-0 pointer-events-none" style={patternStyle(theme)} />
           )}
 
           <div className="relative z-10">
             <Link
               href="/projects"
-              className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors mb-10"
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase opacity-70 hover:opacity-100 transition-opacity mb-10"
+              style={{ color: theme.onHero }}
             >
               ← {labels.allProjects}
             </Link>
@@ -262,17 +258,20 @@ export default async function CasePage({
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-end">
               <div>
                 <StatusBadge status={c.status} />
-                <h1 className="mt-5 font-semibold leading-[0.95] tracking-tight text-white" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em" }}>
+                <h1
+                  className="mt-5 leading-[0.95] tracking-tight"
+                  style={{ fontFamily: FONT_VAR[theme.displayFont], color: theme.onHero, fontSize: "clamp(2.75rem, 7vw, 5.5rem)", letterSpacing: "-0.03em", fontWeight: 700 }}
+                >
                   {name}
                 </h1>
                 {tagline && (
-                  <p className="mt-5 text-[18px] lg:text-[22px] max-w-2xl leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  <p className="mt-5 text-[18px] lg:text-[22px] max-w-2xl leading-relaxed" style={{ color: hexToRgba(theme.onHero, 0.72) }}>
                     {tagline}
                   </p>
                 )}
                 {result && (
                   <div className="mt-10 inline-block">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.25em] mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Результат</div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.25em] mb-2" style={{ color: hexToRgba(theme.onHero, 0.45) }}>Результат</div>
                     <div className="text-2xl lg:text-4xl font-semibold tabular-nums leading-[1.1]" style={{ color: theme.accent }}>{result}</div>
                   </div>
                 )}
@@ -353,7 +352,7 @@ export default async function CasePage({
               target="_blank"
               rel="noopener noreferrer"
               className="ml-auto inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[#1D4ED8]"
-              style={{ color: "#2563EB" }}
+              style={{ color: accentInk }}
             >
               {labels.openSite}
               <ArrowUpRight className="w-4 h-4" />
@@ -367,7 +366,7 @@ export default async function CasePage({
         <div className="max-w-3xl space-y-14">
           {description && (
             <section>
-              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: "#2563EB" }}>{labels.about}</div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: accentInk }}>{labels.about}</div>
               <div className="text-[17px] leading-[1.75] whitespace-pre-wrap" style={{ color: "rgba(10,10,10,0.75)" }}>
                 {description}
               </div>
@@ -376,11 +375,11 @@ export default async function CasePage({
 
           {tasks.filter(Boolean).length > 0 && (
             <section>
-              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: "#2563EB" }}>{labels.tasks}</div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-4" style={{ color: accentInk }}>{labels.tasks}</div>
               <ul className="space-y-3">
                 {tasks.filter(Boolean).map((task, i) => (
                   <li key={i} className="flex items-start gap-3 text-[17px] leading-relaxed" style={{ color: "#0a0a0a" }}>
-                    <span className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#2563EB" }} />
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accentInk }} />
                     <span>{task}</span>
                   </li>
                 ))}
@@ -395,7 +394,7 @@ export default async function CasePage({
               </p>
               {c.contact_person && (
                 <div className="mt-4 flex items-center gap-2 text-[14px]" style={{ color: "#0a0a0a" }}>
-                  <User className="w-4 h-4" style={{ color: "#2563EB" }} />
+                  <User className="w-4 h-4" style={{ color: accentInk }} />
                   <strong>{labels.contact}:</strong>
                   <span>{c.contact_person}</span>
                   {c.contact_role && <span style={{ color: "#9ca3af" }}>· {c.contact_role}</span>}
@@ -409,7 +408,7 @@ export default async function CasePage({
       {/* GALLERY */}
       {c.gallery.length > 0 && (
         <div className="px-6 lg:px-12 py-16 lg:py-24" style={{ borderBottom: "1px solid #e5e5e5" }}>
-          <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: "#2563EB" }}>{labels.gallery}</div>
+          <div className="font-mono text-[11px] uppercase tracking-[0.3em] mb-6" style={{ color: accentInk }}>{labels.gallery}</div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {c.gallery.map((g, i) => (
               <div key={i} className="relative aspect-video rounded-xl overflow-hidden" style={{ border: "1px solid #e5e5e5", background: "#fafafa" }}>
@@ -465,4 +464,42 @@ function shadeHex(hex: string, percent: number): string {
   g = Math.max(0, Math.min(255, g));
   b = Math.max(0, Math.min(255, b));
   return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const num = parseInt(full, 16);
+  const r = (num >> 16) & 0xff;
+  const g = (num >> 8) & 0xff;
+  const b = num & 0xff;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Фоновый паттерн hero-канваса под архетип темы (чистый CSS).
+function patternStyle(theme: CaseTheme): React.CSSProperties {
+  const line = hexToRgba(theme.onHero, 0.05);
+  switch (theme.pattern) {
+    case "grid":
+      return {
+        backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
+        backgroundSize: "44px 44px",
+      };
+    case "dots":
+      return {
+        backgroundImage: `radial-gradient(${hexToRgba(theme.onHero, 0.09)} 1.5px, transparent 1.5px)`,
+        backgroundSize: "26px 26px",
+      };
+    case "rules":
+      return {
+        backgroundImage: `linear-gradient(to bottom, ${hexToRgba(theme.onHero, 0.06)} 1px, transparent 1px)`,
+        backgroundSize: "100% 34px",
+      };
+    case "glow":
+      return {
+        backgroundImage: `radial-gradient(60% 60% at 15% 10%, ${hexToRgba(theme.accent, 0.18)} 0%, transparent 60%), radial-gradient(55% 55% at 90% 95%, ${hexToRgba(theme.accent, 0.14)} 0%, transparent 60%)`,
+      };
+    default:
+      return {};
+  }
 }
