@@ -1,0 +1,7 @@
+name: t
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo HELLO_RUNNER_OK
